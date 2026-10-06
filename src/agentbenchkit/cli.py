@@ -11,6 +11,8 @@ import typer
 from pydantic import ValidationError
 
 from agentbenchkit import __version__
+from agentbenchkit.analysis.compare import compare as compare_runs
+from agentbenchkit.analysis.replay import replay as replay_run
 from agentbenchkit.benchmarks.micro_swe import load_tasks
 from agentbenchkit.core.models import CredentialRef, HarnessOptions, ModelSpec, PhaseBudgets
 from agentbenchkit.core.protocols import Harness
@@ -185,6 +187,31 @@ def run(
     typer.echo(f"Success: {summary['samples_successful']}/{summary['samples_planned']}")
     if summary["samples_with_valid_verdict"] < summary["samples_planned"]:
         raise typer.Exit(2)
+
+
+@app.command("replay")
+def replay_command(
+    run_id: str, output: Annotated[Path, typer.Option()] = Path(".agentbenchkit/results")
+) -> None:
+    """Create a new analysis ID from saved evidence, preserving previous analyses."""
+    typer.echo(str(replay_run(output, run_id)))
+
+
+@app.command("compare")
+def compare_command(
+    baseline: str,
+    candidate: str,
+    output: Annotated[Path, typer.Option()] = Path(".agentbenchkit/results"),
+    expect: Annotated[list[str] | None, typer.Option("--expect")] = None,
+) -> None:
+    """Compare manifest conditions before interpreting observed score changes."""
+    typer.echo(
+        json.dumps(
+            compare_runs(output, baseline, candidate, tuple(expect or ())),
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
 
 
 @app.command("rebuild-index")
