@@ -14,14 +14,14 @@ from pydantic import JsonValue
 from agentbenchkit import __version__
 from agentbenchkit.core.events import Event
 from agentbenchkit.core.metrics import summarize
-from agentbenchkit.core.models import SampleResult, TaskSpec, VerificationResult
+from agentbenchkit.core.models import ResolvedManifest, SampleResult, TaskSpec, VerificationResult
 from agentbenchkit.core.protocols import Environment, Harness, StartupError
 from agentbenchkit.core.status import AgentOutcome, AuxiliaryStatus, ExecutionStatus, Verdict
 from agentbenchkit.environments.docker import DockerEnvironment
 from agentbenchkit.environments.host import HostProcessEnvironment
 from agentbenchkit.runtime.manifest import agent_identity, runtime_identity
 from agentbenchkit.runtime.recovery import RunLease, recover
-from agentbenchkit.runtime.settings import NexusSettings
+from agentbenchkit.runtime.settings import AgentSettings
 from agentbenchkit.storage.artifacts import Redactor, StreamRedactor, write_json
 from agentbenchkit.storage.index import index_run
 from agentbenchkit.verification.candidate import collect, inventory, tree_hash
@@ -56,7 +56,7 @@ async def evaluate_attempt(
     sample_id: str,
     harness: Harness,
     run_dir: Path,
-    settings: NexusSettings | None = None,
+    settings: AgentSettings | None = None,
     environment: Environment | None = None,
     final_attempt: bool = True,
 ) -> tuple[SampleResult, bool]:
@@ -330,7 +330,7 @@ async def evaluate_sample(
     sample_id: str,
     harness: Harness,
     run_dir: Path,
-    settings: NexusSettings | None = None,
+    settings: AgentSettings | None = None,
     environment: Environment | None = None,
     startup_retries: int = 1,
 ) -> SampleResult:
@@ -355,7 +355,7 @@ async def evaluate(
     harness: Harness,
     output: Path,
     samples: int = 1,
-    settings: NexusSettings | None = None,
+    settings: AgentSettings | None = None,
     k: int = 1,
     environment: Environment | None = None,
     concurrency: int = 1,
@@ -388,29 +388,33 @@ async def evaluate(
     identity = await agent_identity(harness, environment, run_dir / "work")
     write_json(
         run_dir / "manifest.json",
-        {
-            "schema_version": 1,
-            "run_id": run_id,
-            "created_at": now(),
-            "framework_version": __version__,
-            "framework": runtime_identity(),
-            "trajectory_schema_version": 1,
-            "analyzers": {"rules": "1", "metrics": "1"},
-            "judge": {"enabled": False},
-            "benchmark": "micro_swe-v1",
-            "tasks": task_manifests,
-            "harness": {
-                "name": harness.name,
-                "capabilities": harness.capabilities.model_dump(),
-                **identity,
-            },
-            "environment": environment_manifest,
-            "agent_config": settings.manifest() if settings else {},
-            "samples_per_task": samples,
-            "concurrency": concurrency,
-            "startup_retries": startup_retries,
-            "k": k,
-        },
+        ResolvedManifest.model_validate(
+            {
+                "schema_version": 2,
+                "run_id": run_id,
+                "created_at": now(),
+                "framework_version": __version__,
+                "framework": runtime_identity(),
+                "trajectory_schema_version": 1,
+                "analyzers": {"rules": "1", "metrics": "1"},
+                "judge": {"enabled": False},
+                "benchmark": "micro_swe-v1",
+                "tasks": task_manifests,
+                "harness": {
+                    "name": harness.name,
+                    "capabilities": harness.capabilities.model_dump(),
+                    **identity,
+                },
+                "environment": environment_manifest,
+                "model": settings.model.model_dump() if settings else None,
+                "requested_model": settings.requested_model.model_dump() if settings else None,
+                "agent_config": settings.manifest() if settings else {},
+                "samples_per_task": samples,
+                "concurrency": concurrency,
+                "startup_retries": startup_retries,
+                "k": k,
+            }
+        ).model_dump(mode="json"),
         settings.redactor if settings else None,
     )
     planned = [

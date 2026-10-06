@@ -1,0 +1,6 @@
+model_id = "gpt-6-astra"
+provider_id = "openai_chatgpt"
+reasoning_effort = "low"
+
+[credential]
+kind = "chatgpt_login"

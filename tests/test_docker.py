@@ -148,3 +148,40 @@ async def test_cancel_stops_real_container(tmp_path: Path) -> None:
         assert await docker("inspect", "--format", "{{.State.Running}}", session.name) == "false"
     finally:
         await session.close()
+
+
+async def test_auth_cache_uses_tmpfs_only(tmp_path: Path) -> None:
+    session = DockerSession(tmp_path, "python:3.12-slim")
+
+    async def sink(stream: str, text: str) -> None:
+        pass
+
+    script = (
+        "import pathlib,os; "
+        "auth=pathlib.Path('/agent-private/home/.codex/auth.json'); "
+        "assert auth.read_text()=='synthetic-auth'; "
+        "assert 'ABK_MEMORY_HOME' not in os.environ"
+    )
+    try:
+        result = await session.execute(
+            CommandSpec(argv=(sys.executable, "-c", script)),
+            sink,
+            {
+                "ABK_MEMORY_HOME": json.dumps(
+                    {
+                        "directory": ".codex",
+                        "config": 'model="test"',
+                        "credential_file": "auth.json",
+                        "auth": "synthetic-auth",
+                    }
+                )
+            },
+        )
+        assert result.returncode == 0
+        assert session.name
+        data = json.loads(await docker("inspect", session.name))[0]
+        assert "synthetic-auth" not in json.dumps(data)
+        assert "/tmp" in data["HostConfig"]["Tmpfs"]
+        assert not await asyncio.to_thread(lambda: list(tmp_path.rglob("auth.json")))
+    finally:
+        await session.close()

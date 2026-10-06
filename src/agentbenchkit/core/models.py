@@ -2,14 +2,86 @@
 
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator, model_validator
 
 from agentbenchkit.core.status import AgentOutcome, AuxiliaryStatus, ExecutionStatus, Verdict
 
 
 class Contract(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class CredentialRef(Contract):
+    kind: Literal["api_key", "chatgpt_login"] = "api_key"
+    env_var: str | None = Field(default=None, pattern=r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+    @model_validator(mode="after")
+    def valid_reference(self) -> "CredentialRef":
+        if (self.kind == "api_key") != (self.env_var is not None):
+            raise ValueError("API keys require env_var; ChatGPT login must not specify env_var")
+        return self
+
+
+class ModelSpec(Contract):
+    """Agent-independent model identity and requested generation/connection conditions.
+
+    Null means unspecified/unobservable, never a universal provider default.
+    Secrets are represented only by references. Harnesses must reject unsupported
+    requested fields and return their actual effective configuration separately.
+    """
+
+    schema_version: Literal[1] = 1
+    model_id: str = Field(min_length=1)
+    provider_id: str = Field(min_length=1)
+    base_url: str | None = None
+    credential: CredentialRef
+    context_window: int | None = Field(default=None, gt=0)
+    max_output_tokens: int | None = Field(default=None, gt=0)
+    reasoning_effort: str | None = None
+    temperature: float | None = Field(default=None, ge=0, le=2, allow_inf_nan=False)
+    top_p: float | None = Field(default=None, gt=0, le=1, allow_inf_nan=False)
+    seed: int | None = None
+    request_timeout_seconds: int | None = Field(default=None, gt=0, le=600)
+
+    @model_validator(mode="after")
+    def validate_connection(self) -> "ModelSpec":
+        if self.credential.kind == "api_key" and self.base_url is None:
+            raise ValueError("API model connections require an explicit base_url")
+        if self.credential.kind == "chatgpt_login" and self.base_url is not None:
+            raise ValueError("ChatGPT login endpoint is managed; do not claim an API base_url")
+        if self.base_url is not None:
+            parsed = urlsplit(self.base_url)
+            if (
+                parsed.scheme not in {"http", "https"}
+                or not parsed.hostname
+                or parsed.username
+                or parsed.password
+                or parsed.query
+                or parsed.fragment
+            ):
+                raise ValueError("base_url must be HTTP(S), without credentials/query/fragment")
+        return self
+
+
+class HarnessOptions(Contract):
+    """Agent-loop options, deliberately separate from model connection settings."""
+
+    max_steps: int | None = Field(default=None, gt=0)
+    include_usage: bool = True
+    output_token_parameter: Literal["max_tokens", "max_completion_tokens"] = "max_tokens"
+
+
+class NativeAgentConfig(Contract):
+    config_directory: str = Field(pattern=r"^\.[A-Za-z0-9_-]+$")
+    config_toml: str
+    credential_env: str | None = None
+    config_home_env: str | None = None
+    credential_file: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_.-]+$")
+    effective_model: ModelSpec
+    wire_api: Literal["chat_completions", "responses", "chatgpt"]
+    controls: dict[str, JsonValue] = Field(default_factory=dict)
 
 
 class CommandSpec(Contract):
@@ -120,18 +192,22 @@ class SampleResult(Contract):
 
 
 class ResolvedManifest(Contract):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[2] = 2
     run_id: str
     created_at: str
     framework_version: str
-    benchmark: dict[str, JsonValue]
+    framework: dict[str, JsonValue]
+    benchmark: str
     harness: dict[str, JsonValue]
     environment: dict[str, JsonValue]
-    model: dict[str, JsonValue]
+    model: ModelSpec | None
+    requested_model: ModelSpec | None
+    agent_config: dict[str, JsonValue]
     tasks: tuple[dict[str, JsonValue], ...]
     samples_per_task: int = Field(ge=1)
     concurrency: int = Field(ge=1)
-    phase_budgets: PhaseBudgets
+    startup_retries: int = Field(ge=0)
+    k: int = Field(ge=1)
     trajectory_schema_version: Literal[1] = 1
     analyzers: dict[str, JsonValue] = Field(default_factory=dict)
     judge: dict[str, JsonValue] = Field(default_factory=dict)

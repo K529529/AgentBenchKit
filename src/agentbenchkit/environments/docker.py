@@ -15,10 +15,23 @@ from agentbenchkit.core.models import CommandSpec
 from agentbenchkit.core.protocols import OutputSink, ProcessResult, StartupError
 from agentbenchkit.storage.artifacts import write_json
 
-BOOTSTRAP = (
-    "import json,os,sys; spec=json.loads(sys.stdin.readline()); "
-    "os.chdir(spec['cwd']); os.environ.update(spec['env']); os.execvp(spec['argv'][0],spec['argv'])"
-)
+BOOTSTRAP = """import json,os,pathlib,sys
+spec=json.loads(sys.stdin.readline())
+material=spec['env'].pop('ABK_MEMORY_HOME',None)
+if material:
+    settings=json.loads(material)
+    home=pathlib.Path('/agent-private/home')
+    home.mkdir(mode=0o700)
+    config=home/settings['directory']
+    config.mkdir(mode=0o700)
+    (config/'config.toml').write_text(settings['config'],encoding='utf-8')
+    target=config/settings['credential_file']
+    target.write_text(settings['auth'],encoding='utf-8')
+    target.chmod(0o600)
+os.chdir(spec['cwd'])
+os.environ.update(spec['env'])
+os.execvp(spec['argv'][0],spec['argv'])
+"""
 
 
 async def docker(*args: str, deadline_seconds: float = 30) -> str:
@@ -106,6 +119,8 @@ class DockerSession:
             user,
             "--tmpfs",
             "/tmp:rw,nosuid,size=128m,mode=1777",
+            "--tmpfs",
+            "/agent-private:rw,nosuid,size=64m,mode=1777",
             "--log-driver",
             "none",
         ]

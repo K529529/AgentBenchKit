@@ -10,6 +10,9 @@ from agentbenchkit.core.models import (
     Capabilities,
     CommandSpec,
     Contract,
+    HarnessOptions,
+    ModelSpec,
+    NativeAgentConfig,
     TaskSpec,
     VerificationResult,
 )
@@ -54,6 +57,8 @@ class Environment(Protocol):
 class Harness(Protocol):
     name: str
     capabilities: Capabilities
+
+    def native_config(self, model: ModelSpec, options: HarnessOptions) -> NativeAgentConfig: ...
 
     def version_command(self) -> CommandSpec: ...
 

@@ -1,0 +1,10 @@
+model_id = "qwen3.8-flash"
+provider_id = "dashscope"
+base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+context_window = 262144
+max_output_tokens = 8192
+request_timeout_seconds = 120
+
+[credential]
+kind = "api_key"
+env_var = "DASHSCOPE_API_KEY"
