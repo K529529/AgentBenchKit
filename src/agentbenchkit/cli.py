@@ -12,6 +12,7 @@ from pydantic import ValidationError
 
 from agentbenchkit import __version__
 from agentbenchkit.analysis.compare import compare as compare_runs
+from agentbenchkit.analysis.judge import judge_sample
 from agentbenchkit.analysis.replay import replay as replay_run
 from agentbenchkit.benchmarks.micro_swe import load_tasks
 from agentbenchkit.core.models import CredentialRef, HarnessOptions, ModelSpec, PhaseBudgets
@@ -186,6 +187,22 @@ def run(
     summary = json.loads((result_dir / "summary.json").read_text(encoding="utf-8"))
     typer.echo(f"Success: {summary['samples_successful']}/{summary['samples_planned']}")
     if summary["samples_with_valid_verdict"] < summary["samples_planned"]:
+        raise typer.Exit(2)
+
+
+@app.command("judge")
+def judge_command(
+    run_id: str,
+    sample_id: str,
+    model: Annotated[str, typer.Option()],
+    endpoint: Annotated[str, typer.Option()],
+    key_env: Annotated[str, typer.Option()],
+    output: Annotated[Path, typer.Option()] = Path(".agentbenchkit/results"),
+) -> None:
+    """Optionally score quality with a separate model request and versioned output."""
+    target = judge_sample(output, run_id, sample_id, model, endpoint, key_env)
+    typer.echo(str(target))
+    if json.loads(target.read_text(encoding="utf-8"))["judge_status"] == "ERROR":
         raise typer.Exit(2)
 
 
