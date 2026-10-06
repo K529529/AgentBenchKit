@@ -3,8 +3,10 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 from agentbenchkit.core.models import CommandSpec
-from agentbenchkit.environments.host import HostSession
+from agentbenchkit.environments.host import HostSession, process_start
 from agentbenchkit.storage.artifacts import Redactor, StreamRedactor, write_json
 
 
@@ -121,3 +123,14 @@ def test_secrets_split_at_every_boundary_are_redacted(tmp_path: Path) -> None:
     path = tmp_path / "record.json"
     write_json(path, {"value": secret, "protocol_data": {"private": True}}, Redactor((secret,)))
     assert json.loads(path.read_text()) == {"value": "[REDACTED]"}
+
+
+@pytest.mark.parametrize("error", [FileNotFoundError, ProcessLookupError])
+def test_exited_child_during_recovery_identity_read(
+    monkeypatch: pytest.MonkeyPatch, error: type[OSError]
+) -> None:
+    def vanished(path: Path) -> str:
+        raise error("child was reaped")
+
+    monkeypatch.setattr(Path, "read_text", vanished)
+    assert process_start(123) is None

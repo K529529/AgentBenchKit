@@ -42,6 +42,14 @@ def clean_environment(extra: dict[str, str] | None = None) -> dict[str, str]:
     return result
 
 
+def process_start(pid: int) -> str | None:
+    try:
+        return Path(f"/proc/{pid}/stat").read_text().split(") ", 1)[1].split()[19]
+    except (FileNotFoundError, ProcessLookupError):
+        # A fast child may be reaped between spawn completion and this read.
+        return None
+
+
 class HostSession:
     def __init__(self, workspace: Path, output_limit: int = 2_000_000) -> None:
         self.workspace = workspace.resolve()
@@ -137,16 +145,11 @@ class HostSession:
                 raise
             self.process = process
             if sys.platform != "win32":
-                proc_stat = Path(f"/proc/{process.pid}/stat")
-                if await asyncio.to_thread(proc_stat.exists):
+                start = await asyncio.to_thread(process_start, process.pid)
+                if start is not None:
                     write_json(
                         self.workspace.parent / "host-resource.json",
-                        {
-                            "pid": process.pid,
-                            "start": (await asyncio.to_thread(proc_stat.read_text))
-                            .split(") ", 1)[1]
-                            .split()[19],
-                        },
+                        {"pid": process.pid, "start": start},
                     )
             if sys.platform == "win32":
                 self.job = WindowsJob(process.pid)

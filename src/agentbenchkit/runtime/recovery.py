@@ -12,6 +12,7 @@ from agentbenchkit.core.metrics import summarize
 from agentbenchkit.core.models import SampleResult
 from agentbenchkit.core.status import ExecutionStatus
 from agentbenchkit.environments.docker import docker
+from agentbenchkit.environments.host import process_start
 from agentbenchkit.storage.artifacts import write_json
 
 if sys.platform == "win32":
@@ -100,15 +101,13 @@ async def recover(output: Path) -> list[str]:
             if sys.platform != "win32":
                 for resource in work.glob("**/host-resource.json"):
                     data = json.loads(resource.read_text(encoding="utf-8"))
-                    proc = Path(f"/proc/{data['pid']}/stat")
-                    if (
-                        await asyncio.to_thread(proc.exists)
-                        and (await asyncio.to_thread(proc.read_text)).split(") ", 1)[1].split()[19]
-                        == data["start"]
-                    ):
+                    if await asyncio.to_thread(process_start, data["pid"]) == data["start"]:
                         import signal
 
-                        os.killpg(data["pid"], signal.SIGKILL)
+                        try:
+                            os.killpg(data["pid"], signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
             plan = json.loads((directory / "plan.json").read_text(encoding="utf-8"))
             results = []
             for item in plan:
