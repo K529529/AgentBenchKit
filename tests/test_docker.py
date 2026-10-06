@@ -117,3 +117,34 @@ async def test_verifier_mount_is_readonly_and_has_no_model_key(tmp_path: Path) -
         assert data["HostConfig"]["NetworkMode"] == "none"
     finally:
         await session.close()
+
+
+async def test_cancel_stops_real_container(tmp_path: Path) -> None:
+    ready = asyncio.Event()
+    session = DockerSession(tmp_path, "python:3.12-slim")
+
+    async def sink(stream: str, text: str) -> None:
+        if "ready" in text:
+            ready.set()
+
+    future = asyncio.create_task(
+        session.execute(
+            CommandSpec(
+                argv=(
+                    sys.executable,
+                    "-c",
+                    "import time; print('ready',flush=True); time.sleep(30)",
+                )
+            ),
+            sink,
+        )
+    )
+    try:
+        await asyncio.wait_for(ready.wait(), 10)
+        future.cancel()
+        result = await future
+        assert result.cancelled and result.cleanup_complete
+        assert session.name
+        assert await docker("inspect", "--format", "{{.State.Running}}", session.name) == "false"
+    finally:
+        await session.close()

@@ -1,5 +1,6 @@
 """Reconstruct a fresh workspace and run evaluator-owned checks."""
 
+import asyncio
 import json
 import shutil
 import time
@@ -9,7 +10,7 @@ from agentbenchkit.core.models import CommandSpec, TaskSpec, VerificationResult
 from agentbenchkit.core.protocols import Environment
 from agentbenchkit.core.status import Verdict
 from agentbenchkit.environments.host import HostProcessEnvironment
-from agentbenchkit.storage.artifacts import Redactor, StreamRedactor
+from agentbenchkit.storage.artifacts import Redactor, StreamRedactor, write_json
 from agentbenchkit.verification.candidate import Candidate, restore
 
 
@@ -91,4 +92,8 @@ async def verify_candidate(
         )
     finally:
         if session is not None:
-            await session.close()
+            try:
+                async with asyncio.timeout(task.timeouts.cleanup):
+                    await session.close()
+            except (OSError, RuntimeError, TimeoutError) as exc:
+                write_json(directory / "cleanup.json", {"status": "ERROR", "reason": str(exc)})

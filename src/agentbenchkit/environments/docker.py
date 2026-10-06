@@ -2,6 +2,7 @@
 
 import asyncio
 import codecs
+import hashlib
 import json
 import os
 import sys
@@ -11,11 +12,12 @@ from pathlib import Path
 from typing import Any
 
 from agentbenchkit.core.models import CommandSpec
-from agentbenchkit.core.protocols import OutputSink, ProcessResult
+from agentbenchkit.core.protocols import OutputSink, ProcessResult, StartupError
+from agentbenchkit.storage.artifacts import write_json
 
 BOOTSTRAP = (
     "import json,os,sys; spec=json.loads(sys.stdin.readline()); "
-    "os.environ.update(spec['env']); os.execvp(spec['argv'][0],spec['argv'])"
+    "os.chdir(spec['cwd']); os.environ.update(spec['env']); os.execvp(spec['argv'][0],spec['argv'])"
 )
 
 
@@ -70,9 +72,7 @@ class DockerSession:
                 return destination + value[len(source) :].replace("\\", "/")
         return value
 
-    async def execute(
-        self, command: CommandSpec, sink: OutputSink, env: dict[str, str] | None = None
-    ) -> ProcessResult:
+    async def prepare(self) -> None:
         await self.close()
         name = "abk-" + uuid.uuid4().hex
         network = "none" if self.verification else "bridge"
@@ -85,6 +85,8 @@ class DockerSession:
             name,
             "--label",
             "agentbenchkit.managed=true",
+            "--label",
+            "agentbenchkit.workspace=" + hashlib.sha256(str(self.workspace).encode()).hexdigest(),
             "--init",
             "--interactive",
             "--read-only",
@@ -128,18 +130,40 @@ class DockerSession:
                     + (",readonly" if readonly else ""),
                 ]
             )
+        args.extend(["--workdir", "/workspace", self.image, "python", "-c", BOOTSTRAP])
+        write_json(
+            self.workspace.parent / "docker-resource.json",
+            {"name": name, "workspace": str(self.workspace)},
+        )
+        try:
+            await docker(*args)
+        except (OSError, RuntimeError, TimeoutError) as exc:
+            raise StartupError(str(exc)) from exc
+        self.name = name
+
+    async def execute(
+        self, command: CommandSpec, sink: OutputSink, env: dict[str, str] | None = None
+    ) -> ProcessResult:
+        if self.name is None:
+            await self.prepare()
+        else:
+            state = json.loads(await docker("inspect", "--format", "{{json .State}}", self.name))
+            if state["Status"] != "created":
+                await self.prepare()
+        assert self.name is not None
+        name = self.name
         cwd = (self.workspace / command.cwd).resolve()
         if not cwd.is_relative_to(self.workspace):
             raise ValueError("command cwd escapes workspace")
-        args.extend(["--workdir", self.translate(str(cwd)), self.image, "python", "-c", BOOTSTRAP])
-        await docker(*args)
-        self.name = name
         argv = [self.translate(arg) for arg in command.argv]
         if command.argv[0] == sys.executable:
             argv[0] = "python"
         child_env = {key: self.translate(value) for key, value in (env or {}).items()}
         child_env.update({"PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"})
-        payload = json.dumps({"argv": argv, "env": child_env}).encode() + b"\n"
+        payload = (
+            json.dumps({"argv": argv, "env": child_env, "cwd": self.translate(str(cwd))}).encode()
+            + b"\n"
+        )
         started = time.monotonic()
         timed_out = cancelled = truncated = False
         process = await asyncio.create_subprocess_exec(
@@ -223,4 +247,6 @@ class DockerEnvironment:
 
     async def create(self, workspace: Path, execution_id: str) -> DockerSession:
         await asyncio.to_thread(workspace.mkdir, parents=True, exist_ok=True)
-        return DockerSession(workspace, self.image, self.verification)
+        session = DockerSession(workspace, self.image, self.verification)
+        await session.prepare()
+        return session

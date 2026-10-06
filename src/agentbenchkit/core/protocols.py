@@ -15,6 +15,10 @@ from agentbenchkit.core.models import (
 )
 
 
+class StartupError(RuntimeError):
+    """Infrastructure failed before the Agent generation opportunity began."""
+
+
 class ProcessResult(Contract):
     returncode: int | None
     duration_ms: float

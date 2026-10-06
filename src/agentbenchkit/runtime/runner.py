@@ -15,10 +15,11 @@ from agentbenchkit import __version__
 from agentbenchkit.core.events import Event
 from agentbenchkit.core.metrics import summarize
 from agentbenchkit.core.models import SampleResult, TaskSpec, VerificationResult
-from agentbenchkit.core.protocols import Environment, Harness
-from agentbenchkit.core.status import AgentOutcome, AuxiliaryStatus, ExecutionStatus
+from agentbenchkit.core.protocols import Environment, Harness, StartupError
+from agentbenchkit.core.status import AgentOutcome, AuxiliaryStatus, ExecutionStatus, Verdict
 from agentbenchkit.environments.docker import DockerEnvironment
 from agentbenchkit.environments.host import HostProcessEnvironment
+from agentbenchkit.runtime.recovery import RunLease, recover
 from agentbenchkit.runtime.settings import NexusSettings
 from agentbenchkit.storage.artifacts import Redactor, StreamRedactor, write_json
 from agentbenchkit.verification.candidate import collect, inventory, tree_hash
@@ -47,7 +48,7 @@ def remove_work(path: Path, root: Path) -> None:
     shutil.rmtree(path)
 
 
-async def evaluate_sample(
+async def evaluate_attempt(
     run_id: str,
     task: TaskSpec,
     sample_id: str,
@@ -55,7 +56,8 @@ async def evaluate_sample(
     run_dir: Path,
     settings: NexusSettings | None = None,
     environment: Environment | None = None,
-) -> SampleResult:
+    final_attempt: bool = True,
+) -> tuple[SampleResult, bool]:
     sample_dir = run_dir / "tasks" / task.task_id / sample_id
     execution_id = uuid.uuid4().hex
     execution_dir = sample_dir / "executions" / execution_id
@@ -75,6 +77,19 @@ async def evaluate_sample(
     native_events: list[dict[str, JsonValue]] = []
     process_data: dict[str, Any] = {}
     seq = 0
+    deadline_phase: str | None = None
+    phase = "PREPARE"
+    startup_failure = False
+    agent_started = False
+    verifier_cleanup_error = False
+
+    def budget(seconds: float) -> float:
+        remaining = seconds
+        if task.timeouts.overall is not None:
+            remaining = min(remaining, task.timeouts.overall - (time.monotonic() - started))
+        if remaining <= 0:
+            raise TimeoutError(f"overall deadline reached during {phase}")
+        return remaining
 
     def checkpoint() -> None:
         write_json(
@@ -87,6 +102,8 @@ async def evaluate_sample(
                 "execution_status": status,
                 "started_at": start_time,
                 "errors": errors,
+                "phase": phase,
+                "agent_started": agent_started,
             },
             redactor,
         )
@@ -94,24 +111,30 @@ async def evaluate_sample(
     start_time = now()
     checkpoint()
     try:
-        shutil.copytree(task.fixture, workspace)
-        env = settings.prepare(work / "agent_home") if settings else {}
-        provider = environment or HostProcessEnvironment()
-        session = await provider.create(workspace, execution_id)
-        setup_streams = {name: StreamRedactor(redactor) for name in ("stdout", "stderr")}
-
-        async def setup_sink(stream: str, text: str) -> None:
-            with (execution_dir / f"setup-{stream}.log").open("a", encoding="utf-8") as log:
-                log.write(setup_streams[stream].feed(text))
-
-        for command in task.setup:
+        async with asyncio.timeout(budget(task.timeouts.prepare)):
+            shutil.copytree(task.fixture, workspace)
+            env = settings.prepare(work / "agent_home") if settings else {}
+            provider = environment or HostProcessEnvironment()
+            session = await provider.create(workspace, execution_id)
             setup_streams = {name: StreamRedactor(redactor) for name in ("stdout", "stderr")}
-            setup_result = await session.execute(command, setup_sink)
-            for name, stream_redactor in setup_streams.items():
-                with (execution_dir / f"setup-{name}.log").open("a", encoding="utf-8") as log:
-                    log.write(stream_redactor.feed("", final=True))
-            if setup_result.returncode != 0 or setup_result.timed_out:
-                raise RuntimeError("fixture setup failed")
+
+            async def setup_sink(stream: str, text: str) -> None:
+                with (execution_dir / f"setup-{stream}.log").open("a", encoding="utf-8") as log:
+                    log.write(setup_streams[stream].feed(text))
+
+            for command in task.setup:
+                setup_streams = {name: StreamRedactor(redactor) for name in ("stdout", "stderr")}
+                setup_result = await session.execute(command, setup_sink)
+                for name, stream_redactor in setup_streams.items():
+                    with (execution_dir / f"setup-{name}.log").open("a", encoding="utf-8") as log:
+                        log.write(stream_redactor.feed("", final=True))
+                if setup_result.returncode != 0 or setup_result.timed_out:
+                    raise StartupError("fixture setup failed")
+        phase = "AGENT"
+        command = harness.command(task).model_copy(
+            update={"timeout_seconds": budget(task.timeouts.agent)}
+        )
+        agent_started = True
         status = ExecutionStatus.RUNNING
         checkpoint()
         streams = {name: StreamRedactor(redactor) for name in ("stdout", "stderr")}
@@ -168,7 +191,7 @@ async def evaluate_sample(
                         line, line_buffer = line_buffer.split("\n", 1)
                         parse_line(line)
 
-            process = await session.execute(harness.command(task), sink, env)
+            process = await session.execute(command, sink, env)
             for name, target in (("stdout", stdout), ("stderr", stderr)):
                 remainder = streams[name].feed("", final=True)
                 target.write(remainder)
@@ -180,6 +203,7 @@ async def evaluate_sample(
         agent_result = harness.result(process, native_events)
         outcome = agent_result.outcome
         if process.timed_out:
+            deadline_phase = "AGENT"
             status = ExecutionStatus.TIMED_OUT
         elif process.cancelled:
             status = ExecutionStatus.CANCELLED
@@ -190,39 +214,66 @@ async def evaluate_sample(
             status = ExecutionStatus.FINISHED
         if not process.cleanup_complete:
             raise RuntimeError("Agent stop not confirmed; candidate cannot be frozen")
+        phase = "COLLECT"
+        checkpoint()
+        collect_started = time.monotonic()
+        collect_budget = budget(task.timeouts.collect)
         for entry in inventory(workspace).values():
             text = (workspace / entry.path).read_text(encoding="utf-8")
             if any(secret in text for secret in redactor.secrets):
                 raise RuntimeError("candidate contains a credential; refusing persistence")
         candidate = collect(task.fixture, workspace, sample_dir / "candidate")
         frozen = True
-        verification = await verify_candidate(
-            task,
-            sample_dir / "candidate",
-            candidate,
-            work / "verify",
-            DockerEnvironment(environment.image, verification=True)
-            if isinstance(environment, DockerEnvironment)
-            else None,
+        if time.monotonic() - collect_started > collect_budget:
+            raise TimeoutError("candidate collection deadline exceeded")
+        phase = "VERIFY"
+        checkpoint()
+        verify_task = task.model_copy(
+            update={
+                "timeouts": task.timeouts.model_copy(
+                    update={"verify": budget(task.timeouts.verify)}
+                )
+            }
         )
-        for name in ("stdout.log", "stderr.log"):
+        async with asyncio.timeout(budget(task.timeouts.verify)):
+            verification = await verify_candidate(
+                verify_task,
+                sample_dir / "candidate",
+                candidate,
+                work / "verify",
+                DockerEnvironment(environment.image, verification=True)
+                if isinstance(environment, DockerEnvironment)
+                else None,
+            )
+        verifier_cleanup_error = (work / "verify" / "cleanup.json").exists()
+        for name in ("stdout.log", "stderr.log", "cleanup.json"):
             source = work / "verify" / name
             if source.exists():
                 dest = sample_dir / "verify" / name
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(source, dest)
-    except (OSError, ValueError, RuntimeError) as exc:
+    except asyncio.CancelledError:
+        errors.append(f"cancelled during {phase}")
+        if phase in {"PREPARE", "AGENT", "COLLECT"}:
+            status = ExecutionStatus.CANCELLED
+        else:
+            verification = VerificationResult(status=Verdict.ERROR, reason="verification cancelled")
+    except (OSError, ValueError, RuntimeError, TimeoutError) as exc:
+        if isinstance(exc, TimeoutError):
+            deadline_phase = phase
+        startup_failure = phase == "PREPARE" and isinstance(exc, (StartupError, TimeoutError))
         errors.append(redactor.text(str(exc)))
         if status not in {ExecutionStatus.TIMED_OUT, ExecutionStatus.CANCELLED}:
             status = ExecutionStatus.ERROR
     finally:
         try:
-            if session is not None:
-                await session.close()
-            if work.exists():
-                remove_work(work, work_root)
-            cleanup = AuxiliaryStatus.COMPLETED
-        except (OSError, ValueError, RuntimeError) as exc:
+            async with asyncio.timeout(task.timeouts.cleanup):
+                if session is not None:
+                    await session.close()
+                if work.exists():
+                    remove_work(work, work_root)
+            cleanup = AuxiliaryStatus.ERROR if verifier_cleanup_error else AuxiliaryStatus.COMPLETED
+        except (OSError, ValueError, RuntimeError, TimeoutError) as exc:
             cleanup = AuxiliaryStatus.ERROR
             errors.append(redactor.text(str(exc)))
     result = SampleResult(
@@ -233,6 +284,8 @@ async def evaluate_sample(
         verifier_status=verification.status,
         candidate_frozen=frozen,
         cleanup_status=cleanup,
+        startup_retries_exhausted=startup_failure
+        and (final_attempt or cleanup != AuxiliaryStatus.COMPLETED),
     )
     write_json(sample_dir / "verifier.json", verification.model_dump(), redactor)
     write_json(
@@ -258,10 +311,40 @@ async def evaluate_sample(
             "cleanup_status": cleanup,
             "duration_ms": (time.monotonic() - started) * 1000,
             "process": process_data,
+            "phase": phase,
+            "agent_started": agent_started,
+            "startup_failure": startup_failure,
+            "deadline_phase": deadline_phase,
             "errors": errors,
         },
         redactor,
     )
+    return result, startup_failure and cleanup == AuxiliaryStatus.COMPLETED
+
+
+async def evaluate_sample(
+    run_id: str,
+    task: TaskSpec,
+    sample_id: str,
+    harness: Harness,
+    run_dir: Path,
+    settings: NexusSettings | None = None,
+    environment: Environment | None = None,
+    startup_retries: int = 1,
+) -> SampleResult:
+    for attempt in range(startup_retries + 1):
+        result, retryable = await evaluate_attempt(
+            run_id,
+            task,
+            sample_id,
+            harness,
+            run_dir,
+            settings,
+            environment,
+            final_attempt=attempt == startup_retries,
+        )
+        if not retryable:
+            return result
     return result
 
 
@@ -273,9 +356,12 @@ async def evaluate(
     settings: NexusSettings | None = None,
     k: int = 1,
     environment: Environment | None = None,
+    concurrency: int = 1,
+    startup_retries: int = 1,
 ) -> Path:
-    if not tasks or samples < 1 or k < 1:
+    if not tasks or samples < 1 or k < 1 or concurrency < 1 or startup_retries < 0:
         raise ValueError("tasks, samples and k must be positive")
+    await recover(output)
     run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
     run_dir = (await asyncio.to_thread(output.resolve)) / run_id
     run_dir.mkdir(parents=True, exist_ok=False)
@@ -310,25 +396,64 @@ async def evaluate(
             "environment": environment_manifest,
             "agent_config": settings.manifest() if settings else {},
             "samples_per_task": samples,
-            "concurrency": 1,
+            "concurrency": concurrency,
+            "startup_retries": startup_retries,
             "k": k,
         },
         settings.redactor if settings else None,
     )
-    results = []
-    for task in tasks:
-        for index in range(samples):
-            result = await evaluate_sample(
-                run_id,
-                task,
-                f"sample-{task.task_id}-{index + 1}",
-                harness,
-                run_dir,
-                settings,
-                environment,
+    planned = [
+        SampleResult(
+            sample_id=f"sample-{task.task_id}-{index + 1}",
+            task_id=task.task_id,
+            execution_status=ExecutionStatus.PENDING,
+        )
+        for task in tasks
+        for index in range(samples)
+    ]
+    write_json(run_dir / "plan.json", [item.model_dump() for item in planned])
+    lease = RunLease(run_dir)
+    if not lease.acquire():
+        raise RuntimeError("cannot acquire new run lease")
+    write_json(run_dir / "run_state.json", {"status": "RUNNING"})
+    results = {item.sample_id: item for item in planned}
+    write_json(run_dir / "summary.json", summarize(results.values(), k).model_dump())
+    semaphore = asyncio.Semaphore(concurrency)
+    task_map = {task.task_id: task for task in tasks}
+
+    async def worker(item: SampleResult) -> None:
+        try:
+            async with semaphore:
+                result = await evaluate_sample(
+                    run_id,
+                    task_map[item.task_id],
+                    item.sample_id,
+                    harness,
+                    run_dir,
+                    settings,
+                    environment,
+                    startup_retries,
+                )
+        except asyncio.CancelledError:
+            result = item.model_copy(update={"execution_status": ExecutionStatus.CANCELLED})
+            write_json(
+                run_dir / "tasks" / item.task_id / item.sample_id / "sample.json",
+                {**result.model_dump(), "sample_success": False, "candidate_pass": None},
             )
-            results.append(result)
-    summary = summarize(results, k)
+        results[item.sample_id] = result
+        write_json(run_dir / "summary.json", summarize(results.values(), k).model_dump())
+
+    workers = [asyncio.create_task(worker(item)) for item in planned]
+    try:
+        await asyncio.gather(*workers)
+    except asyncio.CancelledError:
+        for worker_task in workers:
+            worker_task.cancel()
+        await asyncio.gather(*workers, return_exceptions=True)
+    write_json(run_dir / "run_state.json", {"status": "FINISHED"})
+    lease.close()
+    result_list = list(results.values())
+    summary = summarize(result_list, k)
     write_json(run_dir / "summary.json", summary.model_dump())
     lines = [
         f"# Run {run_id}",
@@ -339,7 +464,7 @@ async def evaluate(
         "| Task | Execution | Agent | Verifier | Candidate pass | Sample success |",
         "| --- | --- | --- | --- | --- | --- |",
     ]
-    for result in results:
+    for result in result_list:
         lines.append(
             f"| {result.task_id} | {result.execution_status} | {result.agent_outcome} | "
             f"{result.verifier_status} | {result.candidate_pass} | {result.sample_success} |"

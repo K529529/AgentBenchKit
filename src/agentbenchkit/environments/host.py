@@ -12,6 +12,7 @@ from pathlib import Path
 from agentbenchkit.core.models import CommandSpec
 from agentbenchkit.core.protocols import OutputSink, ProcessResult
 from agentbenchkit.environments.windows_job import WindowsJob
+from agentbenchkit.storage.artifacts import write_json
 
 # Do not inherit unrelated model keys, user config overrides, or Python startup hooks.
 BASE_ENV = (
@@ -135,6 +136,18 @@ class HostSession:
                 self.process = process
                 raise
             self.process = process
+            if sys.platform != "win32":
+                proc_stat = Path(f"/proc/{process.pid}/stat")
+                if await asyncio.to_thread(proc_stat.exists):
+                    write_json(
+                        self.workspace.parent / "host-resource.json",
+                        {
+                            "pid": process.pid,
+                            "start": (await asyncio.to_thread(proc_stat.read_text))
+                            .split(") ", 1)[1]
+                            .split()[19],
+                        },
+                    )
             if sys.platform == "win32":
                 self.job = WindowsJob(process.pid)
                 assert process.stdin is not None

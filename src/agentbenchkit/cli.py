@@ -15,6 +15,7 @@ from agentbenchkit.core.models import PhaseBudgets
 from agentbenchkit.core.status import Verdict
 from agentbenchkit.environments.docker import DockerEnvironment
 from agentbenchkit.harnesses.nexus import NexusHarness
+from agentbenchkit.runtime.recovery import recover
 from agentbenchkit.runtime.runner import evaluate
 from agentbenchkit.runtime.settings import NexusSettings
 from agentbenchkit.verification.candidate import collect
@@ -59,7 +60,12 @@ def run(
     nexus_config: Annotated[Path | None, typer.Option()] = None,
     agent_timeout: Annotated[float, typer.Option(min=1)] = 120,
     max_steps: Annotated[int | None, typer.Option(min=1)] = None,
+    prepare_timeout: Annotated[float, typer.Option(min=1)] = 120,
+    verify_timeout: Annotated[float, typer.Option(min=1)] = 60,
+    overall_timeout: Annotated[float | None, typer.Option(min=1)] = None,
     k: Annotated[int, typer.Option(min=1)] = 1,
+    concurrency: Annotated[int, typer.Option(min=1, max=16)] = 1,
+    startup_retries: Annotated[int, typer.Option(min=0, max=3)] = 1,
     docker_image: Annotated[str, typer.Option()] = "agentbenchkit-nexus:v0.2.0",
 ) -> None:
     """Evaluate real Nexus with fresh workspaces and independent verification."""
@@ -69,7 +75,15 @@ def run(
     config = nexus_config or Path.home() / ".nexus" / "config.toml"
     try:
         settings = NexusSettings(config, max_steps)
-        tasks = load_tasks(tuple(task or ()), PhaseBudgets(agent=agent_timeout))
+        tasks = load_tasks(
+            tuple(task or ()),
+            PhaseBudgets(
+                agent=agent_timeout,
+                prepare=prepare_timeout,
+                verify=verify_timeout,
+                overall=overall_timeout,
+            ),
+        )
         if env == "host_process":
             typer.echo("HostProcess: trusted local execution; no filesystem sandbox.")
         typer.echo(f"Running {len(tasks)} task(s), {samples} sample(s) each with Nexus.")
@@ -82,6 +96,8 @@ def run(
                 settings,
                 k,
                 DockerEnvironment(docker_image) if env == "docker" else None,
+                concurrency,
+                startup_retries,
             )
         )
     except (OSError, ValueError, RuntimeError) as exc:
@@ -95,6 +111,13 @@ def run(
     typer.echo(f"Success: {summary['samples_successful']}/{summary['samples_planned']}")
     if summary["samples_with_valid_verdict"] < summary["samples_planned"]:
         raise typer.Exit(2)
+
+
+@app.command("recover")
+def recover_runs(output: Annotated[Path, typer.Option()] = Path(".agentbenchkit/results")) -> None:
+    """Mark abandoned runs interrupted and stop their recorded resources."""
+    for run_id in asyncio.run(recover(output)):
+        typer.echo(f"Recovered: {run_id}")
 
 
 @app.command("validate-benchmark")
