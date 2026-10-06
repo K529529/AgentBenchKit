@@ -15,7 +15,13 @@ from agentbenchkit.analysis.compare import compare as compare_runs
 from agentbenchkit.analysis.judge import judge_sample
 from agentbenchkit.analysis.replay import replay as replay_run
 from agentbenchkit.benchmarks.micro_swe import load_tasks
-from agentbenchkit.core.models import CredentialRef, HarnessOptions, ModelSpec, PhaseBudgets
+from agentbenchkit.core.models import (
+    CredentialRef,
+    HarnessOptions,
+    ModelSpec,
+    PhaseBudgets,
+    SampleResult,
+)
 from agentbenchkit.core.protocols import Harness
 from agentbenchkit.core.status import Verdict
 from agentbenchkit.environments.docker import DockerEnvironment
@@ -153,6 +159,13 @@ def run(
         if env == "host_process":
             typer.echo("HostProcess: trusted local execution; no filesystem sandbox.")
         typer.echo(f"Running {len(tasks)} task(s), {samples} sample(s) each with {harness}.")
+
+        def progress(result: SampleResult, done: int, total: int) -> None:
+            typer.echo(
+                f"[{done}/{total}] {result.task_id}: {result.execution_status} / "
+                f"{result.agent_outcome} / verifier={result.verifier_status}"
+            )
+
         result_dir = asyncio.run(
             evaluate(
                 tasks,
@@ -164,6 +177,7 @@ def run(
                 DockerEnvironment(docker_image) if env == "docker" else None,
                 concurrency,
                 startup_retries,
+                progress,
             )
         )
     except (OSError, ValueError, RuntimeError) as exc:

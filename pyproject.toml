@@ -3,6 +3,9 @@ name = "agentbenchkit"
 version = "0.1.0"
 description = "Local, evidence-based evaluation of coding agents"
 requires-python = ">=3.12"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
     "pydantic>=2.10,<3",
     "typer>=0.15,<1",

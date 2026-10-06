@@ -3,6 +3,7 @@
 import json
 import re
 import sqlite3
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -21,20 +22,24 @@ def resolve_run(root: Path, run_id: str) -> Path:
 def connect(root: Path) -> sqlite3.Connection:
     root.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(root / "index.sqlite3", timeout=30)
-    db.execute("PRAGMA journal_mode=WAL")
-    db.execute("PRAGMA busy_timeout=30000")
-    db.executescript("""
-        CREATE TABLE IF NOT EXISTS runs (run_id TEXT PRIMARY KEY, created_at TEXT,
-            harness TEXT, environment TEXT, summary TEXT NOT NULL, manifest TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS samples (run_id TEXT, sample_id TEXT, task_id TEXT,
-            result TEXT NOT NULL, PRIMARY KEY(run_id, sample_id));
-        CREATE TABLE IF NOT EXISTS executions (run_id TEXT, execution_id TEXT,
-            sample_id TEXT, record TEXT NOT NULL, PRIMARY KEY(run_id, execution_id));
-        CREATE TABLE IF NOT EXISTS analyses (run_id TEXT, analysis_id TEXT,
-            record TEXT NOT NULL, PRIMARY KEY(run_id, analysis_id));
-        CREATE TABLE IF NOT EXISTS artifacts (run_id TEXT, path TEXT, size INTEGER,
-            PRIMARY KEY(run_id, path));
-    """)
+    try:
+        db.execute("PRAGMA journal_mode=WAL")
+        db.execute("PRAGMA busy_timeout=30000")
+        db.executescript("""
+            CREATE TABLE IF NOT EXISTS runs (run_id TEXT PRIMARY KEY, created_at TEXT,
+                harness TEXT, environment TEXT, summary TEXT NOT NULL, manifest TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS samples (run_id TEXT, sample_id TEXT, task_id TEXT,
+                result TEXT NOT NULL, PRIMARY KEY(run_id, sample_id));
+            CREATE TABLE IF NOT EXISTS executions (run_id TEXT, execution_id TEXT,
+                sample_id TEXT, record TEXT NOT NULL, PRIMARY KEY(run_id, execution_id));
+            CREATE TABLE IF NOT EXISTS analyses (run_id TEXT, analysis_id TEXT,
+                record TEXT NOT NULL, PRIMARY KEY(run_id, analysis_id));
+            CREATE TABLE IF NOT EXISTS artifacts (run_id TEXT, path TEXT, size INTEGER,
+                PRIMARY KEY(run_id, path));
+        """)
+    except sqlite3.Error:
+        db.close()
+        raise
     return db
 
 
@@ -92,7 +97,18 @@ def index_run(root: Path, run_id: str) -> None:
 
 
 def rebuild(root: Path) -> int:
-    db = connect(root)
+    if any(read_json(path).get("status") == "RUNNING" for path in root.glob("*/run_state.json")):
+        raise ValueError("finish or recover active runs before rebuilding the index")
+    try:
+        db = connect(root)
+    except sqlite3.DatabaseError:
+        # The index is disposable, but retain the broken file for diagnosis.
+        suffix = ".corrupt-" + uuid.uuid4().hex
+        for name in ("index.sqlite3", "index.sqlite3-wal", "index.sqlite3-shm"):
+            path = root / name
+            if path.exists():
+                path.rename(root / (name + suffix))
+        db = connect(root)
     try:
         with db:
             for table in ("runs", "samples", "executions", "analyses", "artifacts"):

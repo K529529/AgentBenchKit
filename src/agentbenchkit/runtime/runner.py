@@ -5,6 +5,7 @@ import platform
 import shutil
 import time
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -360,6 +361,7 @@ async def evaluate(
     environment: Environment | None = None,
     concurrency: int = 1,
     startup_retries: int = 1,
+    progress: Callable[[SampleResult, int, int], None] | None = None,
 ) -> Path:
     if not tasks or samples < 1 or k < 1 or concurrency < 1 or startup_retries < 0:
         raise ValueError("tasks, samples and k must be positive")
@@ -430,43 +432,55 @@ async def evaluate(
     lease = RunLease(run_dir)
     if not lease.acquire():
         raise RuntimeError("cannot acquire new run lease")
-    write_json(run_dir / "run_state.json", {"status": "RUNNING"})
-    results = {item.sample_id: item for item in planned}
-    write_json(run_dir / "summary.json", summarize(results.values(), k).model_dump())
-    semaphore = asyncio.Semaphore(concurrency)
-    task_map = {task.task_id: task for task in tasks}
-
-    async def worker(item: SampleResult) -> None:
-        try:
-            async with semaphore:
-                result = await evaluate_sample(
-                    run_id,
-                    task_map[item.task_id],
-                    item.sample_id,
-                    harness,
-                    run_dir,
-                    settings,
-                    environment,
-                    startup_retries,
-                )
-        except asyncio.CancelledError:
-            result = item.model_copy(update={"execution_status": ExecutionStatus.CANCELLED})
-            write_json(
-                run_dir / "tasks" / item.task_id / item.sample_id / "sample.json",
-                {**result.model_dump(), "sample_success": False, "candidate_pass": None},
-            )
-        results[item.sample_id] = result
-        write_json(run_dir / "summary.json", summarize(results.values(), k).model_dump())
-
-    workers = [asyncio.create_task(worker(item)) for item in planned]
     try:
-        await asyncio.gather(*workers)
-    except asyncio.CancelledError:
-        for worker_task in workers:
-            worker_task.cancel()
-        await asyncio.gather(*workers, return_exceptions=True)
-    write_json(run_dir / "run_state.json", {"status": "FINISHED"})
-    lease.close()
+        write_json(run_dir / "run_state.json", {"status": "RUNNING"})
+        results = {item.sample_id: item for item in planned}
+        write_json(run_dir / "summary.json", summarize(results.values(), k).model_dump())
+        semaphore = asyncio.Semaphore(concurrency)
+        task_map = {task.task_id: task for task in tasks}
+
+        async def worker(item: SampleResult) -> None:
+            try:
+                async with semaphore:
+                    result = await evaluate_sample(
+                        run_id,
+                        task_map[item.task_id],
+                        item.sample_id,
+                        harness,
+                        run_dir,
+                        settings,
+                        environment,
+                        startup_retries,
+                    )
+            except asyncio.CancelledError:
+                result = item.model_copy(update={"execution_status": ExecutionStatus.CANCELLED})
+                write_json(
+                    run_dir / "tasks" / item.task_id / item.sample_id / "sample.json",
+                    {**result.model_dump(), "sample_success": False, "candidate_pass": None},
+                )
+            results[item.sample_id] = result
+            if progress is not None:
+                finished = sum(
+                    value.execution_status != ExecutionStatus.PENDING for value in results.values()
+                )
+                progress(result, finished, len(planned))
+            write_json(run_dir / "summary.json", summarize(results.values(), k).model_dump())
+
+        workers = [asyncio.create_task(worker(item)) for item in planned]
+        try:
+            await asyncio.gather(*workers)
+        except asyncio.CancelledError:
+            for worker_task in workers:
+                worker_task.cancel()
+            await asyncio.gather(*workers, return_exceptions=True)
+        except BaseException:
+            for worker_task in workers:
+                worker_task.cancel()
+            await asyncio.gather(*workers, return_exceptions=True)
+            raise
+        write_json(run_dir / "run_state.json", {"status": "FINISHED"})
+    finally:
+        lease.close()
     result_list = list(results.values())
     summary = summarize(result_list, k)
     write_json(run_dir / "summary.json", summary.model_dump())

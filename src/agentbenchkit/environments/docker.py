@@ -150,8 +150,20 @@ class DockerSession:
             self.workspace.parent / "docker-resource.json",
             {"name": name, "workspace": str(self.workspace)},
         )
+        creation = asyncio.create_task(docker(*args))
         try:
-            await docker(*args)
+            await asyncio.shield(creation)
+        except asyncio.CancelledError:
+            # Docker may create the resource after its CLI caller is cancelled.
+            # Adopt the completed create before unwinding the Environment factory.
+            try:
+                await creation
+            except (OSError, RuntimeError, TimeoutError):
+                pass
+            else:
+                self.name = name
+                await self.close()
+            raise
         except (OSError, RuntimeError, TimeoutError) as exc:
             raise StartupError(str(exc)) from exc
         self.name = name

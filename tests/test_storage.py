@@ -1,3 +1,4 @@
+import asyncio
 import json
 from pathlib import Path
 
@@ -50,3 +51,13 @@ def test_only_truncated_final_jsonl_line_is_tolerated(tmp_path: Path) -> None:
     path.write_text('{"broken":\n' + event.model_dump_json() + "\n", encoding="utf-8")
     with pytest.raises(ValueError, match="line 1"):
         read_events(path)
+
+
+async def test_corrupt_database_rebuild_keeps_source_evidence(tmp_path: Path) -> None:
+    directory = await evaluate(load_tasks(("clamp",)), ControlledHarness(True), tmp_path)
+    source = (directory / "manifest.json").read_bytes()
+    (tmp_path / "index.sqlite3").write_bytes(b"not a sqlite database")
+    assert rebuild(tmp_path) == 1
+    assert list_runs(tmp_path)[0]["run_id"] == directory.name
+    assert (directory / "manifest.json").read_bytes() == source
+    assert await asyncio.to_thread(lambda: list(tmp_path.glob("index.sqlite3.corrupt-*")))

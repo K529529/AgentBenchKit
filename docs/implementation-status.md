@@ -15,4 +15,4 @@ real Agent/Docker runs. A failed evaluated Agent is not automatically a toolkit 
 | 7: rubric/optional judge | PASS (controlled); real Judge NOT RUN | Four dimensions; isolated HTTP worker deadline; versioned results; Judge failure/replay preserve correctness |
 | 8: viewer | PASS | Read-only/XSS/path/size tests; actual browser run/sample pages checked; model/provider and subscription-smoke limits visible |
 | 9: public benchmark | OPTIONAL, NOT RUN | |
-| 10: release hardening | NOT RUN | |
+| 10: release hardening | PASS (local) | 127 tests incl. 7 Docker; wheel assets/license; secret scan; MIT/docs; see acceptance-v0.md and latest branch CI |

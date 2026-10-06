@@ -113,7 +113,12 @@ async def recover(output: Path) -> list[str]:
             for item in plan:
                 sample_dir = directory / "tasks" / item["task_id"] / item["sample_id"]
                 result_path = sample_dir / "sample.json"
-                if result_path.exists():
+                executions = list(sample_dir.glob("executions/*/execution.json"))
+                unfinished = any(
+                    "finished_at" not in json.loads(path.read_text(encoding="utf-8"))
+                    for path in executions
+                )
+                if result_path.exists() and not unfinished:
                     result = load_sample(result_path)
                 else:
                     result = SampleResult.model_validate(item).model_copy(

@@ -1,0 +1,33 @@
+# V0.1.0 limitations
+
+- The internal benchmark has eight small Python tasks. It is integration evidence,
+  not a broad coding-capability ranking or official SWE-bench result.
+- Nexus v0.2.0 and Codex 0.155.1 use public CLI interfaces. Agent source is unchanged.
+  Model inputs are unavailable; model outputs are partial; missing measurements
+  remain null. No pinned pricing table means cost is null, never zero.
+- Common ModelSpec does not imply equivalent model transports or controllable
+  generation parameters. Nexus uses Chat Completions; Codex API uses Responses.
+  Unsupported explicit fields are rejected. ChatGPT login runs are smoke only.
+  Real Codex API-provider execution and real optional Judge requests are NOT RUN.
+- `model` in schema v2 records the configuration generated for the Agent, not a
+  proof of the provider's server-side model version, routing or defaults. Old run
+  manifests remain untouched and have incomplete comparability information.
+- Docker is required for ChatGPT auth-cache injection and isolated acceptance.
+  Host execution is trusted local development only. Docker uses network bridge
+  for the Agent and network none for verification; it is not an egress allowlist.
+- An Agent necessarily sees its own inference credentials. V0 does not defend
+  against credential exfiltration by a malicious Agent. Secret redaction protects
+  known literal credential values; it is not general data-loss prevention.
+- UTF-8 text candidates only, bounded to 20 MB. Symlinks, junctions and binaries
+  are explicitly unsupported. POSIX executable modes can be preserved on native
+  Linux; Windows bind mounts cannot prove those permissions.
+- Candidate collection is synchronous and size-bounded; its elapsed budget is
+  checked after collection. A pathological filesystem stall is not hard-preempted.
+- Rule-based suspected ownership is heuristic with evidence and confidence, not
+  a causal proof or a model-quality verdict. Single-run changes are stochastic.
+- Viewer is loopback-only, read-only, caps pages/artifacts at 1 MB and shows the
+  newest 200 runs. Full local evidence stays available on disk.
+- A non-fatal Starlette TestClient warning recommends httpx2. Production Viewer
+  does not depend on httpx; tests currently use the locked httpx version.
+- Optional public SWE-bench adapter is deferred. No distributed execution,
+  PostgreSQL, Redis, queues or automatic production publication is included.

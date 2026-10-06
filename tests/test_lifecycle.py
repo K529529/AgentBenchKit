@@ -173,3 +173,52 @@ async def test_prepare_timeout_exhausts_before_agent(tmp_path: Path) -> None:
     assert result.startup_retries_exhausted
     assert result.sample_success is False
     assert result.agent_outcome == "UNKNOWN"
+
+
+async def test_recovery_overrides_stale_startup_result_when_retry_was_running(
+    tmp_path: Path,
+) -> None:
+    run = tmp_path / "retry-interrupted"
+    item = SampleResult(
+        sample_id="sample", task_id="task", execution_status=ExecutionStatus.PENDING
+    )
+    write_json(run / "manifest.json", {"k": 1})
+    write_json(run / "plan.json", [item.model_dump()])
+    write_json(run / "run_state.json", {"status": "RUNNING"})
+    folder = run / "tasks/task/sample"
+    write_json(
+        folder / "sample.json",
+        item.model_copy(update={"execution_status": ExecutionStatus.ERROR}).model_dump(),
+    )
+    write_json(folder / "executions/retry/execution.json", {"execution_status": "RUNNING"})
+    assert await recover(tmp_path) == [run.name]
+    assert json.loads((folder / "sample.json").read_text())["execution_status"] == "INTERRUPTED"
+
+
+async def test_cancel_during_docker_create_adopts_and_removes_resource(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from agentbenchkit.environments import docker as module
+
+    entered, finish = asyncio.Event(), asyncio.Event()
+    commands = []
+
+    async def fake_docker(*args: str, **kwargs: object) -> str:
+        commands.append(args[0])
+        if args[0] == "create":
+            entered.set()
+            await finish.wait()
+        if args[0] == "inspect":
+            return '{"Running":false}'
+        return ""
+
+    monkeypatch.setattr(module, "docker", fake_docker)
+    session = module.DockerSession(tmp_path, "test-image")
+    pending = asyncio.create_task(session.prepare())
+    await entered.wait()
+    pending.cancel()
+    finish.set()
+    with pytest.raises(asyncio.CancelledError):
+        await pending
+    assert "rm" in commands and session.name is None
