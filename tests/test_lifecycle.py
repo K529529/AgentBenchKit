@@ -74,7 +74,7 @@ async def test_cancellation_preserves_planned_denominator(tmp_path: Path) -> Non
 
     future = asyncio.create_task(
         evaluate(
-            load_tasks(),
+            load_tasks(("clamp", "stable_unique")),
             ControlledHarness(True),
             tmp_path,
             samples=3,
@@ -143,7 +143,7 @@ async def test_bounded_concurrency(tmp_path: Path) -> None:
             return HostSession(workspace)
 
     await evaluate(
-        load_tasks(),
+        load_tasks(("clamp", "stable_unique")),
         ControlledHarness(False),
         tmp_path,
         samples=3,

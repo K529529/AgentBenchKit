@@ -1,0 +1,26 @@
+{
+  "chunked": {
+    "prompt": "Fix chunks.py: chunked(items, size) returns a list of lists of at most size items, preserving order. Accept any iterable, do not mutate inputs; empty input returns []. size must be a positive integer (bool is invalid); otherwise raise ValueError.",
+    "task_type": "api_behavior"
+  },
+  "merge_intervals": {
+    "prompt": "Fix intervals.py: merge_intervals(intervals) accepts pairs of numeric closed interval bounds, merges overlaps and touching endpoints, and returns sorted tuples. Empty input returns []. Reversed bounds raise ValueError. Do not mutate the input.",
+    "task_type": "bug_fix"
+  },
+  "dotted_get": {
+    "prompt": "Refactor lookup.py: dotted_get(mapping, path, default=None) follows dot-separated dictionary keys. Return default if a component is missing or an intermediate value is not a dict. An empty path returns the original mapping. Existing falsey values and None must be preserved. Do not mutate mapping.",
+    "task_type": "refactor"
+  },
+  "csv_summary": {
+    "prompt": "Repair the two-module sales API. parsing.py parse_rows(text) must parse CSV using headers item,quantity,price, including quoted commas, and return dictionaries with item:str, quantity:int, price:float. reporting.py totals(text) must use the parser and sum quantity*price per item into a dict. Header-only input yields {}. Preserve names; standard library only.",
+    "task_type": "multi_file"
+  },
+  "config_defaults": {
+    "prompt": "Fix settings.py and defaults.toml. defaults.toml must define timeout=30 and retries=2 at the top level. load_settings(path, overrides=None) parses that TOML file and returns its values with supplied overrides applied. Preserve zero/False values; never mutate overrides. Use only the standard library.",
+    "task_type": "config_fix"
+  },
+  "parse_bool_regression": {
+    "prompt": "Fix flags.py parse_bool(value): accept bool unchanged; for str strip whitespace and match case-insensitively true/yes/1/on or false/no/0/off; otherwise raise ValueError, including non-string non-bool values. Also add test_flags.py with standard-library unittest regression tests for false-like strings and invalid values. Do not change the public function name.",
+    "task_type": "regression_test"
+  }
+}

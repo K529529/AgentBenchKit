@@ -18,6 +18,7 @@ from agentbenchkit.harnesses.nexus import NexusHarness
 from agentbenchkit.runtime.recovery import recover
 from agentbenchkit.runtime.runner import evaluate
 from agentbenchkit.runtime.settings import NexusSettings
+from agentbenchkit.storage.index import list_runs, rebuild
 from agentbenchkit.verification.candidate import collect
 from agentbenchkit.verification.verifier import verify_candidate
 
@@ -111,6 +112,19 @@ def run(
     typer.echo(f"Success: {summary['samples_successful']}/{summary['samples_planned']}")
     if summary["samples_with_valid_verdict"] < summary["samples_planned"]:
         raise typer.Exit(2)
+
+
+@app.command("rebuild-index")
+def rebuild_index(output: Annotated[Path, typer.Option()] = Path(".agentbenchkit/results")) -> None:
+    """Rebuild disposable query data from persisted filesystem evidence."""
+    typer.echo(f"Indexed {rebuild(output)} runs")
+
+
+@app.command("runs")
+def runs(output: Annotated[Path, typer.Option()] = Path(".agentbenchkit/results")) -> None:
+    """List indexed local runs."""
+    for row in list_runs(output):
+        typer.echo(f"{row['run_id']}  {row['harness']}  {row['environment']}")
 
 
 @app.command("recover")

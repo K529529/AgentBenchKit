@@ -1,5 +1,6 @@
 """Small standard-library Python fixtures with independently owned checks."""
 
+import json
 import sys
 from pathlib import Path
 
@@ -14,6 +15,9 @@ TASKS = {
     "new list of distinct hashable items in first-occurrence order. Accept any "
     "iterable. Do not mutate input. Equal items should appear only once.",
 }
+
+EXTRA_TASKS = json.loads((ASSETS / "tasks.json").read_text(encoding="utf-8"))
+TASKS.update({key: value["prompt"] for key, value in EXTRA_TASKS.items()})
 
 
 def load_tasks(
@@ -40,6 +44,7 @@ def load_tasks(
                 protected_assets=asset / "verifier",
                 reference_candidate=asset / "reference",
                 timeouts=budgets or PhaseBudgets(),
+                task_type=EXTRA_TASKS.get(task_id, {}).get("task_type", "bug_fix"),
                 metadata={"minimum_tests": 4, "verifier_version": "micro_swe-v1"},
             )
         )

@@ -46,6 +46,8 @@ class NexusSettings:
         return {
             "model": self.redactor.value(self.model),
             "max_steps": self.max_steps,
+            "tools": None,
+            "sampling_parameters": None,
             "mcp_servers": [],
             "skills": [],
             "credential_source": self.key_name,

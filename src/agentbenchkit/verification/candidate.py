@@ -1,5 +1,6 @@
 """Freeze complete text candidates independently of Git tracking state."""
 
+import difflib
 import hashlib
 import json
 import shutil
@@ -80,6 +81,20 @@ def collect(baseline: Path, workspace: Path, destination: Path) -> Candidate:
         deleted=tuple(sorted(before.keys() - after.keys())),
         changed=tuple(name for name in after if before.get(name) != after[name]),
     )
+    patch: list[str] = []
+    for name in sorted(set(candidate.changed) | set(candidate.deleted)):
+        old = (
+            (baseline / name).read_text(encoding="utf-8").splitlines(keepends=True)
+            if name in before
+            else []
+        )
+        new = (
+            (workspace / name).read_text(encoding="utf-8").splitlines(keepends=True)
+            if name in after
+            else []
+        )
+        patch.extend(difflib.unified_diff(old, new, fromfile="a/" + name, tofile="b/" + name))
+    (destination.parent / "patch.diff").write_text("".join(patch), encoding="utf-8")
     write_json(destination.parent / "candidate_manifest.json", candidate.model_dump())
     return candidate
 

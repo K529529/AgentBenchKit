@@ -30,7 +30,9 @@ async def test_full_controlled_pipeline_keeps_completion_separate(
     repair: bool,
     tmp_path: Path,
 ) -> None:
-    run_dir = await evaluate(load_tasks(), ControlledHarness(repair), tmp_path)
+    run_dir = await evaluate(
+        load_tasks(("clamp", "stable_unique")), ControlledHarness(repair), tmp_path
+    )
     summary = json.loads((run_dir / "summary.json").read_text())
     assert summary["samples_planned"] == 2
     assert summary["end_to_end_success_rate"] == int(repair)

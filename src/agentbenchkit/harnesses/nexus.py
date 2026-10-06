@@ -27,6 +27,9 @@ class NexusHarness:
     def __init__(self, executable: Path | str) -> None:
         self.executable = executable.resolve() if isinstance(executable, Path) else executable
 
+    def version_command(self) -> CommandSpec:
+        return CommandSpec(argv=(str(self.executable), "--version"), timeout_seconds=15)
+
     def command(self, task: TaskSpec) -> CommandSpec:
         return CommandSpec(
             argv=(str(self.executable), "exec", task.prompt, "--json"),

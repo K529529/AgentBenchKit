@@ -19,9 +19,11 @@ from agentbenchkit.core.protocols import Environment, Harness, StartupError
 from agentbenchkit.core.status import AgentOutcome, AuxiliaryStatus, ExecutionStatus, Verdict
 from agentbenchkit.environments.docker import DockerEnvironment
 from agentbenchkit.environments.host import HostProcessEnvironment
+from agentbenchkit.runtime.manifest import agent_identity, runtime_identity
 from agentbenchkit.runtime.recovery import RunLease, recover
 from agentbenchkit.runtime.settings import NexusSettings
 from agentbenchkit.storage.artifacts import Redactor, StreamRedactor, write_json
+from agentbenchkit.storage.index import index_run
 from agentbenchkit.verification.candidate import collect, inventory, tree_hash
 from agentbenchkit.verification.verifier import verify_candidate
 
@@ -383,6 +385,7 @@ async def evaluate(
             "network": "host",
         }
     )
+    identity = await agent_identity(harness, environment, run_dir / "work")
     write_json(
         run_dir / "manifest.json",
         {
@@ -390,9 +393,17 @@ async def evaluate(
             "run_id": run_id,
             "created_at": now(),
             "framework_version": __version__,
+            "framework": runtime_identity(),
+            "trajectory_schema_version": 1,
+            "analyzers": {"rules": "1", "metrics": "1"},
+            "judge": {"enabled": False},
             "benchmark": "micro_swe-v1",
             "tasks": task_manifests,
-            "harness": {"name": harness.name, "capabilities": harness.capabilities.model_dump()},
+            "harness": {
+                "name": harness.name,
+                "capabilities": harness.capabilities.model_dump(),
+                **identity,
+            },
             "environment": environment_manifest,
             "agent_config": settings.manifest() if settings else {},
             "samples_per_task": samples,
@@ -470,4 +481,5 @@ async def evaluate(
             f"{result.verifier_status} | {result.candidate_pass} | {result.sample_success} |"
         )
     (run_dir / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    await asyncio.to_thread(index_run, output, run_id)
     return run_dir
