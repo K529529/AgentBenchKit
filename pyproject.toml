@@ -30,3 +30,4 @@ select = ["E", "F", "I", "UP", "B", "ASYNC"]
 python_version = "3.12"
 strict = true
 files = ["src", "tests"]
+exclude = ["src/agentbenchkit/benchmarks/micro_swe/assets/"]

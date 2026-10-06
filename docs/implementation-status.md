@@ -5,8 +5,8 @@ real Agent/Docker runs. A failed evaluated Agent is not automatically a toolkit 
 
 | Phase | Status | Evidence |
 | --- | --- | --- |
-| 0: contracts/bootstrap | PASS locally; hosted CI pending | Python 3.12; 57 tests passed; Ruff and strict mypy passed; CLI help works |
-| 1: real Nexus vertical slice | NOT RUN | |
+| 0: contracts/bootstrap | PASS (Windows + Ubuntu CI) | Python 3.12; 57 tests passed; Ruff and strict mypy passed; CLI help works |
+| 1: real Nexus vertical slice | PASS | 72 offline tests; real Nexus v0.2.0, qwen3.8-flash, 2/2 independent verifier PASS; see phase-1-evidence.md |
 | 2: Docker/fresh verifier | NOT RUN | |
 | 3: lifecycle hardening | NOT RUN | |
 | 4: benchmark/persistence | NOT RUN | |
