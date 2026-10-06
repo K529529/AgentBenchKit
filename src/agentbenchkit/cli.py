@@ -190,6 +190,25 @@ def run(
         raise typer.Exit(2)
 
 
+@app.command("view")
+def view(
+    run_id: Annotated[str | None, typer.Argument()] = None,
+    output: Annotated[Path, typer.Option()] = Path(".agentbenchkit/results"),
+    port: Annotated[int, typer.Option(min=1024, max=65535)] = 8765,
+) -> None:
+    """Serve local read-only evidence on 127.0.0.1."""
+    import uvicorn
+
+    from agentbenchkit.storage.index import resolve_run
+    from agentbenchkit.viewer.app import create_app
+
+    if run_id:
+        resolve_run(output, run_id)
+    path = f"/runs/{run_id}" if run_id else "/"
+    typer.echo(f"Viewer: http://127.0.0.1:{port}{path}")
+    uvicorn.run(create_app(output), host="127.0.0.1", port=port, log_level="warning")
+
+
 @app.command("judge")
 def judge_command(
     run_id: str,

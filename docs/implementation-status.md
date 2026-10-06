@@ -13,6 +13,6 @@ real Agent/Docker runs. A failed evaluated Agent is not automatically a toolkit 
 | 5: second real Agent + ModelSpec | PASS | Codex 2/2 smoke; common typed model contract; Nexus new-config regression 1/1; see phase-5-evidence.md |
 | 6: analysis/replay/compare | PASS | 5 focused tests; immutable versioned replay; real Nexus/Codex comparison correctly warns and returns INCONCLUSIVE |
 | 7: rubric/optional judge | PASS (controlled); real Judge NOT RUN | Four dimensions; isolated HTTP worker deadline; versioned results; Judge failure/replay preserve correctness |
-| 8: viewer | NOT RUN | |
+| 8: viewer | PASS | Read-only/XSS/path/size tests; actual browser run/sample pages checked; model/provider and subscription-smoke limits visible |
 | 9: public benchmark | OPTIONAL, NOT RUN | |
 | 10: release hardening | NOT RUN | |
