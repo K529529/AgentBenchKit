@@ -23,7 +23,8 @@ async def verify_candidate(
     started = time.monotonic()
     workspace = directory / "workspace"
     assets = directory / "protected"
-    report_path = directory / "report.json"
+    report_path = directory / "output" / "report.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
     session = None
     try:
         restore(task.fixture, candidate_dir, manifest, workspace)

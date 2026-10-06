@@ -28,3 +28,17 @@ uv run agent-bench run micro_swe nexus --env host_process --samples 1 --nexus-ex
 
 `host_process` 仅用于可信本地开发。运行结果默认存入 `.agentbenchkit/results`。
 Nexus 使用临时独立 HOME，按配置中的 `api_key_env` 显式注入密钥；不会修改 Agent 源码。
+
+正式隔离执行使用 Docker（需运行 Docker Desktop / Docker Engine）：
+
+```sh
+uv run python scripts/build_nexus_image.py /path/to/Nexus-next
+uv run agent-bench run micro_swe nexus --env docker --nexus-config /path/to/config.toml
+```
+
+构建脚本从现有 Nexus 仓库导出固定 v0.2.0 提交，不修改其源码。
+Agent 容器有 CPU、内存和进程数限制；验证容器禁用网络，测试目录只读。
+V0 面向可信评测任务：Agent 进程仍能访问自身模型凭据，并非恶意 Agent 的密钥隔离设施。
+通常应使用专用低权限评测密钥；本轮实测沿用现有配置已获用户明确授权。
+
+Docker 集成测试需显式设置 `ABK_TEST_DOCKER=1`，未启用时标记为 SKIPPED。

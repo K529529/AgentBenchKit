@@ -1,0 +1,7 @@
+FROM python:3.12-slim
+ARG NEXUS_COMMIT=677fc997dcdc2f369fa8d4a667d400de99e35f84
+LABEL agentbenchkit.nexus.commit=$NEXUS_COMMIT
+COPY nexus-v0.2.0.zip /tmp/nexus.zip
+RUN pip install --no-cache-dir /tmp/nexus.zip && rm /tmp/nexus.zip
+ENV PYTHONDONTWRITEBYTECODE=1
+WORKDIR /workspace

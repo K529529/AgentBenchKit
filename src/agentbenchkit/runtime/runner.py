@@ -15,8 +15,9 @@ from agentbenchkit import __version__
 from agentbenchkit.core.events import Event
 from agentbenchkit.core.metrics import summarize
 from agentbenchkit.core.models import SampleResult, TaskSpec, VerificationResult
-from agentbenchkit.core.protocols import Harness
+from agentbenchkit.core.protocols import Environment, Harness
 from agentbenchkit.core.status import AgentOutcome, AuxiliaryStatus, ExecutionStatus
+from agentbenchkit.environments.docker import DockerEnvironment
 from agentbenchkit.environments.host import HostProcessEnvironment
 from agentbenchkit.runtime.settings import NexusSettings
 from agentbenchkit.storage.artifacts import Redactor, StreamRedactor, write_json
@@ -53,6 +54,7 @@ async def evaluate_sample(
     harness: Harness,
     run_dir: Path,
     settings: NexusSettings | None = None,
+    environment: Environment | None = None,
 ) -> SampleResult:
     sample_dir = run_dir / "tasks" / task.task_id / sample_id
     execution_id = uuid.uuid4().hex
@@ -94,7 +96,8 @@ async def evaluate_sample(
     try:
         shutil.copytree(task.fixture, workspace)
         env = settings.prepare(work / "agent_home") if settings else {}
-        session = await HostProcessEnvironment().create(workspace, execution_id)
+        provider = environment or HostProcessEnvironment()
+        session = await provider.create(workspace, execution_id)
         setup_streams = {name: StreamRedactor(redactor) for name in ("stdout", "stderr")}
 
         async def setup_sink(stream: str, text: str) -> None:
@@ -194,7 +197,13 @@ async def evaluate_sample(
         candidate = collect(task.fixture, workspace, sample_dir / "candidate")
         frozen = True
         verification = await verify_candidate(
-            task, sample_dir / "candidate", candidate, work / "verify"
+            task,
+            sample_dir / "candidate",
+            candidate,
+            work / "verify",
+            DockerEnvironment(environment.image, verification=True)
+            if isinstance(environment, DockerEnvironment)
+            else None,
         )
         for name in ("stdout.log", "stderr.log"):
             source = work / "verify" / name
@@ -263,6 +272,7 @@ async def evaluate(
     samples: int = 1,
     settings: NexusSettings | None = None,
     k: int = 1,
+    environment: Environment | None = None,
 ) -> Path:
     if not tasks or samples < 1 or k < 1:
         raise ValueError("tasks, samples and k must be positive")
@@ -277,6 +287,16 @@ async def evaluate(
         }
         for task in tasks
     ]
+    environment_manifest = (
+        await environment.resolve()
+        if isinstance(environment, DockerEnvironment)
+        else {
+            "provider": "host_process",
+            "os": platform.platform(),
+            "isolation": "trusted-local-only",
+            "network": "host",
+        }
+    )
     write_json(
         run_dir / "manifest.json",
         {
@@ -287,12 +307,7 @@ async def evaluate(
             "benchmark": "micro_swe-v1",
             "tasks": task_manifests,
             "harness": {"name": harness.name, "capabilities": harness.capabilities.model_dump()},
-            "environment": {
-                "provider": "host_process",
-                "os": platform.platform(),
-                "isolation": "trusted-local-only",
-                "network": "host",
-            },
+            "environment": environment_manifest,
             "agent_config": settings.manifest() if settings else {},
             "samples_per_task": samples,
             "concurrency": 1,
@@ -304,7 +319,13 @@ async def evaluate(
     for task in tasks:
         for index in range(samples):
             result = await evaluate_sample(
-                run_id, task, f"sample-{task.task_id}-{index + 1}", harness, run_dir, settings
+                run_id,
+                task,
+                f"sample-{task.task_id}-{index + 1}",
+                harness,
+                run_dir,
+                settings,
+                environment,
             )
             results.append(result)
     summary = summarize(results, k)
@@ -313,7 +334,7 @@ async def evaluate(
         f"# Run {run_id}",
         "",
         f"Harness: {harness.name}",
-        "Environment: host_process",
+        f"Environment: {environment_manifest['provider']}",
         "",
         "| Task | Execution | Agent | Verifier | Candidate pass | Sample success |",
         "| --- | --- | --- | --- | --- | --- |",

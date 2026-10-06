@@ -13,6 +13,7 @@ from agentbenchkit import __version__
 from agentbenchkit.benchmarks.micro_swe import load_tasks
 from agentbenchkit.core.models import PhaseBudgets
 from agentbenchkit.core.status import Verdict
+from agentbenchkit.environments.docker import DockerEnvironment
 from agentbenchkit.harnesses.nexus import NexusHarness
 from agentbenchkit.runtime.runner import evaluate
 from agentbenchkit.runtime.settings import NexusSettings
@@ -36,7 +37,11 @@ def version() -> None:
 @app.command("list")
 def list_components(kind: str) -> None:
     """List currently implemented benchmarks, harnesses or environments."""
-    values = {"benchmarks": ["micro_swe"], "harnesses": ["nexus"], "envs": ["host_process"]}
+    values = {
+        "benchmarks": ["micro_swe"],
+        "harnesses": ["nexus"],
+        "envs": ["host_process", "docker"],
+    }
     if kind not in values:
         raise typer.BadParameter("choose benchmarks, harnesses, or envs")
     typer.echo("\n".join(values[kind]))
@@ -55,19 +60,29 @@ def run(
     agent_timeout: Annotated[float, typer.Option(min=1)] = 120,
     max_steps: Annotated[int | None, typer.Option(min=1)] = None,
     k: Annotated[int, typer.Option(min=1)] = 1,
+    docker_image: Annotated[str, typer.Option()] = "agentbenchkit-nexus:v0.2.0",
 ) -> None:
     """Evaluate real Nexus with fresh workspaces and independent verification."""
-    if (benchmark, harness, env) != ("micro_swe", "nexus", "host_process"):
-        raise typer.BadParameter("this phase implements micro_swe / nexus / host_process")
+    if benchmark != "micro_swe" or harness != "nexus" or env not in {"host_process", "docker"}:
+        raise typer.BadParameter("choose micro_swe / nexus / host_process or docker")
     binary = nexus_executable or Path(shutil.which("nexus") or "nexus")
     config = nexus_config or Path.home() / ".nexus" / "config.toml"
     try:
         settings = NexusSettings(config, max_steps)
         tasks = load_tasks(tuple(task or ()), PhaseBudgets(agent=agent_timeout))
-        typer.echo("HostProcess: trusted local execution; no filesystem sandbox.")
+        if env == "host_process":
+            typer.echo("HostProcess: trusted local execution; no filesystem sandbox.")
         typer.echo(f"Running {len(tasks)} task(s), {samples} sample(s) each with Nexus.")
         result_dir = asyncio.run(
-            evaluate(tasks, NexusHarness(binary), output, samples, settings, k)
+            evaluate(
+                tasks,
+                NexusHarness(binary if env == "host_process" else "nexus"),
+                output,
+                samples,
+                settings,
+                k,
+                DockerEnvironment(docker_image) if env == "docker" else None,
+            )
         )
     except (OSError, ValueError, RuntimeError) as exc:
         # Configuration messages must never contain credential values.

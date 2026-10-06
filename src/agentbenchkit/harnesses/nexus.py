@@ -24,8 +24,8 @@ class NexusHarness:
         native_call_ids=True,
     )
 
-    def __init__(self, executable: Path) -> None:
-        self.executable = executable.resolve()
+    def __init__(self, executable: Path | str) -> None:
+        self.executable = executable.resolve() if isinstance(executable, Path) else executable
 
     def command(self, task: TaskSpec) -> CommandSpec:
         return CommandSpec(
