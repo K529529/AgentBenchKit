@@ -10,10 +10,11 @@ from pydantic import Field
 
 from agentbenchkit.benchmarks.featurebench import EVALUATOR, REVISION, FeatureBenchAdapter
 from agentbenchkit.benchmarks.micro_swe import MicroSweAdapter
+from agentbenchkit.benchmarks.swebench import SweBenchAdapter
 from agentbenchkit.core.models import Contract
 from agentbenchkit.core.protocols import BenchmarkAdapter
 
-NAMES = ("micro_swe", "featurebench")
+NAMES = ("micro_swe", "featurebench", "swe-bench-lite")
 FROZEN_EVALSET_DIGEST = "aea8cb8e68a77524805a53cd15aa471e9cec2135666c4303a63998fab4294d8d"
 
 
@@ -33,8 +34,9 @@ class BenchmarkConfig(Contract):
 def adapter(name: str, config: BenchmarkConfig | None = None) -> BenchmarkAdapter:
     if name == "micro_swe":
         return MicroSweAdapter()
-    if name == "featurebench":
-        return FeatureBenchAdapter(
+    if name in {"featurebench", "swe-bench-lite"}:
+        factory = FeatureBenchAdapter if name == "featurebench" else SweBenchAdapter
+        return factory(
             dataset=config.dataset if config else None,
             source=config.official_source if config else None,
             evaluator_python=config.evaluator_python if config else sys.executable,

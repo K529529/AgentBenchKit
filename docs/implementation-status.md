@@ -175,3 +175,40 @@ left after the real smoke.
 
 SWE-bench, Polyglot and Qoder real acceptance are still NOT RUN at this phase.
 No full benchmark or formal 16 x 2 experiment was run.
+
+
+## V0.2 phase 3: SWE-bench Lite
+
+PASS: full 300-task discovery/selection/config generation, pinned data fetch and
+an adapter using official SWE-bench v4.1.0 (`726c5461e2ef52d83cf1ea2107870a8bb3328d57`).
+The published evaluator matches the original Lite schema. The adapter delegates
+spec creation, patch application, tests and grading to upstream. Only immutable
+image references, evidence location and resource ownership labels are wrapped.
+FeatureBench and SWE share bounded worker execution and unchanged Nexus image
+construction; no benchmark-specific execution logic was added to Runtime.
+
+Real acceptance PASS (2026-10-08):
+
+- Task `psf__requests-1963`, selected as the first Requests task in the pinned
+  catalog for a small repository smoke, before any Agent results.
+- Official image digest:
+  `swebench/sweb.eval.x86_64.psf_1776_requests-1963@sha256:5ca751c160affa98d160831608fffe3e2c4fb61c4fb2dad2b147ef2a885088e4`.
+- Reference-patch official evaluator control PASS before model execution.
+- Run `20261007T233529Z-37ae1426`; execution
+  `c01afafe3562419d90d97d6aa77800f2`.
+- FINISHED / Agent COMPLETED / official PASS / cleanup COMPLETED;
+  candidate_pass=true and sample_success=true.
+- Official F2P 7 success / 0 failure; P2P 112 success / 0 failure.
+- Same Nexus/model controls as phase 2, 29 model calls; reported input 323,779,
+  cached input 289,280 and output 7,706 tokens. No verified monetary charge.
+- Patch SHA256 `3985b562350126e1c731c82171de4827fa9117bc30c0e1c6e7868c21769a295b`.
+- Official result SHA256 `83bb3924026a03be57afd75da04c7e0aec9ec57790312870debde1a5457dc1fe`.
+- Exact inference source snapshot `.agentbenchkit/swe-smoke-source.zip`, SHA256
+  `9a21032a32df431832bc4c1eb37faed2f60deb09c78f97d0d20df6ec1b8b74ea`.
+- Immutable evidence under `.agentbenchkit/v02-results/<run>`; reference control
+  under `.agentbenchkit/swe-controls/gold`. Runtime artifacts remain ignored.
+
+Regression: 186 passed / 7 opt-in Docker skipped, Ruff and mypy PASS. Real upstream
+control and Nexus E2E PASS; no full 300-task run. Phase 2's official FeatureBench
+verdict remains unchanged; no additional FeatureBench model calls were made.
+Polyglot and Qoder real acceptance remain NOT RUN at this phase.

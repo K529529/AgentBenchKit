@@ -101,3 +101,28 @@ def test_repository_credentials_refused_before_freeze(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="credential"):
         freeze_repository(before, after, dest, tmp_path / "collector", Redactor(("synthetic-key",)))
     assert not dest.exists()
+
+
+def test_swe_lite_discovery_selection_and_official_results() -> None:
+    from agentbenchkit.benchmarks.swebench import SweBenchAdapter
+    from agentbenchkit.benchmarks.swebench import official_verdict as swe_verdict
+
+    tasks = SweBenchAdapter().load_tasks()
+    assert len(tasks) == len({t.task_id for t in tasks}) == 300
+    assert len(make_config("swe-bench-lite", (), all_tasks=True).task_ids) == 300
+    ids = (tasks[-1].task_id, tasks[0].task_id)
+    assert tuple(t.task_id for t in SweBenchAdapter().load_tasks(ids)) == ids
+    with pytest.raises(ValueError):
+        SweBenchAdapter().load_tasks(("unknown",))
+    assert (
+        swe_verdict("x", {"completed": True, "report": {"x": {"resolved": False}}}).status == "FAIL"
+    )
+    assert (
+        swe_verdict("x", {"completed": True, "report": {"x": {"resolved": True}}}).status == "PASS"
+    )
+    for report in (None, "bad", {}, {"x": {"resolved": "yes"}}):
+        assert swe_verdict("x", {"completed": True, "report": report}).status == "ERROR"
+    assert (
+        swe_verdict("x", {"completed": False, "report": {"x": {"resolved": True}}}).status
+        == "ERROR"
+    )

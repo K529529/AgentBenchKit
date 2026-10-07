@@ -66,9 +66,12 @@ def list_components(kind: str) -> None:
 @app.command("fetch-data")
 def fetch_benchmark_data(benchmark: str, output: Annotated[Path, typer.Option()]) -> None:
     """Fetch pinned dataset data only; requires the evaluator's optional dependencies."""
-    if benchmark != "featurebench":
+    if benchmark == "featurebench":
+        from agentbenchkit.benchmarks.featurebench.data import fetch
+    elif benchmark == "swe-bench-lite":
+        from agentbenchkit.benchmarks.swebench.data import fetch
+    else:
         raise typer.BadParameter("this benchmark has no data fetcher yet")
-    from agentbenchkit.benchmarks.featurebench.data import fetch
 
     try:
         fetch(output)

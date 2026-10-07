@@ -11,11 +11,11 @@ from typing import Any
 
 from pydantic import JsonValue
 
-from agentbenchkit.core.models import CommandSpec, PhaseBudgets, TaskSpec, VerificationResult
+from agentbenchkit.benchmarks.worker import run_worker
+from agentbenchkit.core.models import PhaseBudgets, TaskSpec, VerificationResult
 from agentbenchkit.core.protocols import Environment
 from agentbenchkit.core.status import Verdict
 from agentbenchkit.environments.docker import DockerEnvironment, DockerLimits, docker
-from agentbenchkit.environments.host import HostSession
 from agentbenchkit.storage.artifacts import Redactor, write_json
 from agentbenchkit.verification.repository import freeze_repository, verified_patch
 
@@ -124,36 +124,9 @@ class FeatureBenchAdapter:
         return row
 
     async def worker(self, spec: dict[str, Any], directory: Path, seconds: float) -> None:
-        await asyncio.to_thread(directory.mkdir, parents=True, exist_ok=True)
-        write_json(directory / "input.json", spec)
-        process_workspace = Path(spec.get("resource_workspace", str(directory)))
-        await asyncio.to_thread(process_workspace.mkdir, parents=True, exist_ok=True)
-        session = HostSession(process_workspace)
-        try:
-            with (
-                (directory / "stdout.log").open("w", encoding="utf-8") as out,
-                (directory / "stderr.log").open("w", encoding="utf-8") as err,
-            ):
-
-                async def sink(stream: str, text: str) -> None:
-                    (out if stream == "stdout" else err).write(text)
-
-                process = await session.execute(
-                    CommandSpec(
-                        argv=(
-                            self.python,
-                            str(Path(__file__).with_name("worker.py").resolve()),
-                            str((directory / "input.json").resolve()),
-                        ),
-                        timeout_seconds=seconds,
-                    ),
-                    sink,
-                )
-            write_json(directory / "process.json", process.model_dump())
-            if process.returncode != 0 or process.timed_out or not process.cleanup_complete:
-                raise RuntimeError("official FeatureBench worker failed; see preserved logs")
-        finally:
-            await session.close()
+        await run_worker(
+            self.python, Path(__file__).with_name("worker.py"), spec, directory, seconds
+        )
 
     async def prepare(self, task: TaskSpec, workspace: Path, evidence: Path) -> Environment | None:
         if sys.platform == "win32":

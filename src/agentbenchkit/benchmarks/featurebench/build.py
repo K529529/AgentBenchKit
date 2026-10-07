@@ -1,42 +1,18 @@
 """Build an inference-only derivative; official evaluation uses the untouched image."""
 
 import argparse
-import hashlib
 import json
-import shutil
-import subprocess
-import tempfile
 from pathlib import Path
 
 from agentbenchkit.benchmarks.featurebench import CATALOG
-
-NEXUS_ARCHIVE_SHA256 = "b7993371ff87513f32ce4705bf7b308178caf970f289b8b15e248751af778c42"
+from agentbenchkit.benchmarks.images import build as build_nexus_image
 
 
 def build(image: str, tag: str, uv_binary: Path, nexus_archive: Path) -> None:
     allowed = {row["image_pin"] for row in json.loads(CATALOG.read_text(encoding="utf-8"))}
     if image not in allowed:
         raise ValueError("image must be a pinned Fast v1.1 image")
-    if uv_binary.read_bytes()[:4] != b"\x7fELF":
-        raise ValueError("provide the Linux uv executable")
-    if hashlib.sha256(nexus_archive.read_bytes()).hexdigest() != NEXUS_ARCHIVE_SHA256:
-        raise ValueError("Nexus archive differs from the accepted V0 external Agent")
-    with tempfile.TemporaryDirectory(prefix="abk-image-") as temporary:
-        context = Path(temporary)
-        shutil.copy2(uv_binary, context / "uv")
-        shutil.copy2(nexus_archive, context / "nexus.zip")
-        (context / "Dockerfile").write_text(
-            f'FROM {image}\nLABEL agentbenchkit.benchmark.base="{image}"\n'
-            "COPY uv /usr/local/bin/uv\nCOPY nexus.zip /tmp/nexus.zip\n"
-            "RUN chmod +x /usr/local/bin/uv && "
-            "UV_PYTHON_INSTALL_DIR=/opt/abk-python uv python install 3.12.10 && "
-            "UV_PYTHON_INSTALL_DIR=/opt/abk-python uv venv --python 3.12.10 /opt/abk && "
-            "uv pip install --python /opt/abk/bin/python /tmp/nexus.zip && rm /tmp/nexus.zip\n"
-            'ENV PATH="/opt/miniconda3/envs/testbed/bin:/opt/abk/bin:${PATH}"\n'
-            "RUN nexus --version\n",
-            encoding="utf-8",
-        )
-        subprocess.run(["docker", "build", "--tag", tag, str(context)], check=True)
+    build_nexus_image(image, tag, uv_binary, nexus_archive)
 
 
 if __name__ == "__main__":
