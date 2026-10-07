@@ -15,11 +15,16 @@ micro_swe 任务；不把一次成功或启发式归因当成能力证明。
 
 ## Web Viewer
 
-<p align="center">
-  <img src="docs/assets/viewer-overview.webp" alt="AgentBenchKit Web Viewer" width="900">
-</p>
+在本地只读页面中查看 Agent 执行结果、独立验证与端到端状态，并展开检查轨迹、候选代码、验证证据和可选 Judge 评分。
 
-本地只读 Viewer 将一次评测的任务结果、Agent 状态、独立验证、Failure / RCA 与后续分析集中在同一页面；下钻后可查看指标、Trajectory、Candidate / patch、Verifier evidence，以及可选的 LLM-as-a-Judge Rubric 结果。
+<p align="center">
+  <a href="docs/assets/viewer-overview.png">
+    <img src="docs/assets/viewer-overview.png" alt="AgentBenchKit Web Viewer：clamp 样本的执行结果、独立验证、观察归因与证据详情" width="880">
+  </a>
+</p>
+<p align="center">
+  <sub>clamp 样本详情 · 执行、正确性与分析分层展示<br>点击图片查看完整分辨率</sub>
+</p>
 
 ## 核心执行链路
 

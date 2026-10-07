@@ -53,3 +53,10 @@ Physical failures and original artifacts are retained; they are not current rele
 - Canonical Judge output now shares an exact prompt/schema, rejects ambiguous shapes,
   and receives framework-owned versions only after validation. Full live Judge validation
   passed; see [diagnostics](judge-diagnostics.md).
+
+## README Viewer image repair
+
+PASS: replaced the invalid WebP reference with the original PNG (byte-identical to
+the supplied screenshot; all PNG chunk CRCs and local image links verified).
+Centered preview, linked full-size image and caption added. Ruff, mypy and the
+existing suite pass: 175 passed / 7 Docker skipped; no evaluation code changed.
