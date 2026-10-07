@@ -1,19 +1,38 @@
-# AgentBenchKit
+<p align="center">
+  <img src="docs/assets/readme-banner.svg" alt="AgentBenchKit — Lightweight Coding Agent Evaluation &amp; Benchmark Infrastructure" width="960">
+</p>
 
-**Lightweight Coding Agent Evaluation & Benchmark Infrastructure**
+<p align="center">
+  <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.12%2B-3776AB?style=flat-square&amp;logo=python&amp;logoColor=white" alt="Python 3.12+"></a>
+  <a href="docs/adding-a-harness.md"><img src="https://img.shields.io/badge/Harnesses-Nexus%20%2B%20Codex-147D70?style=flat-square" alt="Harnesses: Nexus and Codex"></a>
+  <a href="docs/limitations.md"><img src="https://img.shields.io/badge/micro__swe-8%20tasks-266579?style=flat-square" alt="micro_swe: 8 tasks"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-147D70?style=flat-square" alt="MIT License"></a>
+</p>
 
-轻量、本地运行的 Coding Agent 评测基础设施。通过公共 CLI 接入外部 Agent，
-保存执行证据、冻结候选代码、独立验证结果，再做轨迹分析与回归比较。
+<p align="center"><b>不止看 Agent 做对了吗，也看它如何执行、失败证据在哪里、修改后是否变好。</b></p>
 
-不只回答“Agent 最后做对了吗”，还帮助开发者检查：**怎么执行的、失败证据在哪里、
-工具如何使用、修改前后的结果是否可比较**。V0 支持 Nexus / Codex，内置 8 道 Python
-micro_swe 任务；不把一次成功或启发式归因当成能力证明。
+<p align="center">
+  <a href="#quick-start">快速开始</a> ·
+  <a href="#web-viewer">界面预览</a> ·
+  <a href="#architecture">架构总览</a> ·
+  <a href="docs/adding-a-harness.md">接入 Agent</a> ·
+  <a href="docs/acceptance-v0.md">验收证据</a> ·
+  <a href="docs/release-notes-v0.1.0.md">v0.1.0 说明</a>
+</p>
 
-[Quick Start](#quick-start) · [接入新 Agent](docs/adding-a-harness.md) ·
-[验收证据](docs/acceptance-v0.md) · [架构](docs/architecture-v0.3.1.md) ·
-[限制](docs/limitations.md) · [v0.1.0 说明](docs/release-notes-v0.1.0.md)
+---
 
-## Web Viewer
+## 📖 项目简介
+
+**AgentBenchKit** 是轻量、本地运行的 Coding Agent 评测基础设施。通过公共 CLI
+接入外部 Agent，保存执行证据、冻结候选代码、独立验证结果，再做轨迹分析与回归比较。
+
+V0 支持 **Nexus / Codex**，使用公共 **ModelSpec** 管理模型连接信息，
+在 **HostProcess / Docker** 中运行评测。内置的 micro_swe 包含 8 道小型 Python 任务，
+用于接入验证与回归检查；不把一次成功或启发式归因当成能力证明。
+
+<a id="web-viewer"></a>
+## 🖥️ Web Viewer
 
 在本地只读页面中查看 Agent 执行结果、独立验证与端到端状态，并展开检查轨迹、候选代码、验证证据和可选 Judge 评分。
 
@@ -32,7 +51,15 @@ micro_swe 任务；不把一次成功或启发式归因当成能力证明。
 
 <p align="center"><sub>Nexus / qwen3.8-flash / Docker 真实单任务示例</sub></p>
 
-## 核心执行链路
+<a id="architecture"></a>
+## 🧭 架构总览
+
+<p align="center">
+  <a href="docs/assets/architecture-overview.svg"><img src="docs/assets/architecture-overview.svg" alt="Benchmark、Harness、ModelSpec 与 Environment 配置 Runtime；公开轨迹成为证据，冻结候选交给全新 verifier，再进行分析与回看。" width="960"></a>
+</p>
+
+<details>
+<summary>展开文字版执行链路</summary>
 
 ```text
 Benchmark / Task + Agent Harness + Environment
@@ -50,7 +77,11 @@ Benchmark / Task + Agent Harness + Environment
                    Web Viewer
 ```
 
-## 核心能力
+</details>
+
+详细接口与冻结语义见 [V0.3.1 架构方案](docs/architecture-v0.3.1.md)。
+
+## ✨ 核心能力
 
 | 层次 | V0 提供什么 |
 | --- | --- |
@@ -60,7 +91,8 @@ Benchmark / Task + Agent Harness + Environment
 | 回归与质量 | 基于不可变 evidence 的 Replay；先检查实验条件的 Regression Compare；四维 Rubric + 已真实验收的可选 LLM Judge。 |
 | 存储与展示 | 不可变文件证据 + 可重建 SQLite 索引；本地只读 Web Viewer，展示任务、轨迹、diff、判定与分析。 |
 
-## Quick Start
+<a id="quick-start"></a>
+## 🚀 Quick Start
 
 需要 Python 3.12+、[uv](https://docs.astral.sh/uv/)、Git；容器运行需要 Docker Engine
 或 Docker Desktop（Linux containers）。已配置模型账户与密钥；Agent 本体安装在执行环境中。
@@ -126,7 +158,7 @@ Nexus 镜像构建完成后，可运行 `uv run python scripts/build_agents_imag
 HostProcess 通过 `--env host_process` 使用本机 Agent，仅适合可信本地调试。
 `--nexus-executable` / `--codex-executable` 可指定可执行文件。
 
-## CLI 心智模型
+## 🛠️ CLI 心智模型
 
 | 命令 | 作用 |
 | --- | --- |
@@ -136,7 +168,7 @@ HostProcess 通过 `--env host_process` 使用本机 Agent，仅适合可信本�
 | `judge` | 事后调用独立模型，进行附加四维 Rubric 评分。 |
 | `compare` | 比较两个 run 的条件与结果，报告回归或不可比原因。 |
 
-## Trust / Evaluation Boundaries
+## 🛡️ Trust / Evaluation Boundaries
 
 - Agent completion ≠ candidate correctness；candidate correctness ≠ end-to-end success。
 - Deterministic verifier 是 correctness authority；LLM Judge 只能增加质量评价。
@@ -144,14 +176,14 @@ HostProcess 通过 `--env host_process` 使用本机 Agent，仅适合可信本�
 - Missing observability = N/A，不能伪装成 token/tool/cost 为 0。
 - 文件证据是事实来源；SQLite 可重建。失败物理执行、历史分析与 Judge 记录均保留。
 
-## Adding a new Agent
+## 🔌 Adding a new Agent
 
 已支持的 Nexus / Codex 可直接运行；未知 Agent 需要适配其公开命令、配置和事件。
 V0 是源码级 Harness 接入，**没有 plugin discovery**，也不要求修改被评测 Agent。
 见 [接入指南](docs/adding-a-harness.md) 和
 [可运行 Harness 示例](examples/custom_harness.py)。
 
-## Current scope / limitations
+## 📌 Current scope / limitations
 
 - micro_swe 只有 8 道小型 Python 任务，不是 leaderboard；SWE-bench adapter deferred。
 - Codex ChatGPT 登录属于 smoke，不用于正式同模型公平比较；真实 Codex 显式 API inference 尚未执行。
@@ -163,7 +195,7 @@ V0 是源码级 Harness 接入，**没有 plugin discovery**，也不要求修�
 更多边界见 [limitations](docs/limitations.md)、[ModelSpec](docs/model-contract.md) 和
 [trajectory analyzers](docs/trajectory-analyzers.md)。
 
-## Validation / Acceptance
+## ✅ Validation / Acceptance
 
 - 最终本地检查：**175 tests passed / 7 Docker skipped**；Ruff、严格 mypy 通过。
 - Windows / Ubuntu [CI](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml)。
@@ -173,7 +205,7 @@ V0 是源码级 Harness 接入，**没有 plugin discovery**，也不要求修�
 可复核 run ID、历史失败和未执行项目见 [acceptance](docs/acceptance-v0.md)；
 开发检查与阶段记录见 [implementation status](docs/implementation-status.md)。
 
-## License
+## 📄 License
 
 [MIT](LICENSE)。随包 HTMX 的第三方许可见
 [HTMX-LICENSE.txt](src/agentbenchkit/viewer/static/htmx-LICENSE.txt)。

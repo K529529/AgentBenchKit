@@ -89,3 +89,17 @@ Gallery alignment follow-up PASS: both previews use a common 270px height with
 natural aspect ratios and unchanged original-image links. Removed the preview
 instruction and centered the remaining example caption. HTML attributes and
 image targets checked; Ruff/mypy PASS; 175 passed / 7 Docker skipped.
+
+## README visual identity
+
+PASS: added original teal/navy SVG branding and an architecture overview, factual
+Python/Harness/task/license badges, centered navigation and consistent section
+headings. The two 270px gallery previews, original screenshots, all fenced CLI
+examples, acceptance claims and evaluation boundaries are preserved. The textual
+execution chain remains available in an expandable section.
+
+Local browser preview verified the header, architecture diagram, navigation and
+all eight images loading; both gallery images render at 270px height. This preview
+approximates GitHub styling rather than asserting pixel-identical GitHub rendering.
+SVG XML and local README link checks PASS. Ruff/mypy PASS; full suite:
+**175 passed / 7 opt-in Docker skipped**. Only documentation/assets changed.
