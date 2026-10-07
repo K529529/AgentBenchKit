@@ -13,9 +13,11 @@ from agentbenchkit.core.models import (
     HarnessOptions,
     ModelSpec,
     NativeAgentConfig,
+    PhaseBudgets,
     TaskSpec,
     VerificationResult,
 )
+from agentbenchkit.storage.artifacts import Redactor
 
 
 class StartupError(RuntimeError):
@@ -70,7 +72,33 @@ class Harness(Protocol):
 
 
 class BenchmarkAdapter(Protocol):
-    def load_tasks(self) -> list[TaskSpec]: ...
+    """Benchmark-owned task materialization and independent correctness semantics.
+
+    Runtime owns deadlines, process execution, stop/freeze ordering and cleanup.
+    Implementations must never expose protected evaluator inputs to the Agent.
+    """
+
+    name: str
+
+    def load_tasks(
+        self, selected: tuple[str, ...] = (), budgets: PhaseBudgets | None = None
+    ) -> list[TaskSpec]: ...
+
+    def task_manifest(self, task: TaskSpec) -> dict[str, JsonValue]: ...
+
+    async def prepare(self, task: TaskSpec, workspace: Path) -> None: ...
+
+    async def collect(
+        self, task: TaskSpec, workspace: Path, destination: Path, redactor: Redactor
+    ) -> None: ...
+
+    async def verify(
+        self,
+        task: TaskSpec,
+        candidate_dir: Path,
+        directory: Path,
+        environment: Environment | None,
+    ) -> VerificationResult: ...
 
 
 class Verifier(Protocol):

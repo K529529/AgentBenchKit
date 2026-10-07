@@ -106,3 +106,18 @@ SVG XML and local README link checks PASS. Ruff/mypy PASS; full suite:
 
 Final README copy polish PASS: applied the owner-selected tagline and shortened
 the gallery caption only. Ruff/mypy PASS; 175 passed / 7 Docker skipped.
+
+## V0.2 phase 1: Benchmark execution hooks
+
+PASS (2026-10-08): Runtime delegates task manifests, preparation, candidate freeze
+and independent verification through BenchmarkAdapter. MicroSweAdapter preserves
+existing verifier semantics, Docker fresh verification and credential checks.
+Benchmark identity is adapter-owned; correctness/sample_success rules are unchanged.
+Scope and phase order are recorded in [V0.2 implementation](v0.2-implementation.md).
+
+- Baseline: 175 passed / 7 opt-in Docker skipped; Ruff and mypy PASS.
+- After hooks: 176 passed / 7 opt-in Docker skipped; Ruff and mypy PASS.
+- Relevant real integration: all 7 opt-in Docker checks PASS (23.29 seconds).
+- Real model smoke for new benchmarks: NOT RUN, pending adapter phases.
+- Execution sandbox initialization is broken on this host; reviewed commands outside
+  that sandbox were used. No Agent/model calls or large image pulls in this phase.

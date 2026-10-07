@@ -1,7 +1,9 @@
 # AgentBenchKit
 
 The frozen V0 contract is `docs/architecture-v0.3.1.md`.
-Work on `feature/v0-implementation`. The user authorized a tested, coherent commit
+V0.2 scope is recorded in `docs/v0.2-implementation.md` and supersedes V0 scope
+where explicitly expanded. Work on `feature/V0.2.0-implementation`.
+The user authorized a tested, coherent commit
 and push after each completed phase. Never force-push or rewrite pushed history.
 
 Keep evaluated agents external and unchanged. Use public CLI/SDK interfaces.

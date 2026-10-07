@@ -13,10 +13,11 @@ from typing import Any
 from pydantic import JsonValue
 
 from agentbenchkit import __version__
+from agentbenchkit.benchmarks.micro_swe import MicroSweAdapter
 from agentbenchkit.core.events import Event
 from agentbenchkit.core.metrics import summarize
 from agentbenchkit.core.models import ResolvedManifest, SampleResult, TaskSpec, VerificationResult
-from agentbenchkit.core.protocols import Environment, Harness, StartupError
+from agentbenchkit.core.protocols import BenchmarkAdapter, Environment, Harness, StartupError
 from agentbenchkit.core.status import AgentOutcome, AuxiliaryStatus, ExecutionStatus, Verdict
 from agentbenchkit.environments.docker import DockerEnvironment
 from agentbenchkit.environments.host import HostProcessEnvironment
@@ -25,8 +26,6 @@ from agentbenchkit.runtime.recovery import RunLease, recover
 from agentbenchkit.runtime.settings import AgentSettings
 from agentbenchkit.storage.artifacts import Redactor, StreamRedactor, write_json
 from agentbenchkit.storage.index import index_run
-from agentbenchkit.verification.candidate import collect, inventory, tree_hash
-from agentbenchkit.verification.verifier import verify_candidate
 
 NORMALIZED = {
     "run_started": "agent_started",
@@ -60,7 +59,9 @@ async def evaluate_attempt(
     settings: AgentSettings | None = None,
     environment: Environment | None = None,
     final_attempt: bool = True,
+    benchmark: BenchmarkAdapter | None = None,
 ) -> tuple[SampleResult, bool]:
+    benchmark = benchmark or MicroSweAdapter()
     sample_dir = run_dir / "tasks" / task.task_id / sample_id
     execution_id = uuid.uuid4().hex
     execution_dir = sample_dir / "executions" / execution_id
@@ -115,7 +116,7 @@ async def evaluate_attempt(
     checkpoint()
     try:
         async with asyncio.timeout(budget(task.timeouts.prepare)):
-            shutil.copytree(task.fixture, workspace)
+            await benchmark.prepare(task, workspace)
             env = settings.prepare(work / "agent_home") if settings else {}
             provider = environment or HostProcessEnvironment()
             session = await provider.create(workspace, execution_id)
@@ -221,11 +222,7 @@ async def evaluate_attempt(
         checkpoint()
         collect_started = time.monotonic()
         collect_budget = budget(task.timeouts.collect)
-        for entry in inventory(workspace).values():
-            text = (workspace / entry.path).read_text(encoding="utf-8")
-            if any(secret in text for secret in redactor.secrets):
-                raise RuntimeError("candidate contains a credential; refusing persistence")
-        candidate = collect(task.fixture, workspace, sample_dir / "candidate")
+        await benchmark.collect(task, workspace, sample_dir / "candidate", redactor)
         frozen = True
         if time.monotonic() - collect_started > collect_budget:
             raise TimeoutError("candidate collection deadline exceeded")
@@ -239,14 +236,8 @@ async def evaluate_attempt(
             }
         )
         async with asyncio.timeout(budget(task.timeouts.verify)):
-            verification = await verify_candidate(
-                verify_task,
-                sample_dir / "candidate",
-                candidate,
-                work / "verify",
-                DockerEnvironment(environment.image, verification=True)
-                if isinstance(environment, DockerEnvironment)
-                else None,
+            verification = await benchmark.verify(
+                verify_task, sample_dir / "candidate", work / "verify", environment,
             )
         verifier_cleanup_error = (work / "verify" / "cleanup.json").exists()
         for name in ("stdout.log", "stderr.log", "cleanup.json"):
@@ -334,6 +325,7 @@ async def evaluate_sample(
     settings: AgentSettings | None = None,
     environment: Environment | None = None,
     startup_retries: int = 1,
+    benchmark: BenchmarkAdapter | None = None,
 ) -> SampleResult:
     for attempt in range(startup_retries + 1):
         result, retryable = await evaluate_attempt(
@@ -345,6 +337,7 @@ async def evaluate_sample(
             settings,
             environment,
             final_attempt=attempt == startup_retries,
+            benchmark=benchmark,
         )
         if not retryable:
             return result
@@ -362,21 +355,16 @@ async def evaluate(
     concurrency: int = 1,
     startup_retries: int = 1,
     progress: Callable[[SampleResult, int, int], None] | None = None,
+    benchmark: BenchmarkAdapter | None = None,
 ) -> Path:
     if not tasks or samples < 1 or k < 1 or concurrency < 1 or startup_retries < 0:
         raise ValueError("tasks, samples and k must be positive")
+    benchmark = benchmark or MicroSweAdapter()
     await recover(output)
     run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:8]
     run_dir = (await asyncio.to_thread(output.resolve)) / run_id
     run_dir.mkdir(parents=True, exist_ok=False)
-    task_manifests = [
-        {
-            **task.model_dump(mode="json"),
-            "fixture_hash": tree_hash(inventory(task.fixture)),
-            "verifier_hash": tree_hash(inventory(task.protected_assets)),
-        }
-        for task in tasks
-    ]
+    task_manifests = [benchmark.task_manifest(task) for task in tasks]
     environment_manifest = (
         await environment.resolve()
         if isinstance(environment, DockerEnvironment)
@@ -400,7 +388,7 @@ async def evaluate(
                 "trajectory_schema_version": 1,
                 "analyzers": {"rules": "2", "metrics": "1", "repeated_tool_calls": "1"},
                 "judge": {"enabled": False},
-                "benchmark": "micro_swe-v1",
+                "benchmark": benchmark.name,
                 "tasks": task_manifests,
                 "harness": {
                     "name": harness.name,
@@ -451,6 +439,7 @@ async def evaluate(
                         settings,
                         environment,
                         startup_retries,
+                        benchmark,
                     )
             except asyncio.CancelledError:
                 result = item.model_copy(update={"execution_status": ExecutionStatus.CANCELLED})

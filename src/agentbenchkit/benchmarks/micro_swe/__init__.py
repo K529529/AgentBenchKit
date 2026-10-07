@@ -1,11 +1,18 @@
 """Small standard-library Python fixtures with independently owned checks."""
 
 import json
+import shutil
 import sys
 from pathlib import Path
 
-from agentbenchkit.core.models import CommandSpec, PhaseBudgets, TaskSpec
-from agentbenchkit.verification.candidate import inventory, tree_hash
+from pydantic import JsonValue
+
+from agentbenchkit.core.models import CommandSpec, PhaseBudgets, TaskSpec, VerificationResult
+from agentbenchkit.core.protocols import Environment
+from agentbenchkit.environments.docker import DockerEnvironment
+from agentbenchkit.storage.artifacts import Redactor
+from agentbenchkit.verification.candidate import Candidate, collect, inventory, tree_hash
+from agentbenchkit.verification.verifier import verify_candidate
 
 ASSETS = Path(__file__).parent / "assets"
 TASKS = {
@@ -49,3 +56,47 @@ def load_tasks(
             )
         )
     return result
+
+
+class MicroSweAdapter:
+    name = "micro_swe-v1"
+
+    def load_tasks(
+        self, selected: tuple[str, ...] = (), budgets: PhaseBudgets | None = None
+    ) -> list[TaskSpec]:
+        return load_tasks(selected, budgets)
+
+    def task_manifest(self, task: TaskSpec) -> dict[str, JsonValue]:
+        return {
+            **task.model_dump(mode="json"),
+            "fixture_hash": tree_hash(inventory(task.fixture)),
+            "verifier_hash": tree_hash(inventory(task.protected_assets)),
+        }
+
+    async def prepare(self, task: TaskSpec, workspace: Path) -> None:
+        shutil.copytree(task.fixture, workspace)
+
+    async def collect(
+        self, task: TaskSpec, workspace: Path, destination: Path, redactor: Redactor
+    ) -> None:
+        for entry in inventory(workspace).values():
+            text = (workspace / entry.path).read_text(encoding="utf-8")
+            if any(secret in text for secret in redactor.secrets):
+                raise RuntimeError("candidate contains a credential; refusing persistence")
+        collect(task.fixture, workspace, destination)
+
+    async def verify(
+        self,
+        task: TaskSpec,
+        candidate_dir: Path,
+        directory: Path,
+        environment: Environment | None,
+    ) -> VerificationResult:
+        candidate = Candidate.model_validate_json(
+            (candidate_dir.parent / "candidate_manifest.json").read_text(encoding="utf-8")
+        )
+        return await verify_candidate(
+            task, candidate_dir, candidate, directory,
+            DockerEnvironment(environment.image, verification=True)
+            if isinstance(environment, DockerEnvironment) else None,
+        )
