@@ -137,7 +137,8 @@ uv run agent-bench judge 20261007T085706Z-6489516b sample-clamp-1 --model qwen3.
 
 Every invocation creates a new Judge artifact. The generic CLI defaults remain
 2000 tokens / omitted reasoning effort; use the explicit settings above to repeat
-this accepted configuration. The owner's independent acceptance is still pending.
+this accepted configuration. The owner confirmed independent acceptance complete on 2026-10-07.
+Release finalization reuses the immutable live evidence; it does not repeat paid requests.
 
 ## Automated verification
 

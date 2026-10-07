@@ -60,4 +60,23 @@ Nexus 的 `--nexus-config` 只是兼容导入入口，先转换成 `ModelSpec`�
 订阅认证或未知模型条件的限制。样本分数变化只是观测，不是能力因果结论。
 
 Codex 显式 API 配置的转换与拒绝逻辑经过自动化测试；真实 API 模型在线验收
-尚未运行（当前仅获授权使用 ChatGPT 登录）。
+尚未运行；现有真实 Codex 验收是 ChatGPT 登录 smoke。
+
+
+## 已支持 Agent 的运行方式
+
+这些命令使用现有 CLI 接入，不需要新增 Adapter。先按 [README](../README.md)
+构建 `agentbenchkit-agents:v0` 并设置模型配置引用的密钥环境变量。
+API 配置示例中的 `REPLACE_WITH_MODEL_ID` 必须替换为 Provider 支持的模型。
+
+```sh
+uv run agent-bench run micro_swe codex --env docker --docker-image agentbenchkit-agents:v0 --model-config examples/models/codex-api.toml --task clamp
+uv run agent-bench run micro_swe codex --env docker --docker-image agentbenchkit-agents:v0 --model-config examples/models/codex-smoke.toml --codex-auth /path/to/.codex/auth.json --task clamp --task stable_unique
+```
+
+第二条使用现有登录缓存，会消耗账户额度，结果标记为 `subscription_smoke`。
+凭据只经内存通道写入容器 tmpfs，不应复制到仓库或镜像。HostProcess 不支持这种认证。
+
+新增 Agent 的开发流程见 [Adding a Harness](adding-a-harness.md)。未来 plugin discovery
+尚未实现。Optional Judge 有独立请求配置与 usage，严格输出和框架版本归属见
+[Judge 契约](judge-diagnostics.md)；其真实验收已通过，不改变以上 Agent 模型可比性边界。

@@ -45,5 +45,5 @@ select = ["E", "F", "I", "UP", "B", "ASYNC"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["src", "tests"]
+files = ["src", "tests", "examples"]
 exclude = ["src/agentbenchkit/benchmarks/micro_swe/assets/"]

@@ -1,116 +1,162 @@
 # AgentBenchKit
 
-轻量级、本地运行的 Coding Agent 评测工具。用公共 CLI 接入 Nexus / Codex，
-在隔离环境运行整个 Agent，冻结候选代码，再用独立测试验证结果。
+**Lightweight Coding Agent Evaluation & Benchmark Infrastructure**
 
-**执行完成、代码正确、端到端成功是三个不同结论。** 分析和清理失败独立记录；
-不可观测指标显示 N/A，不补成零。V0 内置 8 道 Python micro_swe 任务。
+轻量、本地运行的 Coding Agent 评测基础设施。通过公共 CLI 接入外部 Agent，
+保存执行证据、冻结候选代码、独立验证结果，再做轨迹分析与回归比较。
 
-[架构方案](docs/architecture-v0.3.1.md) · [公共模型契约](docs/model-contract.md) ·
-[验收证据](docs/implementation-status.md) · [已知限制](docs/limitations.md)
+不只回答“Agent 最后做对了吗”，还帮助开发者检查：**怎么执行的、失败证据在哪里、
+工具如何使用、修改前后的结果是否可比较**。V0 支持 Nexus / Codex，内置 8 道 Python
+micro_swe 任务；不把一次成功或启发式归因当成能力证明。
 
-## 安装与检查
+[Quick Start](#quick-start) · [接入新 Agent](docs/adding-a-harness.md) ·
+[验收证据](docs/acceptance-v0.md) · [架构](docs/architecture-v0.3.1.md) ·
+[限制](docs/limitations.md) · [v0.1.0 说明](docs/release-notes-v0.1.0.md)
 
-需要 Python 3.12+、uv；容器评测需要 Docker Engine / Docker Desktop。
-Windows PowerShell 和 Linux 均有 CI 检查。
+## 核心执行链路
+
+```text
+Benchmark / Task + Agent Harness + Environment
+                       ↓
+                Evaluation Runtime
+                       ↓
+               Trajectory / Candidate
+                       ↓
+            Fresh Independent Verifier
+                       ↓
+                Metrics / Failure / RCA
+                       ↓
+       Replay / Compare / Optional Judge
+                       ↓
+                   Web Viewer
+```
+
+## 核心能力
+
+| 层次 | V0 提供什么 |
+| --- | --- |
+| 接入与配置 | Benchmark / Harness / Environment 解耦；Nexus + Codex 双真实 Harness；公共 ModelSpec 转原生配置、隔离 Agent HOME。 |
+| 执行与验证 | HostProcess / Docker 整个 Agent 执行；阶段超时、取消、启动前重试；Candidate Freeze；全新 protected verifier。 |
+| 结果与分析 | candidate_pass 与 sample_success 分离；pass@k / coverage / success rate；Trajectory Evaluation、Failure / RCA、重复工具调用 observation。 |
+| 回归与质量 | 基于不可变 evidence 的 Replay；先检查实验条件的 Regression Compare；四维 Rubric + 已真实验收的可选 LLM Judge。 |
+| 存储与展示 | 不可变文件证据 + 可重建 SQLite 索引；本地只读 Web Viewer，展示任务、轨迹、diff、判定与分析。 |
+
+## Quick Start
+
+需要 Python 3.12+、[uv](https://docs.astral.sh/uv/)、Git；容器运行需要 Docker Engine
+或 Docker Desktop（Linux containers）。已配置模型账户与密钥；Agent 本体安装在执行环境中。
+
+### 1. 从源码安装并检查 benchmark
 
 ```sh
+git clone https://github.com/K529529/AgentBenchKit.git
+cd AgentBenchKit
+git checkout feature/v0-implementation
 uv sync --locked
 uv run agent-bench --help
 uv run agent-bench validate-benchmark
-uv run pytest
-uv run ruff check .
-uv run mypy
 ```
 
-`validate-benchmark` 验证全部任务的 no-op 应失败、参考候选应通过，不调用模型。
-启用真实 Docker 测试：PowerShell 先执行 `$env:ABK_TEST_DOCKER='1'`，
-Linux 则执行 `ABK_TEST_DOCKER=1 uv run pytest`。
+`validate-benchmark` 在全部八题上确认 no-op 应失败、reference candidate 应通过，
+不调用模型。当前 v0.1.0 是待人工发布的 release candidate，PR 仍为 Draft。
 
-## 构建 Agent 镜像
+### 2. 准备 Nexus 镜像与模型配置
 
 ```sh
-uv run python scripts/build_nexus_image.py /path/to/Nexus-next
-uv run python scripts/build_agents_image.py
+git clone https://github.com/K529529/Nexus.git ../Nexus
+uv run python scripts/build_nexus_image.py ../Nexus
 ```
 
-第一条从本地 Nexus Git 仓库导出固定 v0.2.0 提交；第二条使用 GitHub CLI
-下载完整官方 Codex 0.155.1 Linux 包。脚本不修改 Agent 源码，不复制个人配置。
-本机需有 Git、GitHub CLI 和网络访问能力。
+已有 Nexus Git checkout 可复用。构建脚本导出固定 v0.2.0 commit，不修改 Agent 源码，
+不复制个人配置。检查并调整 [nexus-api.toml](examples/models/nexus-api.toml) 中的
+模型 ID、Provider、endpoint、上下文窗口与预算；密钥只通过其引用的环境变量提供。
+例如本机终端使用 PowerShell `$env:DASHSCOPE_API_KEY="<your-key>"`，
+或 shell `export DASHSCOPE_API_KEY="<your-key>"`；不要将密钥写进配置或提交到 Git。
 
-## 显式 Model / Provider 评测
-
-复制并调整 `examples/models/nexus-api.toml` 或 `codex-api.toml`，
-在当前终端设置配置引用的密钥环境变量。模型文件只保存凭据引用。
-
-```sh
-uv run agent-bench run micro_swe nexus --env docker --docker-image agentbenchkit-agents:v0 --model-config examples/models/nexus-api.toml --samples 1 --concurrency 2
-uv run agent-bench run micro_swe codex --env docker --docker-image agentbenchkit-agents:v0 --model-config examples/models/codex-api.toml --task clamp --task stable_unique
-```
-
-Codex API 示例中的 `REPLACE_WITH_MODEL_ID` 必须替换为 Provider 实际支持的模型。
-两个 Harness 都使用公共 `ModelSpec`，分别转换为 Agent 原生配置；每次执行使用
-独立 HOME / CODEX_HOME。不支持的显式参数直接报错，详见[模型契约](docs/model-contract.md)。
-Nexus 的 `--nexus-config /path/to/config.toml` 保留为兼容导入入口。
-
-`--agent-timeout`、`--prepare-timeout`、`--verify-timeout` 和 `--overall-timeout`
-控制阶段预算；`--samples` 是每题采样数，`--k` 控制 pass@k。
-`--startup-retries` 仅在 Agent 开始前重试基础设施，物理执行记录全部保留。
-运行过程中打印每个样本的执行/Agent/验证状态，结束后返回 run ID。
-
-## Codex ChatGPT 登录 smoke
+### 3. 跑一题，查看与重放
 
 ```sh
-uv run agent-bench run micro_swe codex --env docker --docker-image agentbenchkit-agents:v0 --model-config examples/models/codex-smoke.toml --codex-auth /path/to/.codex/auth.json --task clamp --task stable_unique
-```
-
-仅用于接入验收。登录缓存经 stdin 进入容器 tmpfs，不写入镜像或结果目录。
-记录标为 `subscription_smoke`；不能据此宣称正式 API 或同模型公平比较。
-运行会消耗对应账号的模型额度。
-
-## 查看、重放和比较
-
-```sh
+uv run agent-bench run micro_swe nexus --env docker --docker-image agentbenchkit-nexus:v0.2.0 --model-config examples/models/nexus-api.toml --task clamp
 uv run agent-bench runs
 uv run agent-bench view RUN_ID
 uv run agent-bench replay RUN_ID
-uv run agent-bench compare BASELINE_RUN CANDIDATE_RUN
-uv run agent-bench recover
-uv run agent-bench rebuild-index
 ```
 
-结果默认在 `.agentbenchkit/results`。Viewer 只监听 `127.0.0.1:8765`，只读展示
-任务、轨迹、候选 diff、独立验证证据、指标、归因及可比性限制。
-SQLite 仅是可重建索引，文件证据是事实来源；重建损坏索引会保留损坏文件副本。
+将 `RUN_ID` 替换为 `run` 输出的 ID。默认结果目录为 `.agentbenchkit/results`，
+Viewer 监听 `127.0.0.1:8765`。`replay` 生成新分析版本，不重新执行 Agent。
+`--samples` / `--k` 控制采样与 pass@k，`--concurrency` 控制并发；阶段预算见 `run --help`。
 
-Replay 包含[重复工具调用观察](docs/trajectory-analyzers.md)：显示公开输入的重复次数和事件证据，不判定停滞或调整正确性。
-
-Replay 生成新 analysis ID，不覆盖历史记录。Compare 先比较 manifest 条件；
-非预期差异或未知结果产生 INCONCLUSIVE。`--expect harness` 等参数用于声明
-实验变量，不能消除订阅认证、未知模型参数等可比性限制。
-
-## 可选质量 Judge
+### 4. 比较两个 run，按需执行 Judge
 
 ```sh
-uv run agent-bench judge RUN_ID SAMPLE_ID --model JUDGE_MODEL --endpoint https://api.example.com/v1 --key-env JUDGE_API_KEY
+uv run agent-bench compare BASELINE_RUN CANDIDATE_RUN
+uv run agent-bench judge RUN_ID sample-clamp-1 --model qwen3.8-flash --endpoint https://maas.qianwenaiapi.com/compatible-mode/v1 --key-env DASHSCOPE_API_KEY --max-completion-tokens 8192 --reasoning-effort low
 ```
 
-这会把该样本的限量任务/代码/公共轨迹发送给指定 Provider，并单独计入 Judge
-usage。四个质量维度为测试质量、工具使用、解法质量、效率；缺少证据时 N/A。
-Judge 不修改 verifier 或 sample_success，每次输出独立版本。真实在线 Judge 已通过
-一次完整样本验收；严格四维 schema、超时、失败隔离与版本保留已测试。
-模型只生成业务字段，版本由框架注入；未知字段和歧义形状会拒绝。
-失败时 CLI 和独立 Judge 记录包含脱敏、限长诊断；支持显式
-`--max-completion-tokens` / `--reasoning-effort`，详见[诊断与重试](docs/judge-diagnostics.md)。
+Compare 会标出模型、任务、环境等差异，不可比时返回 INCONCLUSIVE。
+Judge 示例使用已验收的配置，需要该 endpoint 的访问资格；它会单独调用模型，
+发送限量任务/代码/公开轨迹并计入 Judge usage。其他 Provider 请调整显式配置。
+每次 Judge 生成独立 artifact，不改正确性；详见 [Judge 契约与证据](docs/judge-diagnostics.md)。
 
-## 边界
+### Codex 与 HostProcess
 
-Docker Agent 容器有 CPU/内存/进程限制；全新 verifier 禁用网络、测试资产只读。
-`host_process` 仅用于可信本地调试，不是文件系统沙箱。V0 不面向恶意 Agent，
-Agent 能访问自己执行所需的模型凭据，建议使用专用评测密钥。
+Nexus 镜像构建完成后，可运行 `uv run python scripts/build_agents_image.py` 构建
+`agentbenchkit-agents:v0`；该脚本需要 GitHub CLI 和网络，下载固定官方 Codex 0.155.1
+完整 Linux x86_64 包。使用 [codex-api.toml](examples/models/codex-api.toml) 前替换
+模型占位符，或按 [模型与认证说明](docs/model-contract.md) 跑 ChatGPT 登录 smoke。
 
-二进制文件、符号链接与 Windows junction 候选暂不支持，会明确失败。
-Windows bind mount 不声称保留 Linux 可执行位。模型价格未固定时 cost=N/A。
-当前 micro_swe 结果不是 SWE-bench 官方分数，8 道小题也不是能力排行榜。
+HostProcess 通过 `--env host_process` 使用本机 Agent，仅适合可信本地调试。
+`--nexus-executable` / `--codex-executable` 可指定可执行文件。
 
-采用 [MIT](LICENSE) 许可证。第三方 HTMX 许可证随静态文件保留。
+## CLI 心智模型
+
+| 命令 | 作用 |
+| --- | --- |
+| `run` | 发起 Agent 执行、候选收集、独立验证与初始分析。 |
+| `view` | 本地查看已有 run 和证据。 |
+| `replay` | 基于已有 evidence 重新分析，不重新运行 Agent，也不覆盖历史分析。 |
+| `judge` | 事后调用独立模型，进行附加四维 Rubric 评分。 |
+| `compare` | 比较两个 run 的条件与结果，报告回归或不可比原因。 |
+
+## Trust / Evaluation Boundaries
+
+- Agent completion ≠ candidate correctness；candidate correctness ≠ end-to-end success。
+- Deterministic verifier 是 correctness authority；LLM Judge 只能增加质量评价。
+- Observation ≠ Root Cause：RCA 有证据与置信度，属于启发式判断。
+- Missing observability = N/A，不能伪装成 token/tool/cost 为 0。
+- 文件证据是事实来源；SQLite 可重建。失败物理执行、历史分析与 Judge 记录均保留。
+
+## Adding a new Agent
+
+已支持的 Nexus / Codex 可直接运行；未知 Agent 需要适配其公开命令、配置和事件。
+V0 是源码级 Harness 接入，**没有 plugin discovery**，也不要求修改被评测 Agent。
+见 [接入指南](docs/adding-a-harness.md) 和
+[可运行 Harness 示例](examples/custom_harness.py)。
+
+## Current scope / limitations
+
+- micro_swe 只有 8 道小型 Python 任务，不是 leaderboard；SWE-bench adapter deferred。
+- Codex ChatGPT 登录属于 smoke，不用于正式同模型公平比较；真实 Codex 显式 API inference 尚未执行。
+- Docker 不是 hostile-code 强隔离，Agent 可访问自身推理凭据；HostProcess 没有文件系统沙箱。
+- 候选仅支持有界 UTF-8 文本；binary、symlink、junction 不支持，Windows bind mount 不保证 POSIX 执行位。
+- 重复工具调用是 observation；Stagnation 因逐步 mutation 证据不足未实现。
+- 公开事件和可配置模型参数有 Agent 差异；配置相同不自动证明实验公平可比。
+
+更多边界见 [limitations](docs/limitations.md)、[ModelSpec](docs/model-contract.md) 和
+[trajectory analyzers](docs/trajectory-analyzers.md)。
+
+## Validation / Acceptance
+
+- 最终本地检查：**175 tests passed / 7 Docker skipped**；Ruff、严格 mypy 通过。
+- Windows / Ubuntu [CI](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml)。
+- 已有真实证据：Nexus 8/8；Codex ChatGPT smoke 2/2；真实 LLM Judge `COMPLETED`、四维严格解析。
+- Docker 边界与 Viewer 已验收；本轮复用不可变证据，不重复消耗模型额度。
+- **Owner acceptance 已完成**（项目所有者于 2026-10-07 确认）。
+
+可复核 run ID、历史失败和未执行项目见 [acceptance](docs/acceptance-v0.md)；
+开发检查与阶段记录见 [implementation status](docs/implementation-status.md)。
+
+## License
+
+[MIT](LICENSE)。随包 HTMX 的第三方许可见
+[HTMX-LICENSE.txt](src/agentbenchkit/viewer/static/htmx-LICENSE.txt)。

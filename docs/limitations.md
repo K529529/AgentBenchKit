@@ -8,7 +8,8 @@
 - Common ModelSpec does not imply equivalent model transports or controllable
   generation parameters. Nexus uses Chat Completions; Codex API uses Responses.
   Unsupported explicit fields are rejected. ChatGPT login runs are smoke only.
-  Real Codex API-provider execution and real optional Judge requests are NOT RUN.
+  Real Codex API-provider inference is NOT RUN. Real optional Judge acceptance is
+  COMPLETED; its four quality scores do not replace the deterministic verifier.
 - `model` in schema v2 records the configuration generated for the Agent, not a
   proof of the provider's server-side model version, routing or defaults. Old run
   manifests remain untouched and have incomplete comparability information.
@@ -31,3 +32,12 @@
   does not depend on httpx; tests currently use the locked httpx version.
 - Optional public SWE-bench adapter is deferred. No distributed execution,
   PostgreSQL, Redis, queues or automatic production publication is included.
+
+- Harness discovery is source-level only. A new Agent may require reviewed extensions
+  to TOML configuration, authentication or the limited wire_api enum; there is no
+  general plugin system. Repeated-tool analysis recognizes only verified Nexus/Codex
+  public input shapes. See [adding a Harness](adding-a-harness.md).
+- Stagnation detection is deferred because complete per-step workspace mutation
+  evidence is unavailable. Repeated tool inputs alone are not proof of stagnation.
+- Owner acceptance is complete; PR remains Draft pending release review. No tag,
+  GitHub Release, repository-visibility change or PyPI publication is part of this RC.

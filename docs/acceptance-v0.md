@@ -2,19 +2,38 @@
 
 Validation performed on 2026-10-07 (Asia/Shanghai). Artifact run IDs use UTC.
 
-## Local release checks
+## v0.1.0 release candidate checks
 
-- PASS: 127 tests, including 7 real Docker boundary tests.
-- PASS: Ruff; strict mypy for Windows and Linux targets.
-- PASS: source distribution and wheel build; task assets, Viewer files and MIT
-  license present in wheel.
-- PASS: real Viewer run/sample navigation inspected in the in-app browser;
-  ChatGPT smoke status, model/provider, verifier result and observability visible.
-- PASS: 375 source/evidence files compared in memory against the actual authorized
-  credential values; zero literal matches. No credential values printed.
-- PASS: no managed Agent containers remain; real acceptance work directories empty.
-- CI: Windows/Ubuntu passed through 3c6ccc9. Release hardening is pushed with a
-  fresh CI run; consult the branch checks for the latest commit result.
+- PASS: `uv sync --locked`; **175 tests passed / 7 Docker skipped** in finalization.
+  The seven opt-in Docker tests were previously executed successfully; this pass
+  reuses that evidence rather than rerunning unchanged container/model acceptance.
+- PASS: Ruff; strict mypy for Windows/Linux, including the new Harness example.
+- PASS: CLI help/version, example help, and all eight benchmark no-op FAIL / reference PASS checks.
+- PASS: sdist/wheel build; benchmark fixtures/references/protected verifiers, Viewer
+  templates/static files, MIT and third-party licenses, `py.typed` checked in archives.
+- PASS: 48 README/docs local links and anchors (case-sensitive paths), example syntax,
+  and 337 source/archive entries scanned (126 source files); no secret or runtime-artifact
+  findings. All 79 package source/asset files are present in both distributions.
+- PASS: wheel installed into a fresh virtual environment; installed CLI help, all
+  eight no-op/reference task checks and external example type checking succeed.
+  No runtime evidence is committed.
+- CI: [Windows and Ubuntu branch checks](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml).
+  PR #1 remains Draft; no tag, release publication, visibility change or PyPI upload.
+- Owner acceptance: **complete**, confirmed by the project owner on 2026-10-07.
+
+The Harness example composes the actual Nexus adapter and is checked without a new
+paid request. Existing immutable real Agent/Judge artifacts below remain the real
+acceptance evidence. Exact branch HEAD and CI links are recorded in PR #1.
+
+## Earlier integration evidence retained
+
+- Real Docker boundary checks passed during V0 implementation (seven opt-in tests).
+- Real Viewer run/sample navigation was inspected in the browser, including model,
+  subscription-smoke limits, verifier results and observability.
+- Initial release-hardening credential scan examined 375 source/evidence files
+  with zero literal matches; finalization runs a fresh source/package scan.
+- No managed Agent containers or acceptance workspaces remained after those runs.
+  These are historical cleanup observations, not a claim about all later local work.
 
 ## Real Agent runs
 
@@ -58,7 +77,7 @@ claim would be unsupported. Versioned replay preserves original evidence.
 PASS: full sample request returned HTTP 200 / stop / COMPLETED; all four dimensions
 passed strict schema. Original correctness and three historical failed Judge artifacts
 were preserved. See [root causes and live evidence](judge-diagnostics.md).
-The owner will run an independent acceptance.
+Owner independent acceptance is complete (confirmed on 2026-10-07).
 
 ## Explicitly not run
 
