@@ -76,3 +76,11 @@ Actual browser checks cover the overview, sample navigation and attribution
 expansion; existing Viewer tests cover read-only evidence integrity and security.
 Ruff and mypy PASS; full suite: **175 passed / 7 opt-in Docker skipped**.
 No additional model calls or Docker acceptance runs were needed for this UI change.
+
+## README two-column gallery
+
+PASS: replaced the single 680px JPEG preview with two linked 360px PNG previews
+(run overview and sample detail), each with a caption below. Both supplied PNGs
+are byte-identical to their originals; chunk CRCs and README image/link targets
+pass validation. No Viewer or evaluation code changed. Ruff and mypy PASS;
+full suite: **175 passed / 7 opt-in Docker skipped**.

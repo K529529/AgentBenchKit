@@ -17,14 +17,20 @@ micro_swe 任务；不把一次成功或启发式归因当成能力证明。
 
 在本地只读页面中查看 Agent 执行结果、独立验证与端到端状态，并展开检查轨迹、候选代码、验证证据和可选 Judge 评分。
 
-<p align="center">
-  <a href="docs/assets/viewer-overview.jpg">
-    <img src="docs/assets/viewer-overview.jpg" alt="AgentBenchKit Web Viewer：真实 Nexus 运行的指标总览、任务结果与可展开证据" width="680">
-  </a>
-</p>
-<p align="center">
-  <sub>Nexus · qwen3.8-flash · Docker · 真实单任务运行<br>点击图片查看完整分辨率</sub>
-</p>
+<table>
+  <tr>
+    <td align="center" valign="top">
+      <a href="docs/assets/viewer-overview.png"><img src="docs/assets/viewer-overview.png" alt="评测运行总览：模型、环境、核心指标与任务结果" width="360"></a>
+      <br><sub><b>评测运行总览</b><br>查看模型、环境、核心指标与任务结果</sub>
+    </td>
+    <td align="center" valign="top">
+      <a href="docs/assets/viewer-sample.png"><img src="docs/assets/viewer-sample.png" alt="样本详情：Agent 结果、独立验证与可展开的分析证据" width="360"></a>
+      <br><sub><b>样本详情与证据</b><br>分层查看执行、验证、轨迹与质量分析</sub>
+    </td>
+  </tr>
+</table>
+
+<sub>点击图片查看高清原图 · Nexus / qwen3.8-flash / Docker 真实单任务示例</sub>
 
 ## 核心执行链路
 
