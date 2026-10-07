@@ -60,3 +60,19 @@ PASS: replaced the invalid WebP reference with the original PNG (byte-identical 
 the supplied screenshot; all PNG chunk CRCs and local image links verified).
 Centered preview, linked full-size image and caption added. Ruff, mypy and the
 existing suite pass: 175 passed / 7 Docker skipped; no evaluation code changed.
+
+## Viewer presentation refresh
+
+PASS: refreshed the shared Viewer styling and run overview hierarchy; preserved
+all status values, model-comparability warnings and expandable raw evidence.
+Sample attribution is now expandable: UNKNOWN / confidence 0.0 remains visible
+when opened, with the original uncertainty statement. No evaluation semantics or
+stored evidence changed.
+
+README now uses an unmodified browser capture of real Nexus / qwen3.8-flash /
+Docker run `20261007T085706Z-6489516b` (one task, one successful sample), with a
+680px preview and link to the original JPEG. This is a UI example, not a leaderboard.
+Actual browser checks cover the overview, sample navigation and attribution
+expansion; existing Viewer tests cover read-only evidence integrity and security.
+Ruff and mypy PASS; full suite: **175 passed / 7 opt-in Docker skipped**.
+No additional model calls or Docker acceptance runs were needed for this UI change.

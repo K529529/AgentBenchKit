@@ -18,12 +18,12 @@ micro_swe 任务；不把一次成功或启发式归因当成能力证明。
 在本地只读页面中查看 Agent 执行结果、独立验证与端到端状态，并展开检查轨迹、候选代码、验证证据和可选 Judge 评分。
 
 <p align="center">
-  <a href="docs/assets/viewer-overview.png">
-    <img src="docs/assets/viewer-overview.png" alt="AgentBenchKit Web Viewer：clamp 样本的执行结果、独立验证、观察归因与证据详情" width="680">
+  <a href="docs/assets/viewer-overview.jpg">
+    <img src="docs/assets/viewer-overview.jpg" alt="AgentBenchKit Web Viewer：真实 Nexus 运行的指标总览、任务结果与可展开证据" width="680">
   </a>
 </p>
 <p align="center">
-  <sub>clamp 样本详情 · 执行、正确性与分析分层展示<br>点击图片查看完整分辨率</sub>
+  <sub>Nexus · qwen3.8-flash · Docker · 真实单任务运行<br>点击图片查看完整分辨率</sub>
 </p>
 
 ## 核心执行链路
