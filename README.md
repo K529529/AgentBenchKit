@@ -13,6 +13,14 @@ micro_swe 任务；不把一次成功或启发式归因当成能力证明。
 [验收证据](docs/acceptance-v0.md) · [架构](docs/architecture-v0.3.1.md) ·
 [限制](docs/limitations.md) · [v0.1.0 说明](docs/release-notes-v0.1.0.md)
 
+## Web Viewer
+
+<p align="center">
+  <img src="docs/assets/viewer-overview.webp" alt="AgentBenchKit Web Viewer" width="900">
+</p>
+
+本地只读 Viewer 将一次评测的任务结果、Agent 状态、独立验证、Failure / RCA 与后续分析集中在同一页面；下钻后可查看指标、Trajectory、Candidate / patch、Verifier evidence，以及可选的 LLM-as-a-Judge Rubric 结果。
+
 ## 核心执行链路
 
 ```text
