@@ -84,3 +84,8 @@ PASS: replaced the single 680px JPEG preview with two linked 360px PNG previews
 are byte-identical to their originals; chunk CRCs and README image/link targets
 pass validation. No Viewer or evaluation code changed. Ruff and mypy PASS;
 full suite: **175 passed / 7 opt-in Docker skipped**.
+
+Gallery alignment follow-up PASS: both previews use a common 270px height with
+natural aspect ratios and unchanged original-image links. Removed the preview
+instruction and centered the remaining example caption. HTML attributes and
+image targets checked; Ruff/mypy PASS; 175 passed / 7 Docker skipped.

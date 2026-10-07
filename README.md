@@ -20,17 +20,17 @@ micro_swe 任务；不把一次成功或启发式归因当成能力证明。
 <table>
   <tr>
     <td align="center" valign="top">
-      <a href="docs/assets/viewer-overview.png"><img src="docs/assets/viewer-overview.png" alt="评测运行总览：模型、环境、核心指标与任务结果" width="360"></a>
+      <a href="docs/assets/viewer-overview.png"><img src="docs/assets/viewer-overview.png" alt="评测运行总览：模型、环境、核心指标与任务结果" height="270"></a>
       <br><sub><b>评测运行总览</b><br>查看模型、环境、核心指标与任务结果</sub>
     </td>
     <td align="center" valign="top">
-      <a href="docs/assets/viewer-sample.png"><img src="docs/assets/viewer-sample.png" alt="样本详情：Agent 结果、独立验证与可展开的分析证据" width="360"></a>
+      <a href="docs/assets/viewer-sample.png"><img src="docs/assets/viewer-sample.png" alt="样本详情：Agent 结果、独立验证与可展开的分析证据" height="270"></a>
       <br><sub><b>样本详情与证据</b><br>分层查看执行、验证、轨迹与质量分析</sub>
     </td>
   </tr>
 </table>
 
-<sub>点击图片查看高清原图 · Nexus / qwen3.8-flash / Docker 真实单任务示例</sub>
+<p align="center"><sub>Nexus / qwen3.8-flash / Docker 真实单任务示例</sub></p>
 
 ## 核心执行链路
 
