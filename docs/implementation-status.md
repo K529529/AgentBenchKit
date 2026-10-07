@@ -103,3 +103,6 @@ all eight images loading; both gallery images render at 270px height. This previ
 approximates GitHub styling rather than asserting pixel-identical GitHub rendering.
 SVG XML and local README link checks PASS. Ruff/mypy PASS; full suite:
 **175 passed / 7 opt-in Docker skipped**. Only documentation/assets changed.
+
+Final README copy polish PASS: applied the owner-selected tagline and shortened
+the gallery caption only. Ruff/mypy PASS; 175 passed / 7 Docker skipped.

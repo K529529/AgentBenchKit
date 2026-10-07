@@ -9,7 +9,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-147D70?style=flat-square" alt="MIT License"></a>
 </p>
 
-<p align="center"><b>不止看 Agent 做对了吗，也看它如何执行、失败证据在哪里、修改后是否变好。</b></p>
+<p align="center"><b>每一步，都有据可循</b></p>
 
 <p align="center">
   <a href="#quick-start">快速开始</a> ·
@@ -49,7 +49,7 @@ V0 支持 **Nexus / Codex**，使用公共 **ModelSpec** 管理模型连接信�
   </tr>
 </table>
 
-<p align="center"><sub>Nexus / qwen3.8-flash / Docker 真实单任务示例</sub></p>
+<p align="center"><sub>Nexus / qwen3.8-flash / Docker 单任务示例</sub></p>
 
 <a id="architecture"></a>
 ## 🧭 架构总览
