@@ -19,7 +19,7 @@ micro_swe 任务；不把一次成功或启发式归因当成能力证明。
 
 <p align="center">
   <a href="docs/assets/viewer-overview.png">
-    <img src="docs/assets/viewer-overview.png" alt="AgentBenchKit Web Viewer：clamp 样本的执行结果、独立验证、观察归因与证据详情" width="880">
+    <img src="docs/assets/viewer-overview.png" alt="AgentBenchKit Web Viewer：clamp 样本的执行结果、独立验证、观察归因与证据详情" width="680">
   </a>
 </p>
 <p align="center">
