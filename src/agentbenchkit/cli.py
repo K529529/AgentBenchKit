@@ -15,6 +15,8 @@ from agentbenchkit.analysis.compare import compare as compare_runs
 from agentbenchkit.analysis.judge import judge_sample
 from agentbenchkit.analysis.replay import replay as replay_run
 from agentbenchkit.benchmarks.micro_swe import load_tasks
+from agentbenchkit.benchmarks.registry import NAMES, BenchmarkConfig, make_config
+from agentbenchkit.benchmarks.registry import adapter as benchmark_adapter
 from agentbenchkit.core.models import (
     CredentialRef,
     HarnessOptions,
@@ -52,13 +54,69 @@ def version() -> None:
 def list_components(kind: str) -> None:
     """List currently implemented benchmarks, harnesses or environments."""
     values = {
-        "benchmarks": ["micro_swe"],
+        "benchmarks": list(NAMES),
         "harnesses": ["nexus", "codex"],
         "envs": ["host_process", "docker"],
     }
     if kind not in values:
         raise typer.BadParameter("choose benchmarks, harnesses, or envs")
     typer.echo("\n".join(values[kind]))
+
+
+@app.command("fetch-data")
+def fetch_benchmark_data(benchmark: str, output: Annotated[Path, typer.Option()]) -> None:
+    """Fetch pinned dataset data only; requires the evaluator's optional dependencies."""
+    if benchmark != "featurebench":
+        raise typer.BadParameter("this benchmark has no data fetcher yet")
+    from agentbenchkit.benchmarks.featurebench.data import fetch
+
+    try:
+        fetch(output)
+    except (ImportError, OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Pinned data saved to {output}; no model calls.")
+
+
+@app.command("tasks")
+def discover_tasks(
+    benchmark: str, task: Annotated[list[str] | None, typer.Option()] = None
+) -> None:
+    """Discover all task IDs (or validate a selection) without running models."""
+    try:
+        tasks = benchmark_adapter(benchmark).load_tasks(tuple(task or ()))
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(json.dumps([{"task_id": t.task_id, "tags": t.tags} for t in tasks], indent=2))
+
+
+@app.command("make-config")
+def generate_benchmark_config(
+    benchmark: str,
+    output: Annotated[Path, typer.Option()],
+    task: Annotated[list[str] | None, typer.Option()] = None,
+    all_tasks: Annotated[bool, typer.Option()] = False,
+    evalset: Annotated[Path | None, typer.Option()] = None,
+    dataset: Annotated[Path | None, typer.Option()] = None,
+    official_source: Annotated[Path | None, typer.Option()] = None,
+    evaluator_python: Annotated[str | None, typer.Option()] = None,
+    agent_image: Annotated[str | None, typer.Option()] = None,
+) -> None:
+    """Generate a selected/full plan. This command never executes tasks."""
+    try:
+        config = make_config(benchmark, tuple(task or ()), all_tasks, evalset)
+        config = config.model_copy(
+            update={
+                "dataset": dataset.resolve() if dataset else None,
+                "official_source": official_source.resolve() if official_source else None,
+                "evaluator_python": evaluator_python or config.evaluator_python,
+                "agent_image": agent_image,
+            }
+        )
+        with output.open("x", encoding="utf-8") as stream:
+            stream.write(config.model_dump_json(indent=2) + "\n")
+    except (ValueError, OSError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"Wrote {len(config.task_ids)} task(s) to {output}; no tasks executed.")
 
 
 @app.command()
@@ -88,14 +146,15 @@ def run(
     concurrency: Annotated[int, typer.Option(min=1, max=16)] = 1,
     startup_retries: Annotated[int, typer.Option(min=0, max=3)] = 1,
     docker_image: Annotated[str, typer.Option()] = "agentbenchkit-nexus:v0.2.0",
+    benchmark_config: Annotated[Path | None, typer.Option()] = None,
 ) -> None:
     """Evaluate an external Agent with fresh workspaces and independent verification."""
     if (
-        benchmark != "micro_swe"
+        benchmark not in NAMES
         or harness not in {"nexus", "codex"}
         or env not in {"host_process", "docker"}
     ):
-        raise typer.BadParameter("choose micro_swe, nexus or codex, host_process or docker")
+        raise typer.BadParameter("choose an implemented benchmark, harness and environment")
     binary = nexus_executable or Path(shutil.which("nexus") or "nexus")
     config = nexus_config or Path.home() / ".nexus" / "config.toml"
     try:
@@ -147,8 +206,22 @@ def run(
         if max_steps is not None:
             options = options.model_copy(update={"max_steps": max_steps})
         settings = AgentSettings(adapter, spec, options, auth_file=codex_auth)
-        tasks = load_tasks(
-            tuple(task or ()),
+        selection = tuple(task or ())
+        configuration = None
+        if benchmark_config:
+            if selection:
+                raise ValueError("do not mix --task and --benchmark-config")
+            configuration = BenchmarkConfig.model_validate_json(
+                benchmark_config.read_text(encoding="utf-8")
+            )
+            if configuration.benchmark != benchmark:
+                raise ValueError("benchmark config identity mismatch")
+            selection = configuration.task_ids
+        if benchmark != "micro_swe" and (not selection or env != "docker"):
+            raise ValueError("public benchmarks require explicit task selection and --env docker")
+        bench = benchmark_adapter(benchmark, configuration)
+        tasks = bench.load_tasks(
+            selection,
             PhaseBudgets(
                 agent=agent_timeout,
                 prepare=prepare_timeout,
@@ -166,6 +239,10 @@ def run(
                 f"{result.agent_outcome} / verifier={result.verifier_status}"
             )
 
+        if configuration:
+            docker_image = configuration.agent_image or next(
+                iter(configuration.agent_images.values()), docker_image
+            )
         result_dir = asyncio.run(
             evaluate(
                 tasks,
@@ -178,6 +255,7 @@ def run(
                 concurrency,
                 startup_retries,
                 progress,
+                benchmark=bench,
             )
         )
     except (OSError, ValueError, RuntimeError) as exc:

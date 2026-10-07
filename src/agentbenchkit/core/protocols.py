@@ -1,5 +1,6 @@
 """External adapters describe commands; environments own process execution."""
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Protocol
 
@@ -82,11 +83,13 @@ class BenchmarkAdapter(Protocol):
 
     def load_tasks(
         self, selected: tuple[str, ...] = (), budgets: PhaseBudgets | None = None
-    ) -> list[TaskSpec]: ...
+    ) -> Sequence[TaskSpec]: ...
 
     def task_manifest(self, task: TaskSpec) -> dict[str, JsonValue]: ...
 
-    async def prepare(self, task: TaskSpec, workspace: Path) -> None: ...
+    async def prepare(
+        self, task: TaskSpec, workspace: Path, evidence: Path
+    ) -> Environment | None: ...
 
     async def collect(
         self, task: TaskSpec, workspace: Path, destination: Path, redactor: Redactor

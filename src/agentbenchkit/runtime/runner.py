@@ -5,7 +5,7 @@ import platform
 import shutil
 import time
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -22,7 +22,7 @@ from agentbenchkit.core.status import AgentOutcome, AuxiliaryStatus, ExecutionSt
 from agentbenchkit.environments.docker import DockerEnvironment
 from agentbenchkit.environments.host import HostProcessEnvironment
 from agentbenchkit.runtime.manifest import agent_identity, runtime_identity
-from agentbenchkit.runtime.recovery import RunLease, recover
+from agentbenchkit.runtime.recovery import RunLease, cleanup_resources, recover
 from agentbenchkit.runtime.settings import AgentSettings
 from agentbenchkit.storage.artifacts import Redactor, StreamRedactor, write_json
 from agentbenchkit.storage.index import index_run
@@ -116,9 +116,13 @@ async def evaluate_attempt(
     checkpoint()
     try:
         async with asyncio.timeout(budget(task.timeouts.prepare)):
-            await benchmark.prepare(task, workspace)
+            prepared_environment = await benchmark.prepare(
+                task, workspace, execution_dir / "prepare"
+            )
             env = settings.prepare(work / "agent_home") if settings else {}
-            provider = environment or HostProcessEnvironment()
+            provider = prepared_environment or environment or HostProcessEnvironment()
+            if isinstance(provider, DockerEnvironment):
+                write_json(execution_dir / "environment.json", await provider.resolve(), redactor)
             session = await provider.create(workspace, execution_id)
             setup_streams = {name: StreamRedactor(redactor) for name in ("stdout", "stderr")}
 
@@ -237,7 +241,10 @@ async def evaluate_attempt(
         )
         async with asyncio.timeout(budget(task.timeouts.verify)):
             verification = await benchmark.verify(
-                verify_task, sample_dir / "candidate", work / "verify", environment,
+                verify_task,
+                sample_dir / "candidate",
+                work / "verify",
+                environment,
             )
         verifier_cleanup_error = (work / "verify" / "cleanup.json").exists()
         for name in ("stdout.log", "stderr.log", "cleanup.json"):
@@ -260,11 +267,15 @@ async def evaluate_attempt(
         if status not in {ExecutionStatus.TIMED_OUT, ExecutionStatus.CANCELLED}:
             status = ExecutionStatus.ERROR
     finally:
+        verifier_cleanup_error |= (work / "verify" / "cleanup.json").exists()
         try:
             async with asyncio.timeout(task.timeouts.cleanup):
                 if session is not None:
                     await session.close()
                 if work.exists():
+                    resource_errors = await cleanup_resources(work)
+                    if resource_errors:
+                        raise RuntimeError("; ".join(resource_errors))
                     remove_work(work, work_root)
             cleanup = AuxiliaryStatus.ERROR if verifier_cleanup_error else AuxiliaryStatus.COMPLETED
         except (OSError, ValueError, RuntimeError, TimeoutError) as exc:
@@ -345,7 +356,7 @@ async def evaluate_sample(
 
 
 async def evaluate(
-    tasks: list[TaskSpec],
+    tasks: Sequence[TaskSpec],
     harness: Harness,
     output: Path,
     samples: int = 1,

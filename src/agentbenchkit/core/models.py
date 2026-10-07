@@ -112,16 +112,21 @@ class PhaseBudgets(Contract):
 class TaskSpec(Contract):
     task_id: str = Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_.-]*$")
     prompt: str = Field(min_length=1)
-    fixture: Path
     baseline_revision: str
     setup: tuple[CommandSpec, ...] = ()
-    verification: CommandSpec
-    protected_assets: Path
-    reference_candidate: Path
     timeouts: PhaseBudgets = PhaseBudgets()
     task_type: str = "bug_fix"
     tags: tuple[str, ...] = ()
     metadata: dict[str, JsonValue] = Field(default_factory=dict)
+
+
+class LocalTaskSpec(TaskSpec):
+    """Tasks backed by bundled fixtures and a local verifier command."""
+
+    fixture: Path
+    verification: CommandSpec
+    protected_assets: Path
+    reference_candidate: Path
 
 
 class Capabilities(Contract):

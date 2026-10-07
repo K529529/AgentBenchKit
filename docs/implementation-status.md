@@ -121,3 +121,57 @@ Scope and phase order are recorded in [V0.2 implementation](v0.2-implementation.
 - Real model smoke for new benchmarks: NOT RUN, pending adapter phases.
 - Execution sandbox initialization is broken on this host; reviewed commands outside
   that sandbox were used. No Agent/model calls or large image pulls in this phase.
+
+
+## V0.2 phase 2: FeatureBench Fast v1.1
+
+PASS: full 100-task discovery, explicit selection/config generation and frozen
+16-task/8-image evalset import. Dataset, evaluator and official image digests are
+pinned. Official RuntimeHandler prepares the masked repository; official
+run_instance owns F2P/P2P execution and grading. Runtime contains no repository or
+FeatureBench conditions. Local fixture fields now belong to LocalTaskSpec.
+
+Real Nexus pipeline smoke completed on 2026-10-08:
+
+- Task: `pypa__packaging.013f3b03.test_metadata.e00b5801.lv1`, selected for its
+  relatively small image from the frozen set before observing Agent results.
+- Run: `20261007T231234Z-bfb89e93`; physical execution
+  `5cecee636bfc4667bab35ef096a2546e`.
+- FINISHED / Agent LIMITED (40 steps) / official FAIL / cleanup COMPLETED.
+  Candidate frozen; sample_success=false. This is pipeline acceptance, not a
+  solved task or a claim of benchmark accuracy. No performance-driven retry.
+- Official report: patch applied, evaluation completed; F2P 275 success / 19
+  failure; P2P 3508 success / 0 failure. ABK uses upstream resolved=false.
+- Agent qwen3.8-flash, reasoning low, max output 16384; 40 reported model calls,
+  input 1,330,177 tokens, cached input 982,784, output 25,269. No verified CNY bill.
+- Candidate patch SHA256:
+  `1f7555ab3025fae1a72f72375df569b50f135a12608b6cf0c92a5895180c1dbf`.
+- Official worker result SHA256:
+  `367801b34ee7d9210157acc8fd03a2c16669f4715a8661a21c8f7c722af617f0`.
+- Exact pre-commit smoke source snapshot SHA256:
+  `6e2738195d735cffd8a0c53f84a021419fe1877226cca4de1708881d8e5834b1`.
+  Later type/config/resource-recovery hardening is regression checked separately;
+  it is not misrepresented as the exact source used for model inference.
+
+Evidence is local and ignored: `.agentbenchkit/v02-results/<run>` and
+`.agentbenchkit/smoke-source-3.zip`. Earlier physical runs remain preserved:
+`20261007T230422Z-756533b5` failed PREPARE on docker-py's 60-second snapshot timeout;
+`20261007T230815Z-2f1ffcaf` failed before model calls on the container home UID.
+The fixes use bounded Docker CLI snapshotting and the existing host UID mapping.
+No agent source, official test logic or credential boundary was changed.
+
+Official evaluator controls PASS: empty patch -> FAIL, reference patch -> PASS.
+Final-code verification of the frozen Nexus patch is retained separately in
+`.agentbenchkit/featurebench-final-verification` (no additional model calls).
+
+Validation: 185 passed / 7 opt-in Docker skipped; Ruff/mypy PASS. Real Linux/WSL
+Docker regression: 7 passed. Windows Docker retry: 4 FAIL / 3 PASS due to host
+PermissionError reading container-created files in Python's 0700 pytest directory.
+A same-machine no-model comparison reproduced it with BOTH committed V0 and V0.2;
+ordinary directories worked in both. This host ACL limitation remains documented,
+not hidden by a permission relaxation. Linux ext4 workspaces are required for the
+public benchmark execution path. No managed container or ephemeral snapshot was
+left after the real smoke.
+
+SWE-bench, Polyglot and Qoder real acceptance are still NOT RUN at this phase.
+No full benchmark or formal 16 x 2 experiment was run.

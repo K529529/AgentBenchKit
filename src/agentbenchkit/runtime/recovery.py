@@ -57,6 +57,88 @@ def load_sample(path: Path) -> SampleResult:
     )
 
 
+async def cleanup_resources(work: Path) -> list[str]:
+    """Reap only recorded, ownership-verified resources before discarding work."""
+    errors = []
+    resources = await asyncio.to_thread(lambda: list(work.glob("**/*-resource.json")))
+    if sys.platform != "win32":
+        for resource in (p for p in resources if p.name == "host-resource.json"):
+            data = json.loads(resource.read_text(encoding="utf-8"))
+            if await asyncio.to_thread(process_start, data["pid"]) == data["start"]:
+                import signal
+
+                try:
+                    os.killpg(data["pid"], signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+    for resource in (p for p in resources if p.name == "docker-resource.json"):
+        data = json.loads(resource.read_text(encoding="utf-8"))
+        name = data["name"]
+        if not name.startswith("abk-"):
+            errors.append("unexpected Docker resource name")
+            continue
+        try:
+            ids = await docker(
+                "ps",
+                "-aq",
+                "--filter",
+                f"name=^/{name}$",
+                "--filter",
+                "label=agentbenchkit.managed=true",
+            )
+            if ids:
+                details = json.loads(await docker("inspect", name))[0]
+                identity = hashlib.sha256(data["workspace"].encode()).hexdigest()
+                if details["Config"]["Labels"].get("agentbenchkit.workspace") != identity:
+                    raise ValueError("container ownership does not match recovery record")
+                await docker("rm", "--force", name)
+        except (OSError, RuntimeError, ValueError, TimeoutError) as exc:
+            errors.append(str(exc))
+    # External evaluators may name their own containers. Ownership is
+    # checked by scoped execution/workspace labels, never by benchmark.
+    for resource in (p for p in resources if p.name == "docker-group-resource.json"):
+        data = json.loads(resource.read_text(encoding="utf-8"))
+        identity = hashlib.sha256(data["workspace"].encode()).hexdigest()
+        try:
+            ids = await docker(
+                "ps",
+                "-aq",
+                "--filter",
+                "label=agentbenchkit.managed=true",
+                "--filter",
+                "label=agentbenchkit.execution=" + data["execution"],
+            )
+            for container_id in ids.splitlines():
+                details = json.loads(await docker("inspect", container_id))[0]
+                if details["Config"]["Labels"].get("agentbenchkit.workspace") != identity:
+                    raise ValueError("evaluator resource ownership mismatch")
+                await docker("rm", "--force", container_id)
+        except (OSError, RuntimeError, ValueError, TimeoutError) as exc:
+            errors.append(str(exc))
+    for resource in (p for p in resources if p.name == "docker-image-resource.json"):
+        data = json.loads(resource.read_text(encoding="utf-8"))
+        identity = hashlib.sha256(data["workspace"].encode()).hexdigest()
+        if not data["name"].startswith("abk-prepared-"):
+            errors.append("unexpected ephemeral image name")
+            continue
+        try:
+            images = await docker(
+                "image",
+                "ls",
+                "-q",
+                "--filter",
+                "reference=" + data["name"],
+            )
+            if images:
+                details = json.loads(await docker("image", "inspect", data["name"]))[0]
+                if details["Config"]["Labels"].get("agentbenchkit.workspace") != identity:
+                    raise ValueError("ephemeral image ownership mismatch")
+                await docker("image", "rm", data["name"])
+        except (OSError, RuntimeError, ValueError, TimeoutError) as exc:
+            errors.append(str(exc))
+    return errors
+
+
 async def recover(output: Path) -> list[str]:
     recovered = []
     for manifest_path in sorted(
@@ -73,41 +155,7 @@ async def recover(output: Path) -> list[str]:
         if not lease.acquire():
             continue  # a live runner owns the evidence and resources
         try:
-            errors = []
-            work = directory / "work"
-            for resource in work.glob("**/docker-resource.json"):
-                data = json.loads(resource.read_text(encoding="utf-8"))
-                name = data["name"]
-                if not name.startswith("abk-"):
-                    errors.append("unexpected Docker resource name")
-                    continue
-                try:
-                    ids = await docker(
-                        "ps",
-                        "-aq",
-                        "--filter",
-                        f"name=^/{name}$",
-                        "--filter",
-                        "label=agentbenchkit.managed=true",
-                    )
-                    if ids:
-                        details = json.loads(await docker("inspect", name))[0]
-                        identity = hashlib.sha256(data["workspace"].encode()).hexdigest()
-                        if details["Config"]["Labels"].get("agentbenchkit.workspace") != identity:
-                            raise ValueError("container ownership does not match recovery record")
-                        await docker("rm", "--force", name)
-                except (OSError, RuntimeError, ValueError, TimeoutError) as exc:
-                    errors.append(str(exc))
-            if sys.platform != "win32":
-                for resource in work.glob("**/host-resource.json"):
-                    data = json.loads(resource.read_text(encoding="utf-8"))
-                    if await asyncio.to_thread(process_start, data["pid"]) == data["start"]:
-                        import signal
-
-                        try:
-                            os.killpg(data["pid"], signal.SIGKILL)
-                        except ProcessLookupError:
-                            pass
+            errors = await cleanup_resources(directory / "work")
             plan = json.loads((directory / "plan.json").read_text(encoding="utf-8"))
             results = []
             for item in plan:

@@ -1,0 +1,949 @@
+{
+  "schema_version": 1,
+  "evalset_id": "featurebench-fast-evalset-v1",
+  "evalset_version": "1.0.0",
+  "created_date": "2026-10-08",
+  "status": "frozen_selection_not_execution_validated",
+  "purpose": "Fixed outcome-blind, cost-aware diversity panel; not an unbiased estimate of full Fast accuracy.",
+  "source": {
+    "dataset": "LiberCoders/FeatureBench",
+    "dataset_version": "v1.1",
+    "revision": "76b4a4566e04f4bcc13c35125d4f301791efa736",
+    "split": "fast",
+    "source_task_count": 100,
+    "source_repo_count": 18,
+    "parquet_url": "https://huggingface.co/datasets/LiberCoders/FeatureBench/resolve/76b4a4566e04f4bcc13c35125d4f301791efa736/data/fast-00000-of-00001.parquet",
+    "parquet_sha256": "d775855a031b0fb5932ff7fdf4512ce733fbc6716528395bf15cbad22df5d2c3",
+    "decoded_json_sha256": "6db91dc228924a2c3bf392e35e3f52eae76150076932c83b69cb34a1b659cdde",
+    "official_evaluator_commit": "8d4e347ec57546685c5a87e8676bf575db022ea6",
+    "registry_snapshot_sha256": "40641c440afabf22fd8d3a89d839af2f3a446f74c6ed53dfbabf5450a3ceb18e",
+    "registry_snapshot_date": "2026-10-08"
+  },
+  "selection_policy": {
+    "algorithm": "cost_constrained_repo_enumeration_then_stratified_greedy_single_swap_v1",
+    "target_task_count": 16,
+    "allowed_image_count_range": [
+      6,
+      8
+    ],
+    "primary_repo_families": {
+      "api_schema_compatibility": [
+        "fastapi/fastapi",
+        "pydantic/pydantic"
+      ],
+      "array_data_structures": [
+        "pandas-dev/pandas",
+        "pydata/xarray"
+      ],
+      "scientific_symbolic_computing": [
+        "astropy/astropy",
+        "sympy/sympy",
+        "scikit-learn/scikit-learn"
+      ],
+      "visualization": [
+        "matplotlib/matplotlib",
+        "mwaskom/seaborn"
+      ],
+      "packaging_build": [
+        "pypa/packaging",
+        "pypa/hatch",
+        "mesonbuild/meson",
+        "pypa/setuptools"
+      ],
+      "language_test_tooling": [
+        "pytest-dev/pytest",
+        "python/mypy",
+        "Netflix/metaflow"
+      ],
+      "documentation_toolchain": [
+        "sphinx-doc/sphinx"
+      ],
+      "application_services": [
+        "mlflow/mlflow"
+      ]
+    },
+    "repo_optimization": "At most one repo per family; enough tasks for 16 with <=3/repo. Maximize family coverage within 8 images, then minimize union of registry layer sizes; repo-name order breaks ties.",
+    "task_minimum_per_repo": "min(2, available_tasks)",
+    "task_maximum_per_repo": 3,
+    "same_repo_mask_path_jaccard_max": 0.6,
+    "complexity_proxy": "Mean of full-pool empirical midranks of mask_removed_lines, mask_touched_files, declared_interface_paths, declared_signature_occurrences.",
+    "test_scale_proxy": "Mean of full-pool empirical midranks of F2P removed test lines and AST FunctionDef/AsyncFunctionDef nodes named test_* in the removed whole test file. Source is parsed, never executed.",
+    "midrank": "(count strictly smaller + 0.5 * count equal) / 100",
+    "tertiles": "Cut at sorted full-pool scores at zero-based indexes 33 and 66; ties stay in the same bin.",
+    "thresholds": {
+      "complexity_proxy_score": {
+        "low_inclusive_max": 0.395,
+        "medium_inclusive_max": 0.57
+      },
+      "test_scale_proxy_score": {
+        "low_inclusive_max": 0.32,
+        "medium_inclusive_max": 0.6575
+      }
+    },
+    "task_optimization": "Seed one task per repo closest to (0.5,0.5) proxy scores. Greedily satisfy repo minima then fill to 16. Best-improving single swaps preserve quotas and overlap ceiling until local optimum.",
+    "task_objective_lexicographic": [
+      "maximize sorted ascending counts of the six complexity/test-scale bins (max-min balance)",
+      "maximize number of covered mask scope bins plus presence/absence of parametrize markers",
+      "maximize mean (1 - mask-path Jaccard) among same-repo pairs",
+      "maximize mean pairwise L1 distance of the two proxy scores, divided by 2"
+    ],
+    "tie_break": "Ascending instance_id; for swap ties use ascending (removed_id, added_id). Numeric objective rounded to 12 decimals.",
+    "image_count_alternatives": [
+      {
+        "image_count": 6,
+        "family_coverage": 6,
+        "compressed_unique_bytes": 36942320203,
+        "repos": [
+          "mlflow/mlflow",
+          "mwaskom/seaborn",
+          "pydata/xarray",
+          "pypa/packaging",
+          "sphinx-doc/sphinx",
+          "sympy/sympy"
+        ],
+        "families": [
+          "array_data_structures",
+          "scientific_symbolic_computing",
+          "visualization",
+          "packaging_build",
+          "documentation_toolchain",
+          "application_services"
+        ],
+        "feasible_combinations": 221
+      },
+      {
+        "image_count": 7,
+        "family_coverage": 7,
+        "compressed_unique_bytes": 36328976738,
+        "repos": [
+          "fastapi/fastapi",
+          "mwaskom/seaborn",
+          "pydata/xarray",
+          "pypa/packaging",
+          "pytest-dev/pytest",
+          "sphinx-doc/sphinx",
+          "sympy/sympy"
+        ],
+        "families": [
+          "api_schema_compatibility",
+          "array_data_structures",
+          "scientific_symbolic_computing",
+          "visualization",
+          "packaging_build",
+          "language_test_tooling",
+          "documentation_toolchain"
+        ],
+        "feasible_combinations": 664
+      },
+      {
+        "image_count": 8,
+        "family_coverage": 8,
+        "compressed_unique_bytes": 43185330435,
+        "repos": [
+          "fastapi/fastapi",
+          "mlflow/mlflow",
+          "mwaskom/seaborn",
+          "pydata/xarray",
+          "pypa/packaging",
+          "pytest-dev/pytest",
+          "sphinx-doc/sphinx",
+          "sympy/sympy"
+        ],
+        "families": [
+          "api_schema_compatibility",
+          "array_data_structures",
+          "scientific_symbolic_computing",
+          "visualization",
+          "packaging_build",
+          "language_test_tooling",
+          "documentation_toolchain",
+          "application_services"
+        ],
+        "feasible_combinations": 288
+      }
+    ],
+    "task_search_optimality": "Deterministic local optimum only; no global optimum claim.",
+    "agent_outcomes_used": false,
+    "leaderboard_scores_used": false,
+    "reference_implementation_semantics_used": false,
+    "metadata_only_reference_use": "Counts and paths from mask/test patches; no solution bodies exported. Semantic rationales use public v1.1 problem statements only.",
+    "metric_limits": [
+      "Complexity is a structural proxy, not measured reasoning difficulty, completion time, or token cost.",
+      "Mask scope can exceed the required v1.1 interfaces; counts include comments, blanks, and helper/test paths.",
+      "Declared signatures are regex occurrences in Path-associated Python blocks, not an AST-verified required-function count.",
+      "Static test definitions are not collected or parameter-expanded test cases; P2P test case counts and actual runtimes are unknown.",
+      "Families are curator-defined primary repo strata, not official task labels; code tags are descriptive and not outcome-derived."
+    ]
+  },
+  "summary": {
+    "task_count": 16,
+    "repo_count": 8,
+    "image_count": 8,
+    "level_counts": {
+      "lv1": 16,
+      "lv2": 0
+    },
+    "official_gpu_requests": 0,
+    "repo_task_counts": {
+      "fastapi/fastapi": 1,
+      "mlflow/mlflow": 3,
+      "mwaskom/seaborn": 3,
+      "pydata/xarray": 2,
+      "pypa/packaging": 1,
+      "pytest-dev/pytest": 2,
+      "sphinx-doc/sphinx": 2,
+      "sympy/sympy": 2
+    },
+    "complexity_proxy_counts": {
+      "low": 6,
+      "high": 5,
+      "medium": 5
+    },
+    "test_scale_proxy_counts": {
+      "low": 5,
+      "medium": 5,
+      "high": 6
+    },
+    "mask_scope_counts": {
+      "cross_6_15": 4,
+      "local_2_5": 7,
+      "wide_16_plus": 4,
+      "single": 1
+    }
+  },
+  "task_ids": [
+    "fastapi__fastapi.02e108d1.test_compat.71e8518f.lv1",
+    "mlflow__mlflow.93dab383.test_genai_eval_utils.2d5441f2.lv1",
+    "mlflow__mlflow.93dab383.test_numpy_dataset.1beaad57.lv1",
+    "mlflow__mlflow.93dab383.test_trace_correlation.53c200a6.lv1",
+    "mwaskom__seaborn.7001ebe7.test_algorithms.1f0181c2.lv1",
+    "mwaskom__seaborn.7001ebe7.test_distributions.f700676d.lv1",
+    "mwaskom__seaborn.7001ebe7.test_plot.b645d353.lv1",
+    "pydata__xarray.97f3a746.test_backends_chunks.fa55f68a.lv1",
+    "pydata__xarray.97f3a746.test_coordinate_transform.6cacb660.lv1",
+    "pypa__packaging.013f3b03.test_metadata.e00b5801.lv1",
+    "pytest-dev__pytest.68016f0e.raises_group.c28bf36a.lv1",
+    "pytest-dev__pytest.68016f0e.test_local.40fb2f1f.lv1",
+    "sphinx-doc__sphinx.e347e59c.test_build_gettext.2721e644.lv1",
+    "sphinx-doc__sphinx.e347e59c.test_ext_intersphinx.04901873.lv1",
+    "sympy__sympy.c1097516.test_inverse.c240ffe7.lv1",
+    "sympy__sympy.c1097516.test_puiseux.cd575f09.lv1"
+  ],
+  "tasks": [
+    {
+      "ordinal": 1,
+      "instance_id": "fastapi__fastapi.02e108d1.test_compat.71e8518f.lv1",
+      "repo": "fastapi/fastapi",
+      "level": "lv1",
+      "base_commit": "02e108d1663149faac4156dd23595cbdf74287c2",
+      "image": "libercoders/featurebench-specs_fastapi-instance_835a08db",
+      "title_zh": "Pydantic 跨版本兼容",
+      "selection_reason_zh": "覆盖 API 框架中的版本兼容与字段识别；以较小公开接口范围提供兼容性基线。",
+      "code_type_tags": [
+        "version_compatibility",
+        "schema_introspection"
+      ],
+      "primary_repo_family": "api_schema_compatibility",
+      "problem_statement_sha256": "1bd0c3c13a250dc16785fb339106d5e7eb5352ad42d3f2b14d14214d84bb6701",
+      "static_metadata": {
+        "declared_interface_paths": 2,
+        "declared_signature_occurrences": 5,
+        "mask_removed_lines": 106,
+        "mask_touched_files": 9,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 166,
+        "f2p_static_test_definitions": 10,
+        "f2p_parametrize_markers": 0,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.34875,
+        "test_scale_proxy_score": 0.1975,
+        "scope_stratum": "cross_6_15",
+        "has_parametrize": false,
+        "complexity_stratum": "low",
+        "test_scale_stratum": "low"
+      }
+    },
+    {
+      "ordinal": 2,
+      "instance_id": "mlflow__mlflow.93dab383.test_genai_eval_utils.2d5441f2.lv1",
+      "repo": "mlflow/mlflow",
+      "level": "lv1",
+      "base_commit": "93dab383a1a3fc9882ebc32283ad2a05d79ff70f",
+      "image": "libercoders/featurebench-specs_mlflow-instance_efffa87e",
+      "title_zh": "评估结果整理与 CLI 展示",
+      "selection_reason_zh": "覆盖 scorer 名称解析、评估结果提取与表格格式化；与同仓库的数据模型、统计计算分开取样。",
+      "code_type_tags": [
+        "cli_formatting",
+        "result_processing"
+      ],
+      "primary_repo_family": "application_services",
+      "problem_statement_sha256": "f867d26e97bfaef8448a59b58beb6e4f3d7e7770312a82de0ce0cc278bad7563",
+      "static_metadata": {
+        "declared_interface_paths": 1,
+        "declared_signature_occurrences": 4,
+        "mask_removed_lines": 162,
+        "mask_touched_files": 2,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 505,
+        "f2p_static_test_definitions": 20,
+        "f2p_parametrize_markers": 0,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.15375,
+        "test_scale_proxy_score": 0.6575,
+        "scope_stratum": "local_2_5",
+        "has_parametrize": false,
+        "complexity_stratum": "low",
+        "test_scale_stratum": "medium"
+      }
+    },
+    {
+      "ordinal": 3,
+      "instance_id": "mlflow__mlflow.93dab383.test_numpy_dataset.1beaad57.lv1",
+      "repo": "mlflow/mlflow",
+      "level": "lv1",
+      "base_commit": "93dab383a1a3fc9882ebc32283ad2a05d79ff70f",
+      "image": "libercoders/featurebench-specs_mlflow-instance_efffa87e",
+      "title_zh": "Dataset 与 tensor schema",
+      "selection_reason_zh": "覆盖 shape/dtype 处理、schema 推断与 JSON 序列化；公开接口横跨六个路径，补充跨模块业务代码。",
+      "code_type_tags": [
+        "serialization",
+        "tensor_schema"
+      ],
+      "primary_repo_family": "application_services",
+      "problem_statement_sha256": "92aaf8cd00677012c827690a3b371f295c7d41e1275706e6c1247511b6e419d4",
+      "static_metadata": {
+        "declared_interface_paths": 6,
+        "declared_signature_occurrences": 12,
+        "mask_removed_lines": 814,
+        "mask_touched_files": 17,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 257,
+        "f2p_static_test_definitions": 11,
+        "f2p_parametrize_markers": 2,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.76,
+        "test_scale_proxy_score": 0.37,
+        "scope_stratum": "wide_16_plus",
+        "has_parametrize": true,
+        "complexity_stratum": "high",
+        "test_scale_stratum": "medium"
+      }
+    },
+    {
+      "ordinal": 4,
+      "instance_id": "mlflow__mlflow.93dab383.test_trace_correlation.53c200a6.lv1",
+      "repo": "mlflow/mlflow",
+      "level": "lv1",
+      "base_commit": "93dab383a1a3fc9882ebc32283ad2a05d79ff70f",
+      "image": "libercoders/featurebench-specs_mlflow-instance_efffa87e",
+      "title_zh": "Trace 相关性统计",
+      "selection_reason_zh": "覆盖 NPMI、零计数及数值稳定性；为同一应用仓库增加小范围算法任务。",
+      "code_type_tags": [
+        "statistics",
+        "numeric_edge_cases"
+      ],
+      "primary_repo_family": "application_services",
+      "problem_statement_sha256": "57cb83bd691bf09c45eb7e63615b0ea812adce900ce0163b0edd7aa0e2c8a99a",
+      "static_metadata": {
+        "declared_interface_paths": 1,
+        "declared_signature_occurrences": 3,
+        "mask_removed_lines": 164,
+        "mask_touched_files": 3,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 148,
+        "f2p_static_test_definitions": 10,
+        "f2p_parametrize_markers": 4,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.15,
+        "test_scale_proxy_score": 0.1825,
+        "scope_stratum": "local_2_5",
+        "has_parametrize": true,
+        "complexity_stratum": "low",
+        "test_scale_stratum": "low"
+      }
+    },
+    {
+      "ordinal": 5,
+      "instance_id": "mwaskom__seaborn.7001ebe7.test_algorithms.1f0181c2.lv1",
+      "repo": "mwaskom/seaborn",
+      "level": "lv1",
+      "base_commit": "7001ebe72423238e99c0434a2ef0a0ebc9cb55c1",
+      "image": "libercoders/featurebench-specs_seaborn-instance_52738fbb",
+      "title_zh": "Bootstrap 重采样",
+      "selection_reason_zh": "覆盖随机种子、缺失值与结构化重采样；提供较小测试文件下的统计算法任务。",
+      "code_type_tags": [
+        "randomized_algorithm",
+        "missing_data"
+      ],
+      "primary_repo_family": "visualization",
+      "problem_statement_sha256": "f58d7bdad4a472d97e97922930285b2b2b33badb5066904fc0b44e0b1242e409",
+      "static_metadata": {
+        "declared_interface_paths": 1,
+        "declared_signature_occurrences": 2,
+        "mask_removed_lines": 116,
+        "mask_touched_files": 2,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 172,
+        "f2p_static_test_definitions": 13,
+        "f2p_parametrize_markers": 0,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.08499999999999999,
+        "test_scale_proxy_score": 0.3125,
+        "scope_stratum": "local_2_5",
+        "has_parametrize": false,
+        "complexity_stratum": "low",
+        "test_scale_stratum": "low"
+      }
+    },
+    {
+      "ordinal": 6,
+      "instance_id": "mwaskom__seaborn.7001ebe7.test_distributions.f700676d.lv1",
+      "repo": "mwaskom/seaborn",
+      "level": "lv1",
+      "base_commit": "7001ebe72423238e99c0434a2ef0a0ebc9cb55c1",
+      "image": "libercoders/featurebench-specs_seaborn-instance_52738fbb",
+      "title_zh": "调色板与 Facet 访问器",
+      "selection_reason_zh": "覆盖 cubehelix、matplotlib 兼容和 FacetGrid 访问器；静态测试范围较大，不把题名误解为重写分布绘图系统。",
+      "code_type_tags": [
+        "color_mapping",
+        "library_interoperability"
+      ],
+      "primary_repo_family": "visualization",
+      "problem_statement_sha256": "762cc4a30d464649b8eaad8b040b58294eedf9d9e7f50d972e28c917d8020e37",
+      "static_metadata": {
+        "declared_interface_paths": 4,
+        "declared_signature_occurrences": 7,
+        "mask_removed_lines": 1174,
+        "mask_touched_files": 12,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 2498,
+        "f2p_static_test_definitions": 172,
+        "f2p_parametrize_markers": 29,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.69125,
+        "test_scale_proxy_score": 0.98,
+        "scope_stratum": "cross_6_15",
+        "has_parametrize": true,
+        "complexity_stratum": "high",
+        "test_scale_stratum": "high"
+      }
+    },
+    {
+      "ordinal": 7,
+      "instance_id": "mwaskom__seaborn.7001ebe7.test_plot.b645d353.lv1",
+      "repo": "mwaskom/seaborn",
+      "level": "lv1",
+      "base_commit": "7001ebe72423238e99c0434a2ef0a0ebc9cb55c1",
+      "image": "libercoders/featurebench-specs_seaborn-instance_52738fbb",
+      "title_zh": "声明式 Plot API",
+      "selection_reason_zh": "覆盖返回副本的方法链、布局验证、图层配置和主题 HTML 表示；补充声明式对象 API 与大测试文件。",
+      "code_type_tags": [
+        "fluent_api",
+        "declarative_configuration"
+      ],
+      "primary_repo_family": "visualization",
+      "problem_statement_sha256": "a299078e845f72f1a9d456bd075a0d2d65eccf87be447827acc728936499367b",
+      "static_metadata": {
+        "declared_interface_paths": 2,
+        "declared_signature_occurrences": 12,
+        "mask_removed_lines": 373,
+        "mask_touched_files": 2,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 2350,
+        "f2p_static_test_definitions": 179,
+        "f2p_parametrize_markers": 12,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.4125,
+        "test_scale_proxy_score": 0.98,
+        "scope_stratum": "local_2_5",
+        "has_parametrize": true,
+        "complexity_stratum": "medium",
+        "test_scale_stratum": "high"
+      }
+    },
+    {
+      "ordinal": 8,
+      "instance_id": "pydata__xarray.97f3a746.test_backends_chunks.fa55f68a.lv1",
+      "repo": "pydata/xarray",
+      "level": "lv1",
+      "base_commit": "97f3a7465a66638f68129581b658853a3992dd89",
+      "image": "libercoders/featurebench-specs_xarray-instance_62de996a",
+      "title_zh": "多维数组分块对齐",
+      "selection_reason_zh": "覆盖边界块、维度与存储网格对齐；以小测试范围提供数组与存储边界问题。",
+      "code_type_tags": [
+        "chunking_algorithm",
+        "storage_alignment"
+      ],
+      "primary_repo_family": "array_data_structures",
+      "problem_statement_sha256": "8ecf3a4a218dfae856e7eac52e5df4fda27fa46cb1390af658d88ce5aece87cd",
+      "static_metadata": {
+        "declared_interface_paths": 1,
+        "declared_signature_occurrences": 4,
+        "mask_removed_lines": 194,
+        "mask_touched_files": 7,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 116,
+        "f2p_static_test_definitions": 3,
+        "f2p_parametrize_markers": 3,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.24375000000000002,
+        "test_scale_proxy_score": 0.05,
+        "scope_stratum": "cross_6_15",
+        "has_parametrize": true,
+        "complexity_stratum": "low",
+        "test_scale_stratum": "low"
+      }
+    },
+    {
+      "ordinal": 9,
+      "instance_id": "pydata__xarray.97f3a746.test_coordinate_transform.6cacb660.lv1",
+      "repo": "pydata/xarray",
+      "level": "lv1",
+      "base_commit": "97f3a7465a66638f68129581b658853a3992dd89",
+      "image": "libercoders/featurebench-specs_xarray-instance_62de996a",
+      "title_zh": "坐标与索引工具",
+      "selection_reason_zh": "覆盖坐标转换、索引完整性、合并与格式化；公开接口及 mask 范围均较大，与分块任务互补。",
+      "code_type_tags": [
+        "coordinate_transform",
+        "index_invariants"
+      ],
+      "primary_repo_family": "array_data_structures",
+      "problem_statement_sha256": "c69192ab0adcb1acb617ecf320d7fc1cb82c622301a7ee07551254005e33c493",
+      "static_metadata": {
+        "declared_interface_paths": 6,
+        "declared_signature_occurrences": 22,
+        "mask_removed_lines": 1685,
+        "mask_touched_files": 27,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 240,
+        "f2p_static_test_definitions": 13,
+        "f2p_parametrize_markers": 1,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.895,
+        "test_scale_proxy_score": 0.4075,
+        "scope_stratum": "wide_16_plus",
+        "has_parametrize": true,
+        "complexity_stratum": "high",
+        "test_scale_stratum": "medium"
+      }
+    },
+    {
+      "ordinal": 10,
+      "instance_id": "pypa__packaging.013f3b03.test_metadata.e00b5801.lv1",
+      "repo": "pypa/packaging",
+      "level": "lv1",
+      "base_commit": "013f3b03a61fb795587d2b6e0c288656abca1d45",
+      "image": "libercoders/featurebench-specs_packaging-instance_c393a6a8",
+      "title_zh": "包元数据解析与校验",
+      "selection_reason_zh": "覆盖元数据规范、依赖解析、编码与错误聚合；以一个镜像增加打包生态和大测试范围。",
+      "code_type_tags": [
+        "metadata_parser",
+        "validation"
+      ],
+      "primary_repo_family": "packaging_build",
+      "problem_statement_sha256": "edcbc8a3c7e2c4783f1a866612ddb4185d6c844eb3e28c9f4a909844dbc409c0",
+      "static_metadata": {
+        "declared_interface_paths": 2,
+        "declared_signature_occurrences": 21,
+        "mask_removed_lines": 874,
+        "mask_touched_files": 3,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 1182,
+        "f2p_static_test_definitions": 72,
+        "f2p_parametrize_markers": 29,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.565,
+        "test_scale_proxy_score": 0.9075,
+        "scope_stratum": "local_2_5",
+        "has_parametrize": true,
+        "complexity_stratum": "medium",
+        "test_scale_stratum": "high"
+      }
+    },
+    {
+      "ordinal": 11,
+      "instance_id": "pytest-dev__pytest.68016f0e.raises_group.c28bf36a.lv1",
+      "repo": "pytest-dev/pytest",
+      "level": "lv1",
+      "base_commit": "68016f0effe59cd91120112f5170fdd057dba1d9",
+      "image": "libercoders/featurebench-specs_pytest-instance_2b74d6c4",
+      "title_zh": "异常组匹配与诊断",
+      "selection_reason_zh": "覆盖嵌套异常、匹配与正则诊断；小接口范围搭配大测试文件，避免测试规模与代码规模完全绑定。",
+      "code_type_tags": [
+        "exception_matching",
+        "diagnostics"
+      ],
+      "primary_repo_family": "language_test_tooling",
+      "problem_statement_sha256": "c39394c6101cd0545b7e0cebf7e85af03a621d1ebad03b62a1b6410ba534c0b0",
+      "static_metadata": {
+        "declared_interface_paths": 1,
+        "declared_signature_occurrences": 2,
+        "mask_removed_lines": 254,
+        "mask_touched_files": 2,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 1358,
+        "f2p_static_test_definitions": 28,
+        "f2p_parametrize_markers": 1,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.1375,
+        "test_scale_proxy_score": 0.845,
+        "scope_stratum": "local_2_5",
+        "has_parametrize": true,
+        "complexity_stratum": "low",
+        "test_scale_stratum": "high"
+      }
+    },
+    {
+      "ordinal": 12,
+      "instance_id": "pytest-dev__pytest.68016f0e.test_local.40fb2f1f.lv1",
+      "repo": "pytest-dev/pytest",
+      "level": "lv1",
+      "base_commit": "68016f0effe59cd91120112f5170fdd057dba1d9",
+      "image": "libercoders/featurebench-specs_pytest-instance_2b74d6c4",
+      "title_zh": "LocalPath 文件系统接口",
+      "selection_reason_zh": "覆盖路径、临时目录、import、所有权及符号链接行为；补充有副作用的系统接口和大测试范围。",
+      "code_type_tags": [
+        "filesystem",
+        "platform_semantics"
+      ],
+      "primary_repo_family": "language_test_tooling",
+      "problem_statement_sha256": "8d1e6680aee884d164c47b860587dd8c3d3b52474afae489a7b94896a4a20483",
+      "static_metadata": {
+        "declared_interface_paths": 1,
+        "declared_signature_occurrences": 44,
+        "mask_removed_lines": 750,
+        "mask_touched_files": 1,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 1584,
+        "f2p_static_test_definitions": 180,
+        "f2p_parametrize_markers": 2,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.46125,
+        "test_scale_proxy_score": 0.975,
+        "scope_stratum": "single",
+        "has_parametrize": true,
+        "complexity_stratum": "medium",
+        "test_scale_stratum": "high"
+      }
+    },
+    {
+      "ordinal": 13,
+      "instance_id": "sphinx-doc__sphinx.e347e59c.test_build_gettext.2721e644.lv1",
+      "repo": "sphinx-doc/sphinx",
+      "level": "lv1",
+      "base_commit": "e347e59ccc27a646c974526252e39a63870f6ea3",
+      "image": "libercoders/featurebench-specs_sphinx-instance_6191afb1",
+      "title_zh": "Gettext catalog 与渲染设置",
+      "selection_reason_zh": "覆盖消息来源记录、模板路径与转义过滤器；只按题面要求处理指定接口，不把宽 mask 等同完整 builder 重写。",
+      "code_type_tags": [
+        "internationalization",
+        "template_rendering"
+      ],
+      "primary_repo_family": "documentation_toolchain",
+      "problem_statement_sha256": "2bfd7431cb174f49a3094e5e0cb3949392abd218434d97a4ae77b222bc7fb135",
+      "static_metadata": {
+        "declared_interface_paths": 1,
+        "declared_signature_occurrences": 3,
+        "mask_removed_lines": 781,
+        "mask_touched_files": 30,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 351,
+        "f2p_static_test_definitions": 13,
+        "f2p_parametrize_markers": 0,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.48750000000000004,
+        "test_scale_proxy_score": 0.49250000000000005,
+        "scope_stratum": "wide_16_plus",
+        "has_parametrize": false,
+        "complexity_stratum": "medium",
+        "test_scale_stratum": "medium"
+      }
+    },
+    {
+      "ordinal": 14,
+      "instance_id": "sphinx-doc__sphinx.e347e59c.test_ext_intersphinx.04901873.lv1",
+      "repo": "sphinx-doc/sphinx",
+      "level": "lv1",
+      "base_commit": "e347e59ccc27a646c974526252e39a63870f6ea3",
+      "image": "libercoders/featurebench-specs_sphinx-instance_6191afb1",
+      "title_zh": "跨项目文档引用",
+      "selection_reason_zh": "覆盖 inventory 加载、缓存、解析与引用回退；增加多模块协议处理和工具链任务。",
+      "code_type_tags": [
+        "inventory_protocol",
+        "cache_resolution"
+      ],
+      "primary_repo_family": "documentation_toolchain",
+      "problem_statement_sha256": "69005dd15df31bf0ea2b0b435c150561b7fdc39a2a6f601c923bee1679d7c88b",
+      "static_metadata": {
+        "declared_interface_paths": 5,
+        "declared_signature_occurrences": 15,
+        "mask_removed_lines": 901,
+        "mask_touched_files": 9,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 925,
+        "f2p_static_test_definitions": 24,
+        "f2p_parametrize_markers": 2,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.7362500000000001,
+        "test_scale_proxy_score": 0.7949999999999999,
+        "scope_stratum": "cross_6_15",
+        "has_parametrize": true,
+        "complexity_stratum": "high",
+        "test_scale_stratum": "high"
+      }
+    },
+    {
+      "ordinal": 15,
+      "instance_id": "sympy__sympy.c1097516.test_inverse.c240ffe7.lv1",
+      "repo": "sympy/sympy",
+      "level": "lv1",
+      "base_commit": "c1097516c793b0364c4f3fe2eeb66b15a94eedfd",
+      "image": "libercoders/featurebench-specs_sympy-instance_3d889fef",
+      "title_zh": "精确矩阵运算与近似比较",
+      "selection_reason_zh": "覆盖 DomainMatrix、表示转换、逆矩阵和域错误语义；提供宽代码范围但较少静态测试定义的组合。",
+      "code_type_tags": [
+        "linear_algebra",
+        "exact_arithmetic"
+      ],
+      "primary_repo_family": "scientific_symbolic_computing",
+      "problem_statement_sha256": "b37f91d74d0dc027f6b5daab933f5313c92c978f0080c49a50377aefb331ff7d",
+      "static_metadata": {
+        "declared_interface_paths": 3,
+        "declared_signature_occurrences": 11,
+        "mask_removed_lines": 2157,
+        "mask_touched_files": 46,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 193,
+        "f2p_static_test_definitions": 9,
+        "f2p_parametrize_markers": 8,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.80875,
+        "test_scale_proxy_score": 0.22,
+        "scope_stratum": "wide_16_plus",
+        "has_parametrize": true,
+        "complexity_stratum": "high",
+        "test_scale_stratum": "low"
+      }
+    },
+    {
+      "ordinal": 16,
+      "instance_id": "sympy__sympy.c1097516.test_puiseux.cd575f09.lv1",
+      "repo": "sympy/sympy",
+      "level": "lv1",
+      "base_commit": "c1097516c793b0364c4f3fe2eeb66b15a94eedfd",
+      "image": "libercoders/featurebench-specs_sympy-instance_3d889fef",
+      "title_zh": "有理数与 Puiseux 多项式",
+      "selection_reason_zh": "覆盖运算符、类型转换、分数指数和代数不变量；与矩阵任务不同的数值代码类型，复用同一镜像。",
+      "code_type_tags": [
+        "operator_overloading",
+        "symbolic_algebra"
+      ],
+      "primary_repo_family": "scientific_symbolic_computing",
+      "problem_statement_sha256": "5c8b85b1e77ed8176785a6067b096f937feaa4e140b051ecc2564742431b69eb",
+      "static_metadata": {
+        "declared_interface_paths": 2,
+        "declared_signature_occurrences": 32,
+        "mask_removed_lines": 588,
+        "mask_touched_files": 3,
+        "f2p_selectors": 1,
+        "p2p_selectors": 5,
+        "f2p_removed_test_lines": 204,
+        "f2p_static_test_definitions": 12,
+        "f2p_parametrize_markers": 0,
+        "test_patch_deleted_files": 1,
+        "test_patch_files": 1,
+        "complexity_proxy_score": 0.54125,
+        "test_scale_proxy_score": 0.3375,
+        "scope_stratum": "local_2_5",
+        "has_parametrize": false,
+        "complexity_stratum": "medium",
+        "test_scale_stratum": "medium"
+      }
+    }
+  ],
+  "images": [
+    {
+      "repo": "fastapi/fastapi",
+      "image": "libercoders/featurebench-specs_fastapi-instance_835a08db",
+      "platform": "linux/amd64",
+      "manifest_digest": "sha256:f98cb81c4d36a7f5edcecfaf53028db48c1df2ec53f8e53cd9accc9ac322dd5e",
+      "pull_reference": "docker.io/libercoders/featurebench-specs_fastapi-instance_835a08db@sha256:f98cb81c4d36a7f5edcecfaf53028db48c1df2ec53f8e53cd9accc9ac322dd5e",
+      "compressed_layer_bytes": 10339678997,
+      "layer_count": 19
+    },
+    {
+      "repo": "mlflow/mlflow",
+      "image": "libercoders/featurebench-specs_mlflow-instance_efffa87e",
+      "platform": "linux/amd64",
+      "manifest_digest": "sha256:5a63b594bc99a6dcd876289974979606b276edd49e966020111db3590c40add4",
+      "pull_reference": "docker.io/libercoders/featurebench-specs_mlflow-instance_efffa87e@sha256:5a63b594bc99a6dcd876289974979606b276edd49e966020111db3590c40add4",
+      "compressed_layer_bytes": 14073256440,
+      "layer_count": 19
+    },
+    {
+      "repo": "mwaskom/seaborn",
+      "image": "libercoders/featurebench-specs_seaborn-instance_52738fbb",
+      "platform": "linux/amd64",
+      "manifest_digest": "sha256:fe27a1a5205fa0939453e79d0f40c74cb402bad8ea1d42fff7de5e2106e77ce1",
+      "pull_reference": "docker.io/libercoders/featurebench-specs_seaborn-instance_52738fbb@sha256:fe27a1a5205fa0939453e79d0f40c74cb402bad8ea1d42fff7de5e2106e77ce1",
+      "compressed_layer_bytes": 10408195402,
+      "layer_count": 19
+    },
+    {
+      "repo": "pydata/xarray",
+      "image": "libercoders/featurebench-specs_xarray-instance_62de996a",
+      "platform": "linux/amd64",
+      "manifest_digest": "sha256:075803e6495efc4aa64c015effcae52986a62352655127f69a262dfbedfbb7d7",
+      "pull_reference": "docker.io/libercoders/featurebench-specs_xarray-instance_62de996a@sha256:075803e6495efc4aa64c015effcae52986a62352655127f69a262dfbedfbb7d7",
+      "compressed_layer_bytes": 11013566703,
+      "layer_count": 19
+    },
+    {
+      "repo": "pypa/packaging",
+      "image": "libercoders/featurebench-specs_packaging-instance_c393a6a8",
+      "platform": "linux/amd64",
+      "manifest_digest": "sha256:96b12548b35b5983ac1dab9a101b4a49946fceb6a05c97690cd942ff014be916",
+      "pull_reference": "docker.io/libercoders/featurebench-specs_packaging-instance_c393a6a8@sha256:96b12548b35b5983ac1dab9a101b4a49946fceb6a05c97690cd942ff014be916",
+      "compressed_layer_bytes": 10178975763,
+      "layer_count": 19
+    },
+    {
+      "repo": "pytest-dev/pytest",
+      "image": "libercoders/featurebench-specs_pytest-instance_2b74d6c4",
+      "platform": "linux/amd64",
+      "manifest_digest": "sha256:90aad241a5422d096bff4b5a796300bcb737fbe347531f5c0dc71ea93421f291",
+      "pull_reference": "docker.io/libercoders/featurebench-specs_pytest-instance_2b74d6c4@sha256:90aad241a5422d096bff4b5a796300bcb737fbe347531f5c0dc71ea93421f291",
+      "compressed_layer_bytes": 10259696691,
+      "layer_count": 19
+    },
+    {
+      "repo": "sphinx-doc/sphinx",
+      "image": "libercoders/featurebench-specs_sphinx-instance_6191afb1",
+      "platform": "linux/amd64",
+      "manifest_digest": "sha256:15b434473e16386e33c864d8b7f4a3bddb9c5585961758c0ed0f06b51b3f0268",
+      "pull_reference": "docker.io/libercoders/featurebench-specs_sphinx-instance_6191afb1@sha256:15b434473e16386e33c864d8b7f4a3bddb9c5585961758c0ed0f06b51b3f0268",
+      "compressed_layer_bytes": 10516105460,
+      "layer_count": 19
+    },
+    {
+      "repo": "sympy/sympy",
+      "image": "libercoders/featurebench-specs_sympy-instance_3d889fef",
+      "platform": "linux/amd64",
+      "manifest_digest": "sha256:207ff124011e74d2b6abbdce2f8d3244546949cd0abfb7949d7dd414368f8935",
+      "pull_reference": "docker.io/libercoders/featurebench-specs_sympy-instance_3d889fef@sha256:207ff124011e74d2b6abbdce2f8d3244546949cd0abfb7949d7dd414368f8935",
+      "compressed_layer_bytes": 10648078585,
+      "layer_count": 19
+    }
+  ],
+  "storage": {
+    "units": "bytes; decimal GB = bytes / 1e9",
+    "measurement": "registry compressed layer descriptors only; no layer blobs pulled",
+    "unique_layer_count": 71,
+    "compressed_unique_bytes": 43185330435,
+    "compressed_naive_sum_bytes": 87437554041,
+    "full_fast_compressed_unique_bytes": 99665441306,
+    "largest_single_image_compressed_bytes": 14073256440,
+    "config_manifests_and_runtime_data_included": false,
+    "uncompressed_bytes_measured": null,
+    "peak_disk_bytes_measured": null,
+    "planning_assumptions": {
+      "unpacked_to_compressed_ratio": [
+        1.5,
+        3.0
+      ],
+      "runtime_cache_evidence_headroom_bytes": [
+        40000000000,
+        70000000000
+      ]
+    },
+    "sequential_one_group_incremental_peak_scenario_bytes": [
+      75183141100,
+      126293025760
+    ],
+    "retain_all_images_incremental_peak_scenario_bytes": [
+      147963326088,
+      242741321740
+    ],
+    "scenario_is_guaranteed_bound": false,
+    "operational_notes": [
+      "One task at a time, group by image; stop agent container before fresh verifier and retain at most one active writable workspace.",
+      "Sequential scenario assumes previous groups are reclaimed, including unreferenced compressed and unpacked content. Shared blocks must remain reusable.",
+      "Containerd may retain both compressed blobs and unpacked layers; VHDX file size does not immediately shrink after Docker deletion.",
+      "Aggressive reclamation can re-download shared layers. Download totals can range from unique sum to naive image sum, excluding retries.",
+      "Measure largest-image unpacked and runtime peak before promising capacity; do not modify official test requirements to fit the estimate."
+    ]
+  },
+  "execution_contract": {
+    "execution_performed": false,
+    "model_calls": 0,
+    "correctness_authority": "Pinned official FeatureBench evaluator; unchanged F2P/P2P semantics.",
+    "intended_agents": [
+      "Nexus",
+      "Qoder"
+    ],
+    "agent_support_not_asserted": "This file defines an evalset, not an implemented QoderHarness or a current ABK CLI flag.",
+    "group_order": [
+      "fastapi/fastapi",
+      "mlflow/mlflow",
+      "mwaskom/seaborn",
+      "pydata/xarray",
+      "pypa/packaging",
+      "pytest-dev/pytest",
+      "sphinx-doc/sphinx",
+      "sympy/sympy"
+    ],
+    "task_order": "task_ids order; isolated clean task workspace and fresh agent session per attempt",
+    "comparison_requirements": [
+      "same task_ids and dataset/image pins",
+      "predeclare attempts, model/provider, token/time budgets and tools",
+      "report missing usage as N/A",
+      "record all failures and infrastructure errors without removing tasks"
+    ],
+    "report_label": "FeatureBench v1.1 Fast - fixed evalset v1 (16/100)",
+    "aggregate_policy": "Report task-micro and repo-macro results separately with verification coverage and infrastructure errors; neither estimates official full-Fast leaderboard performance.",
+    "curator_metadata_policy": "Selection rationales, test statistics and reference-derived metadata are for reporting only; never append them or gold/test patches to Agent prompts."
+  },
+  "freeze_policy": {
+    "no_post_result_replacement": true,
+    "changes_require_new_evalset_version": true,
+    "infra_failure_policy": "Keep the task and record ERROR; retry only under a predeclared policy, preserving all attempts."
+  },
+  "reproducibility": {
+    "generator": "resume-evidence/build_featurebench_evalset_v1.py",
+    "generator_sha256": "be968fdac0e9bff6e226b8d0732d9f65f8e9f096f842df984caa03c7cf2dd3d1",
+    "candidate_features": "resume-evidence/featurebench-fast-evalset-v1/candidate-features.json",
+    "candidate_features_sha256": "af4ea23d7dad9727d32591336f8a11801366b74d04438e636e686c422f03ba02",
+    "layer_lock": "resume-evidence/featurebench-fast-evalset-v1/registry-layer-lock.json",
+    "layer_lock_sha256": "7e8500b730bed51b2b06e7d98ce637aed63c42b83009fac4076028d08cda2f47"
+  }
+}

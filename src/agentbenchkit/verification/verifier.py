@@ -6,7 +6,7 @@ import shutil
 import time
 from pathlib import Path
 
-from agentbenchkit.core.models import CommandSpec, TaskSpec, VerificationResult
+from agentbenchkit.core.models import CommandSpec, LocalTaskSpec, VerificationResult
 from agentbenchkit.core.protocols import Environment
 from agentbenchkit.core.status import Verdict
 from agentbenchkit.environments.host import HostProcessEnvironment
@@ -15,7 +15,7 @@ from agentbenchkit.verification.candidate import Candidate, restore
 
 
 async def verify_candidate(
-    task: TaskSpec,
+    task: LocalTaskSpec,
     candidate_dir: Path,
     manifest: Candidate,
     directory: Path,

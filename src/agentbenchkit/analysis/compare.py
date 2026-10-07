@@ -10,6 +10,7 @@ from agentbenchkit.storage.index import read_json, resolve_run
 
 def conditions(manifest: dict[str, Any]) -> dict[str, Any]:
     return {
+        "benchmark": manifest.get("benchmark"),
         "tasks": {
             task["task_id"]: {
                 key: task.get(key)
@@ -19,6 +20,7 @@ def conditions(manifest: dict[str, Any]) -> dict[str, Any]:
                     "baseline_revision",
                     "timeouts",
                     "prompt",
+                    "metadata",
                 )
             }
             for task in manifest["tasks"]
@@ -46,6 +48,7 @@ def compare(
     persist_analysis: bool = True,
 ) -> dict[str, Any]:
     allowed = {
+        "benchmark",
         "harness",
         "model",
         "requested_model",

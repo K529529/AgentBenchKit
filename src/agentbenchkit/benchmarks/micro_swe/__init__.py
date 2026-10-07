@@ -7,7 +7,13 @@ from pathlib import Path
 
 from pydantic import JsonValue
 
-from agentbenchkit.core.models import CommandSpec, PhaseBudgets, TaskSpec, VerificationResult
+from agentbenchkit.core.models import (
+    CommandSpec,
+    LocalTaskSpec,
+    PhaseBudgets,
+    TaskSpec,
+    VerificationResult,
+)
 from agentbenchkit.core.protocols import Environment
 from agentbenchkit.environments.docker import DockerEnvironment
 from agentbenchkit.storage.artifacts import Redactor
@@ -29,7 +35,7 @@ TASKS.update({key: value["prompt"] for key, value in EXTRA_TASKS.items()})
 
 def load_tasks(
     selected: tuple[str, ...] = (), budgets: PhaseBudgets | None = None
-) -> list[TaskSpec]:
+) -> list[LocalTaskSpec]:
     unknown = set(selected) - TASKS.keys()
     if unknown:
         raise ValueError(f"unknown micro_swe task: {sorted(unknown)}")
@@ -40,7 +46,7 @@ def load_tasks(
         asset = ASSETS / task_id
         fixture = asset / "fixture"
         result.append(
-            TaskSpec(
+            LocalTaskSpec(
                 task_id=task_id,
                 prompt=prompt,
                 fixture=fixture,
@@ -63,22 +69,26 @@ class MicroSweAdapter:
 
     def load_tasks(
         self, selected: tuple[str, ...] = (), budgets: PhaseBudgets | None = None
-    ) -> list[TaskSpec]:
+    ) -> list[LocalTaskSpec]:
         return load_tasks(selected, budgets)
 
     def task_manifest(self, task: TaskSpec) -> dict[str, JsonValue]:
+        assert isinstance(task, LocalTaskSpec)
         return {
             **task.model_dump(mode="json"),
             "fixture_hash": tree_hash(inventory(task.fixture)),
             "verifier_hash": tree_hash(inventory(task.protected_assets)),
         }
 
-    async def prepare(self, task: TaskSpec, workspace: Path) -> None:
+    async def prepare(self, task: TaskSpec, workspace: Path, evidence: Path) -> Environment | None:
+        assert isinstance(task, LocalTaskSpec)
         shutil.copytree(task.fixture, workspace)
+        return None
 
     async def collect(
         self, task: TaskSpec, workspace: Path, destination: Path, redactor: Redactor
     ) -> None:
+        assert isinstance(task, LocalTaskSpec)
         for entry in inventory(workspace).values():
             text = (workspace / entry.path).read_text(encoding="utf-8")
             if any(secret in text for secret in redactor.secrets):
@@ -92,11 +102,16 @@ class MicroSweAdapter:
         directory: Path,
         environment: Environment | None,
     ) -> VerificationResult:
+        assert isinstance(task, LocalTaskSpec)
         candidate = Candidate.model_validate_json(
             (candidate_dir.parent / "candidate_manifest.json").read_text(encoding="utf-8")
         )
         return await verify_candidate(
-            task, candidate_dir, candidate, directory,
+            task,
+            candidate_dir,
+            candidate,
+            directory,
             DockerEnvironment(environment.image, verification=True)
-            if isinstance(environment, DockerEnvironment) else None,
+            if isinstance(environment, DockerEnvironment)
+            else None,
         )

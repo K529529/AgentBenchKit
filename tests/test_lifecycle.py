@@ -222,3 +222,71 @@ async def test_cancel_during_docker_create_adopts_and_removes_resource(
     with pytest.raises(asyncio.CancelledError):
         await pending
     assert "rm" in commands and session.name is None
+
+
+async def test_ephemeral_image_survives_command_recreation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from agentbenchkit.environments import docker as module
+
+    commands: list[tuple[str, ...]] = []
+
+    async def fake_docker(*args: str, **kwargs: object) -> str:
+        commands.append(args)
+        if args[0] == "inspect":
+            return '{"Running":false}'
+        return ""
+
+    monkeypatch.setattr(module, "docker", fake_docker)
+    session = module.DockerSession(tmp_path, "abk-prepared-test")
+    session.remove_image_on_close = True
+    await session.prepare()
+    await session.prepare()
+    assert not any(cmd[:2] == ("image", "rm") for cmd in commands)
+    await session.close()
+    await session.close()
+    assert commands.count(("image", "rm", "abk-prepared-test")) == 1
+
+
+@pytest.mark.parametrize("owned", [True, False])
+async def test_recovery_external_resources_require_workspace_ownership(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, owned: bool
+) -> None:
+    import hashlib
+
+    from agentbenchkit.runtime import recovery as module
+
+    run = tmp_path / "abandoned"
+    workspace = str(run / "work/execution/workspace")
+    write_json(run / "manifest.json", {"k": 1})
+    write_json(run / "plan.json", [])
+    write_json(run / "run_state.json", {"status": "RUNNING"})
+    write_json(
+        run / "work/execution/docker-group-resource.json",
+        {"execution": "run-owned", "workspace": workspace},
+    )
+    write_json(
+        run / "work/execution/docker-image-resource.json",
+        {"name": "abk-prepared-owned", "workspace": workspace},
+    )
+    commands: list[tuple[str, ...]] = []
+    identity = hashlib.sha256(workspace.encode()).hexdigest() if owned else "foreign"
+
+    async def fake_docker(*args: str, **kwargs: object) -> str:
+        commands.append(args)
+        if args[0] == "ps":
+            assert "label=agentbenchkit.managed=true" in args
+            assert "label=agentbenchkit.execution=run-owned" in args
+            return "container-id"
+        if args[:2] == ("image", "ls"):
+            return "image-id"
+        if "inspect" in args:
+            return json.dumps([{"Config": {"Labels": {"agentbenchkit.workspace": identity}}}])
+        return ""
+
+    monkeypatch.setattr(module, "docker", fake_docker)
+    assert await module.recover(tmp_path) == ["abandoned"]
+    removals = [cmd for cmd in commands if "rm" in cmd]
+    assert len(removals) == (2 if owned else 0)
+    state = json.loads((run / "run_state.json").read_text())
+    assert len(state["cleanup_errors"]) == (0 if owned else 2)

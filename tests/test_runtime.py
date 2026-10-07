@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from agentbenchkit.benchmarks.micro_swe import load_tasks
-from agentbenchkit.core.models import CommandSpec, TaskSpec
+from agentbenchkit.core.models import CommandSpec, LocalTaskSpec, TaskSpec
 from agentbenchkit.harnesses.nexus import NexusHarness
 from agentbenchkit.runtime.runner import evaluate
 
@@ -20,6 +20,7 @@ class ControlledHarness(NexusHarness):
     def command(self, task: TaskSpec) -> CommandSpec:
         script = "import json,shutil; "
         if self.repair:
+            assert isinstance(task, LocalTaskSpec)
             script += f"shutil.copytree({str(task.reference_candidate)!r},'.',dirs_exist_ok=True); "
         script += "print(json.dumps({'kind':'run_finished','data':{'outcome':'completed'}}))"
         return CommandSpec(argv=(sys.executable, "-c", script))

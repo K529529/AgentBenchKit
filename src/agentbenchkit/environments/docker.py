@@ -11,7 +11,9 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from agentbenchkit.core.models import CommandSpec
+from pydantic import Field
+
+from agentbenchkit.core.models import CommandSpec, Contract
 from agentbenchkit.core.protocols import OutputSink, ProcessResult, StartupError
 from agentbenchkit.storage.artifacts import write_json
 
@@ -50,14 +52,31 @@ async def docker(*args: str, deadline_seconds: float = 30) -> str:
     return stdout.decode("utf-8").strip()
 
 
+class DockerLimits(Contract):
+    memory_mb: int = Field(default=512, ge=128)
+    cpus: int = Field(default=1, ge=1)
+    pids: int = Field(default=128, ge=32)
+    readonly: bool = True
+    workdir: str = "/workspace"
+    python: str = "python"
+
+
 class DockerSession:
-    def __init__(self, workspace: Path, image: str, verification: bool = False) -> None:
+    def __init__(
+        self,
+        workspace: Path,
+        image: str,
+        verification: bool = False,
+        limits: DockerLimits | None = None,
+    ) -> None:
+        self.limits = limits or DockerLimits()
         self.workspace = workspace.resolve()
         self.image = image
         self.verification = verification
         self.name: str | None = None
-        self.paths = {str(self.workspace): "/workspace"}
+        self.paths = {str(self.workspace): self.limits.workdir}
         self.output_limit = 2_000_000
+        self.remove_image_on_close = False
 
     async def stop(self) -> bool:
         if self.name is None:
@@ -72,12 +91,18 @@ class DockerSession:
         except (OSError, ValueError, RuntimeError, TimeoutError):
             return False
 
-    async def close(self) -> None:
+    async def _close_container(self) -> None:
         if not await self.stop():
             raise RuntimeError("Docker stop not confirmed")
         if self.name:
             await docker("rm", self.name)
             self.name = None
+
+    async def close(self) -> None:
+        await self._close_container()
+        if self.remove_image_on_close:
+            await docker("image", "rm", self.image)
+            self.remove_image_on_close = False
 
     def translate(self, value: str) -> str:
         for source, destination in sorted(self.paths.items(), key=lambda pair: -len(pair[0])):
@@ -86,7 +111,7 @@ class DockerSession:
         return value
 
     async def prepare(self) -> None:
-        await self.close()
+        await self._close_container()
         name = "abk-" + uuid.uuid4().hex
         network = "none" if self.verification else "bridge"
         user = "1000"
@@ -102,17 +127,16 @@ class DockerSession:
             "agentbenchkit.workspace=" + hashlib.sha256(str(self.workspace).encode()).hexdigest(),
             "--init",
             "--interactive",
-            "--read-only",
             "--cap-drop",
             "ALL",
             "--security-opt",
             "no-new-privileges",
             "--pids-limit",
-            "128",
+            str(self.limits.pids),
             "--memory",
-            "512m",
+            f"{self.limits.memory_mb}m",
             "--cpus",
-            "1",
+            str(self.limits.cpus),
             "--network",
             network,
             "--user",
@@ -124,7 +148,9 @@ class DockerSession:
             "--log-driver",
             "none",
         ]
-        mounts = [(self.workspace, "/workspace", self.verification)]
+        if self.limits.readonly:
+            args.append("--read-only")
+        mounts = [(self.workspace, self.limits.workdir, self.verification)]
         if self.verification:
             assets = self.workspace.parent / "protected"
             output = self.workspace.parent / "output"
@@ -145,7 +171,17 @@ class DockerSession:
                     + (",readonly" if readonly else ""),
                 ]
             )
-        args.extend(["--workdir", "/workspace", self.image, "python", "-c", BOOTSTRAP])
+        args.extend(
+            [
+                "--workdir",
+                self.limits.workdir,
+                "--entrypoint",
+                self.limits.python,
+                self.image,
+                "-c",
+                BOOTSTRAP,
+            ]
+        )
         write_json(
             self.workspace.parent / "docker-resource.json",
             {"name": name, "workspace": str(self.workspace)},
@@ -253,9 +289,17 @@ class DockerSession:
 
 
 class DockerEnvironment:
-    def __init__(self, image: str, verification: bool = False) -> None:
+    def __init__(
+        self,
+        image: str,
+        verification: bool = False,
+        limits: DockerLimits | None = None,
+        ephemeral: bool = False,
+    ) -> None:
         self.image = image
         self.verification = verification
+        self.limits = limits or DockerLimits()
+        self.ephemeral = ephemeral
 
     async def resolve(self) -> dict[str, Any]:
         data = json.loads(await docker("image", "inspect", self.image))[0]
@@ -270,14 +314,20 @@ class DockerEnvironment:
             "shell": "/bin/sh",
             "network": "bridge",
             "verifier_network": "none",
-            "cpus": 1,
-            "memory_mb": 512,
-            "pids_limit": 128,
-            "root_filesystem": "read_only",
+            "cpus": self.limits.cpus,
+            "memory_mb": self.limits.memory_mb,
+            "pids_limit": self.limits.pids,
+            "root_filesystem": "read_only" if self.limits.readonly else "writable",
         }
 
     async def create(self, workspace: Path, execution_id: str) -> DockerSession:
         await asyncio.to_thread(workspace.mkdir, parents=True, exist_ok=True)
-        session = DockerSession(workspace, self.image, self.verification)
-        await session.prepare()
+        session = DockerSession(workspace, self.image, self.verification, self.limits)
+        try:
+            await session.prepare()
+        except BaseException:
+            if self.ephemeral:
+                await docker("image", "rm", self.image)
+            raise
+        session.remove_image_on_close = self.ephemeral
         return session

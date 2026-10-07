@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from agentbenchkit.benchmarks.micro_swe import load_tasks
-from agentbenchkit.core.models import TaskSpec
+from agentbenchkit.core.models import LocalTaskSpec
 from agentbenchkit.core.status import Verdict
 from agentbenchkit.verification.candidate import collect, inventory, restore
 from agentbenchkit.verification.verifier import verify_candidate
@@ -13,7 +13,7 @@ from agentbenchkit.verification.verifier import verify_candidate
 @pytest.mark.parametrize("task", load_tasks(), ids=lambda task: task.task_id)
 @pytest.mark.parametrize("reference", [False, True])
 async def test_fixture_positive_and_negative_controls(
-    task: TaskSpec,
+    task: LocalTaskSpec,
     reference: bool,
     tmp_path: Path,
 ) -> None:

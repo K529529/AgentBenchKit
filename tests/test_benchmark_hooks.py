@@ -17,9 +17,11 @@ async def test_adapter_owns_preparation_collection_and_correctness(tmp_path: Pat
     class ExternalAdapter(MicroSweAdapter):
         name = "external-contract-v1"
 
-        async def prepare(self, task: TaskSpec, workspace: Path) -> None:
+        async def prepare(
+            self, task: TaskSpec, workspace: Path, evidence: Path
+        ) -> Environment | None:
             calls.append("prepare")
-            await super().prepare(task, workspace)
+            return await super().prepare(task, workspace, evidence)
 
         async def collect(
             self, task: TaskSpec, workspace: Path, destination: Path, redactor: Redactor
@@ -28,7 +30,10 @@ async def test_adapter_owns_preparation_collection_and_correctness(tmp_path: Pat
             await super().collect(task, workspace, destination, redactor)
 
         async def verify(
-            self, task: TaskSpec, candidate_dir: Path, directory: Path,
+            self,
+            task: TaskSpec,
+            candidate_dir: Path,
+            directory: Path,
             environment: Environment | None,
         ) -> VerificationResult:
             calls.append("verify")
