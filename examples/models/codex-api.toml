@@ -1,0 +1,9 @@
+# Supply a model supported by your chosen Responses-compatible provider.
+model_id = "REPLACE_WITH_MODEL_ID"
+provider_id = "openai"
+base_url = "https://api.openai.com/v1"
+reasoning_effort = "low"
+
+[credential]
+kind = "api_key"
+env_var = "OPENAI_API_KEY"
