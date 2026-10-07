@@ -24,6 +24,8 @@ async def test_viewer_routes_are_readonly_and_escape_html(tmp_path: Path) -> Non
         assert client.get(f"/runs/{directory.name}").status_code == 200
         response = client.get(f"/runs/{directory.name}/samples/{sample.parent.name}")
         assert response.status_code == 200
+        assert "repeated-tool-calls-v1" in response.text
+        assert "UNAVAILABLE" in response.text
         assert "&lt;script&gt;" in response.text
         assert "<script>alert(1)</script>" not in response.text
         assert response.headers["x-content-type-options"] == "nosniff"

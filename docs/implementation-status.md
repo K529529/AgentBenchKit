@@ -16,3 +16,10 @@ real Agent/Docker runs. A failed evaluated Agent is not automatically a toolkit 
 | 8: viewer | PASS | Read-only/XSS/path/size tests; actual browser run/sample pages checked; model/provider and subscription-smoke limits visible |
 | 9: public benchmark | OPTIONAL, NOT RUN | |
 | 10: release hardening | PASS (local) | 127 tests incl. 7 Docker; wheel assets/license; secret scan; MIT/docs; see acceptance-v0.md and latest branch CI |
+
+## Post-V0 release hardening
+
+Repeated public tool inputs: PASS (19 new cases; 139 passed / 7 Docker skipped).
+Existing real Nexus/Codex trajectories replayed without changing evidence or verdicts.
+Stagnation deliberately deferred: no complete per-step mutation evidence.
+See [trajectory analyzer assessment](trajectory-analyzers.md).

@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from agentbenchkit.analysis.repetition import repeated_tool_calls
 from agentbenchkit.core.events import Event
 from agentbenchkit.core.metrics import summarize
 from agentbenchkit.core.models import SampleResult
@@ -15,7 +16,7 @@ from agentbenchkit.storage.artifacts import write_json
 from agentbenchkit.storage.index import index_run, read_json, resolve_run
 from agentbenchkit.storage.trajectory import read_events
 
-VERSION = "rules-v1"
+VERSION = "rules-v2"
 
 
 def evidence_hash(directory: Path) -> str:
@@ -165,6 +166,15 @@ def analyze_sample(
             "analysis_version": VERSION,
             "uncertainty": "Observed facts do not establish model capability or sole root cause.",
         },
+        "trajectory_analysis": {
+            "repeated_tool_calls": repeated_tool_calls(
+                events,
+                f"{records[-1][0].parent.relative_to(directory).as_posix()}/trajectory.jsonl"
+                if records
+                else "",
+                complete,
+            ),
+        },
         "trajectory_error": trajectory_error,
     }
 
@@ -205,6 +215,9 @@ def analyze_run(directory: Path) -> dict[str, Any]:
                         "confidence": 0,
                         "evidence_refs": ["plan.json"],
                         "analysis_version": VERSION,
+                    },
+                    "trajectory_analysis": {
+                        "repeated_tool_calls": repeated_tool_calls([], "", False),
                     },
                     "trajectory_error": "No final sample record",
                 }

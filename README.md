@@ -83,6 +83,8 @@ uv run agent-bench rebuild-index
 任务、轨迹、候选 diff、独立验证证据、指标、归因及可比性限制。
 SQLite 仅是可重建索引，文件证据是事实来源；重建损坏索引会保留损坏文件副本。
 
+Replay 包含[重复工具调用观察](docs/trajectory-analyzers.md)：显示公开输入的重复次数和事件证据，不判定停滞或调整正确性。
+
 Replay 生成新 analysis ID，不覆盖历史记录。Compare 先比较 manifest 条件；
 非预期差异或未知结果产生 INCONCLUSIVE。`--expect harness` 等参数用于声明
 实验变量，不能消除订阅认证、未知模型参数等可比性限制。

@@ -398,7 +398,7 @@ async def evaluate(
                 "framework_version": __version__,
                 "framework": runtime_identity(),
                 "trajectory_schema_version": 1,
-                "analyzers": {"rules": "1", "metrics": "1"},
+                "analyzers": {"rules": "2", "metrics": "1", "repeated_tool_calls": "1"},
                 "judge": {"enabled": False},
                 "benchmark": "micro_swe-v1",
                 "tasks": task_manifests,
