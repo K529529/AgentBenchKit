@@ -3,24 +3,23 @@
 Contract: [architecture-v0.3.1.md](architecture-v0.3.1.md).
 A failed evaluated Agent is not automatically a toolkit failure.
 
-## Current v0.1.0 release candidate
+## Current v0.1.0
 
-- Owner acceptance complete, confirmed by the project owner on 2026-10-07.
 - Final local suite: **175 passed / 7 opt-in Docker skipped**; locked sync, Ruff,
   strict Windows/Linux-target mypy (including examples), CLI help and benchmark validation PASS.
 - sdist/wheel build and contents, package version 0.1.0 / MIT, local documentation
   links, example syntax/type checks and tracked/archive secret scans PASS. Fresh
   wheel installation also passes CLI, all eight task checks and external type checking.
-- Windows/Ubuntu CI checks run on the release-finalization commit; exact HEAD/results
-  are linked in [Draft PR #1](https://github.com/K529529/AgentBenchKit/pull/1).
+- Windows/Ubuntu CI checks pass for the release-finalization state; workflow history
+  remains available in [GitHub Actions](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml).
 - Existing real evidence: Nexus 8/8, Codex ChatGPT smoke 2/2, shared ModelSpec regressions,
   Docker fresh verification, browser Viewer review, replay/compare and full real Judge COMPLETED.
 - Real Judge artifact `f0f559a29ce744fda95aed0f40842c17.json`: HTTP 200 / stop,
   four strict dimensions; original evidence and historical failed Judge artifacts unchanged.
 - Repeated-tool observation is implemented; Stagnation is deliberately deferred.
 - Real Codex explicit API inference is NOT RUN; public SWE-bench adapter is deferred.
-- This phase changes release documentation, an example and typing package metadata only.
-  No merge, tag, GitHub Release, visibility change or PyPI publication is authorized here.
+- Release finalization changes documentation, an example and typing package metadata only;
+  frozen evaluation semantics remain unchanged.
 
 See [acceptance evidence](acceptance-v0.md), [Judge evidence](judge-diagnostics.md),
 [Harness integration](adding-a-harness.md) and [limitations](limitations.md).
@@ -39,7 +38,7 @@ Physical failures and original artifacts are retained; they are not current rele
 | 4: benchmark/persistence | PASS | 8 tasks; all no-op FAIL/reference PASS on host and Docker; 100 tests; index rebuild and manifest identity checks |
 | 5: second real Agent + ModelSpec | PASS | Codex 2/2 smoke; common typed model contract; Nexus new-config regression 1/1; see phase-5-evidence.md |
 | 6: analysis/replay/compare | PASS | 5 focused tests; immutable versioned replay; real Nexus/Codex comparison correctly warns and returns INCONCLUSIVE |
-| 7: rubric/optional judge | PASS (controlled + real Judge); owner acceptance complete | Four dimensions; isolated HTTP worker deadline; versioned results; Judge failure/replay preserve correctness |
+| 7: rubric/optional judge | PASS (controlled + real Judge) | Four dimensions; isolated HTTP worker deadline; versioned results; Judge failure/replay preserve correctness |
 | 8: viewer | PASS | Read-only/XSS/path/size tests; actual browser run/sample pages checked; model/provider and subscription-smoke limits visible |
 | 9: public benchmark | OPTIONAL, NOT RUN | |
 | 10: release finalization | PASS | Current checks and acceptance below; no frozen evaluation semantics changed |
@@ -52,5 +51,5 @@ Physical failures and original artifacts are retained; they are not current rele
 - Safe Judge diagnostics exposed truncation and then a schema mismatch. The old generic
   error record remains intact; it cannot retroactively supply its swallowed exception.
 - Canonical Judge output now shares an exact prompt/schema, rejects ambiguous shapes,
-  and receives framework-owned versions only after validation. Full live acceptance
-  and subsequent owner acceptance passed; see [diagnostics](judge-diagnostics.md).
+  and receives framework-owned versions only after validation. Full live Judge validation
+  passed; see [diagnostics](judge-diagnostics.md).

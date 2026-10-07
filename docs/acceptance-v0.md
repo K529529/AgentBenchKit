@@ -2,7 +2,7 @@
 
 Validation performed on 2026-10-07 (Asia/Shanghai). Artifact run IDs use UTC.
 
-## v0.1.0 release candidate checks
+## v0.1.0 release checks
 
 - PASS: `uv sync --locked`; **175 tests passed / 7 Docker skipped** in finalization.
   The seven opt-in Docker tests were previously executed successfully; this pass
@@ -17,13 +17,11 @@ Validation performed on 2026-10-07 (Asia/Shanghai). Artifact run IDs use UTC.
 - PASS: wheel installed into a fresh virtual environment; installed CLI help, all
   eight no-op/reference task checks and external example type checking succeed.
   No runtime evidence is committed.
-- CI: [Windows and Ubuntu branch checks](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml).
-  PR #1 remains Draft; no tag, release publication, visibility change or PyPI upload.
-- Owner acceptance: **complete**, confirmed by the project owner on 2026-10-07.
+- CI: [Windows and Ubuntu checks](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml).
 
 The Harness example composes the actual Nexus adapter and is checked without a new
 paid request. Existing immutable real Agent/Judge artifacts below remain the real
-acceptance evidence. Exact branch HEAD and CI links are recorded in PR #1.
+acceptance evidence. Exact implementation evidence and CI history remain available in the repository.
 
 ## Earlier integration evidence retained
 
@@ -77,7 +75,6 @@ claim would be unsupported. Versioned replay preserves original evidence.
 PASS: full sample request returned HTTP 200 / stop / COMPLETED; all four dimensions
 passed strict schema. Original correctness and three historical failed Judge artifacts
 were preserved. See [root causes and live evidence](judge-diagnostics.md).
-Owner independent acceptance is complete (confirmed on 2026-10-07).
 
 ## Explicitly not run
 

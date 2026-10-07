@@ -39,5 +39,3 @@
   public input shapes. See [adding a Harness](adding-a-harness.md).
 - Stagnation detection is deferred because complete per-step workspace mutation
   evidence is unavailable. Repeated tool inputs alone are not proof of stagnation.
-- Owner acceptance is complete; PR remains Draft pending release review. No tag,
-  GitHub Release, repository-visibility change or PyPI publication is part of this RC.

@@ -127,7 +127,7 @@ One full request after this schema fix passed; no fallback or retry was needed.
 - Local audit: `.agentbenchkit/judge-schema-acceptance-20261007T100017Z.json`.
   Runtime artifacts/audit stay local and are not committed.
 
-## Owner acceptance command
+## Reproduction command
 
 From `D:\WorkSpace\AgentBenchKit`, with the credential already set in the environment:
 
@@ -136,9 +136,9 @@ uv run agent-bench judge 20261007T085706Z-6489516b sample-clamp-1 --model qwen3.
 ```
 
 Every invocation creates a new Judge artifact. The generic CLI defaults remain
-2000 tokens / omitted reasoning effort; use the explicit settings above to repeat
-this accepted configuration. The owner confirmed independent acceptance complete on 2026-10-07.
-Release finalization reuses the immutable live evidence; it does not repeat paid requests.
+2000 tokens / omitted reasoning effort; use the explicit settings above to reproduce
+the validated configuration. Release finalization reuses immutable live evidence
+instead of repeating paid requests.
 
 ## Automated verification
 

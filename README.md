@@ -51,14 +51,13 @@ Benchmark / Task + Agent Harness + Environment
 ```sh
 git clone https://github.com/K529529/AgentBenchKit.git
 cd AgentBenchKit
-git checkout feature/v0-implementation
 uv sync --locked
 uv run agent-bench --help
 uv run agent-bench validate-benchmark
 ```
 
 `validate-benchmark` 在全部八题上确认 no-op 应失败、reference candidate 应通过，
-不调用模型。当前 v0.1.0 是待人工发布的 release candidate，PR 仍为 Draft。
+不调用模型。
 
 ### 2. 准备 Nexus 镜像与模型配置
 
@@ -151,7 +150,6 @@ V0 是源码级 Harness 接入，**没有 plugin discovery**，也不要求修�
 - Windows / Ubuntu [CI](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml)。
 - 已有真实证据：Nexus 8/8；Codex ChatGPT smoke 2/2；真实 LLM Judge `COMPLETED`、四维严格解析。
 - Docker 边界与 Viewer 已验收；本轮复用不可变证据，不重复消耗模型额度。
-- **Owner acceptance 已完成**（项目所有者于 2026-10-07 确认）。
 
 可复核 run ID、历史失败和未执行项目见 [acceptance](docs/acceptance-v0.md)；
 开发检查与阶段记录见 [implementation status](docs/implementation-status.md)。

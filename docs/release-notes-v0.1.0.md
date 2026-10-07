@@ -1,9 +1,10 @@
-# AgentBenchKit v0.1.0 release candidate
+# AgentBenchKit v0.1.0
 
 Lightweight Coding Agent Evaluation & Benchmark Infrastructure.
-V0 implementation and owner acceptance are complete. This branch is prepared for
-human release review; [PR #1](https://github.com/K529529/AgentBenchKit/pull/1) remains Draft.
-No merge, tag, GitHub Release, public-visibility change or PyPI publication has been performed.
+
+This release establishes the first complete local evaluation workflow for external
+Coding Agents, from isolated execution and candidate freezing through independent
+verification, trajectory analysis, regression comparison and optional LLM-based quality evaluation.
 
 ## Implemented
 
@@ -34,7 +35,6 @@ No merge, tag, GitHub Release, public-visibility change or PyPI publication has 
   earlier Docker boundary tests and browser Viewer inspection.
 - Real Judge HTTP 200 / stop / COMPLETED, all four dimensions parsed strictly;
   original correctness and previous failed artifacts preserved.
-- Owner acceptance complete (project owner confirmation, 2026-10-07).
 
 Existing immutable live evidence is reused during finalization without new model spend.
 See [acceptance](acceptance-v0.md) and [implementation status](implementation-status.md).
