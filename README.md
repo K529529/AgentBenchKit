@@ -97,8 +97,9 @@ uv run agent-bench judge RUN_ID SAMPLE_ID --model JUDGE_MODEL --endpoint https:/
 
 这会把该样本的限量任务/代码/公共轨迹发送给指定 Provider，并单独计入 Judge
 usage。四个质量维度为测试质量、工具使用、解法质量、效率；缺少证据时 N/A。
-Judge 不修改 verifier 或 sample_success，每次输出独立版本。真实在线 Judge
-尚未完成验收；受控 HTTP、超时、失败隔离与版本保留已测试。
+Judge 不修改 verifier 或 sample_success，每次输出独立版本。真实在线 Judge 已通过
+一次完整样本验收；严格四维 schema、超时、失败隔离与版本保留已测试。
+模型只生成业务字段，版本由框架注入；未知字段和歧义形状会拒绝。
 失败时 CLI 和独立 Judge 记录包含脱敏、限长诊断；支持显式
 `--max-completion-tokens` / `--reasoning-effort`，详见[诊断与重试](docs/judge-diagnostics.md)。
 

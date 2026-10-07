@@ -264,7 +264,12 @@ async def test_cli_diagnostics_schema_failure_and_correctness_isolation(
                 json.dumps(
                     {
                         "dimensions": [
-                            {"dimension": name, "score": None, "reason": "No evidence"}
+                            {
+                                "dimension": name,
+                                "score": None,
+                                "reason": "No evidence",
+                                "evidence_refs": [],
+                            }
                             for name in DIMENSIONS
                         ]
                     }
@@ -302,3 +307,147 @@ def test_invalid_worker_diagnostic_never_exposes_raw_output(
         call_judge("https://example.invalid/v1", SECRET, "test", {}, 5)
     assert caught.value.diagnostic["exception_type"] == "WorkerProcessError"
     assert SECRET not in str(caught.value) and PRIVATE not in str(caught.value)
+
+
+def canonical_output() -> dict[str, Any]:
+    return {
+        "dimensions": [
+            {
+                "dimension": name,
+                "score": 2,
+                "reason": "Evidence supports the score.",
+                "evidence_refs": ["candidate.diff"],
+            }
+            for name in DIMENSIONS
+        ]
+    }
+
+
+def test_canonical_prompt_matches_strict_parser_and_framework_versions() -> None:
+    from agentbenchkit.analysis.judge import JudgeOutput, judge_prompt, parse_judge_output
+
+    prompt = judge_prompt()
+    example_text = prompt.split("Example JSON: ")[1].split("\nAuthoritative JSON Schema: ")[0]
+    parsed = parse_judge_output(json.loads(example_text))
+    assert len(parsed.dimensions) == 4
+    assert all(item.judge_version == "quality-v1" for item in parsed.dimensions)
+    assert (
+        json.loads(prompt.split("Authoritative JSON Schema: ")[1])
+        == JudgeOutput.model_json_schema()
+    )
+    scores = parse_judge_output(canonical_output())
+    assert all(
+        item.score == 2 and item.evidence_refs == ("candidate.diff",) for item in scores.dimensions
+    )
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        "mapping",
+        "top-version",
+        "nested-version",
+        "analysis-version",
+        "extra",
+        "missing-field",
+        "duplicate",
+        "missing-dimension",
+        "unknown-dimension",
+        "score-string",
+        "score-bool",
+        "score-out-of-range",
+        "score-nan",
+        "refs-string",
+        "refs-number",
+        "reason-number",
+    ],
+)
+def test_noncanonical_output_is_rejected_without_coercion(case: str) -> None:
+    from pydantic import ValidationError
+
+    from agentbenchkit.analysis.judge import parse_judge_output
+
+    value = canonical_output()
+    first = value["dimensions"][0]
+    if case == "mapping":
+        value["dimensions"] = {item["dimension"]: item for item in value["dimensions"]}
+    elif case == "top-version":
+        value["judge_version"] = "quality-v1"
+    elif case == "nested-version":
+        first["judge_version"] = "quality-v1"
+    elif case == "analysis-version":
+        value["analysis_version"] = "quality-v1"
+    elif case == "extra":
+        first["confidence"] = 0.9
+    elif case == "missing-field":
+        del first["evidence_refs"]
+    elif case == "duplicate":
+        value["dimensions"][1] = first.copy()
+    elif case == "missing-dimension":
+        value["dimensions"].pop()
+    elif case == "unknown-dimension":
+        first["dimension"] = "correctness"
+    elif case == "score-string":
+        first["score"] = "2"
+    elif case == "score-bool":
+        first["score"] = True
+    elif case == "score-out-of-range":
+        first["score"] = 5
+    elif case == "score-nan":
+        first["score"] = float("nan")
+    elif case == "refs-string":
+        first["evidence_refs"] = "candidate.diff"
+    elif case == "refs-number":
+        first["evidence_refs"] = [1]
+    elif case == "reason-number":
+        first["reason"] = 1
+    with pytest.raises(ValidationError):
+        parse_judge_output(value)
+
+
+async def test_reported_shape_mismatch_preserves_history_and_verdicts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, provider: Server
+) -> None:
+    from pydantic import ValidationError
+
+    from agentbenchkit.analysis.judge import RubricScores
+
+    # Representative shape reproduces the recorded errors; raw live output was not retained.
+    bad = {
+        "dimensions": {item["dimension"]: item for item in canonical_output()["dimensions"]},
+        "judge_version": "quality-v1",
+    }
+    with pytest.raises(ValidationError) as caught:
+        RubricScores.model_validate(bad)
+    assert {error["type"] for error in caught.value.errors()} == {"tuple_type", "extra_forbidden"}
+    directory = await evaluate(load_tasks(("clamp",)), ControlledHarness(True), tmp_path)
+    sample = next(directory.glob("tasks/*/*/sample.json"))
+    original = {path: path.read_bytes() for path in directory.rglob("*") if path.is_file()}
+    monkeypatch.setenv("TEST_JUDGE_KEY", SECRET)
+    endpoint, requests, replies = provider
+    replies.append((200, completion(json.dumps(bad))))
+    failed = judge_sample(
+        tmp_path, directory.name, sample.parent.name, "test", endpoint, "TEST_JUDGE_KEY"
+    )
+    failure = json.loads(failed.read_bytes())
+    assert failure["judge_status"] == "ERROR"
+    assert "dimensions: list_type" in failure["error"]
+    assert "judge_version: extra_forbidden" in failure["error"]
+    original[failed] = failed.read_bytes()
+
+    valid = canonical_output()
+    reference = next(sample.parent.rglob("*.diff")).relative_to(directory).as_posix()
+    for item in valid["dimensions"]:
+        item["evidence_refs"] = [reference]
+    replies.append((200, completion(json.dumps(valid))))
+    passed = judge_sample(
+        tmp_path, directory.name, sample.parent.name, "test", endpoint, "TEST_JUDGE_KEY"
+    )
+    result = json.loads(passed.read_bytes())
+    assert result["judge_status"] == "COMPLETED"
+    assert result["analysis_version"] == "quality-v1"
+    assert result["output_schema_version"] == "judge-output-v1"
+    assert result["prompt_version"] == "quality-json-v2"
+    assert all(d["judge_version"] == "quality-v1" for d in result["rubric_scores"]["dimensions"])
+    assert "Authoritative JSON Schema:" in requests[1]["messages"][0]["content"]
+    assert all(path.read_bytes() == before for path, before in original.items())

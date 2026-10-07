@@ -53,12 +53,16 @@ claim would be unsupported. Versioned replay preserves original evidence.
 | Corrupt SQLite file rebuild preserves source evidence | test_storage.py |
 | Read-only Viewer, HTML escaping, traversal and size boundaries | test_viewer.py |
 
+## Real Judge acceptance
+
+PASS: full sample request returned HTTP 200 / stop / COMPLETED; all four dimensions
+passed strict schema. Original correctness and three historical failed Judge artifacts
+were preserved. See [root causes and live evidence](judge-diagnostics.md).
+The owner will run an independent acceptance.
+
 ## Explicitly not run
 
 - Real Codex explicit API-provider inference (configuration conversion tested).
-- Successful real-sample LLM Judge acceptance: user reported ERROR; diagnostics fixed,
-  owner retest pending. A synthetic live diagnostic parsed JSON successfully; see
-  [Judge diagnostics](judge-diagnostics.md).
 - Optional public SWE-bench adapter / official leaderboard evaluation.
 
 These limits are documented rather than counted as successful real-model tests.
