@@ -230,12 +230,30 @@ def judge_command(
     model: Annotated[str, typer.Option()],
     endpoint: Annotated[str, typer.Option()],
     key_env: Annotated[str, typer.Option()],
+    max_completion_tokens: Annotated[int, typer.Option(min=1)] = 2000,
+    reasoning_effort: Annotated[str | None, typer.Option()] = None,
     output: Annotated[Path, typer.Option()] = Path(".agentbenchkit/results"),
 ) -> None:
     """Optionally score quality with a separate model request and versioned output."""
-    target = judge_sample(output, run_id, sample_id, model, endpoint, key_env)
+    target = judge_sample(
+        output,
+        run_id,
+        sample_id,
+        model,
+        endpoint,
+        key_env,
+        max_completion_tokens=max_completion_tokens,
+        reasoning_effort=reasoning_effort,
+    )
     typer.echo(str(target))
-    if json.loads(target.read_text(encoding="utf-8"))["judge_status"] == "ERROR":
+    result = json.loads(target.read_text(encoding="utf-8"))
+    if result["judge_status"] == "ERROR":
+        typer.echo(
+            json.dumps(
+                result.get("error_details", {"message": result.get("error")}), ensure_ascii=False
+            ),
+            err=True,
+        )
         raise typer.Exit(2)
 
 

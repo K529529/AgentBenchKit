@@ -15,6 +15,12 @@ from typing import Any, Literal
 
 from pydantic import Field, model_validator
 
+from agentbenchkit.analysis.judge_diagnostics import (
+    MAX_DIAGNOSTIC_BYTES,
+    JudgeFailure,
+    safe_error,
+    sanitize_diagnostic,
+)
 from agentbenchkit.analysis.replay import evidence_hash
 from agentbenchkit.core.models import Contract
 from agentbenchkit.storage.artifacts import Redactor, write_json
@@ -67,8 +73,17 @@ def unavailable_scores() -> dict[str, Any]:
 
 
 def http_judge(
-    endpoint: str, key: str, model: str, evidence: dict[str, Any], budget_seconds: float = 60
+    endpoint: str,
+    key: str,
+    model: str,
+    evidence: dict[str, Any],
+    budget_seconds: float = 60,
+    *,
+    max_completion_tokens: int = 2000,
+    reasoning_effort: str | None = None,
 ) -> dict[str, Any]:
+    if max_completion_tokens <= 0:
+        raise ValueError("max_completion_tokens must be positive")
     parsed = urllib.parse.urlparse(endpoint)
     if parsed.scheme != "https" and not (
         parsed.scheme == "http" and parsed.hostname in {"localhost", "127.0.0.1"}
@@ -81,15 +96,17 @@ def http_judge(
         "evidence_refs drawn only from supplied artifact paths, judge_version='quality-v1'. "
         "0=poor, 1=weak, 2=adequate, 3=good, 4=strong. No composite score."
     )
-    payload = {
+    payload: dict[str, Any] = {
         "model": model,
         "messages": [
             {"role": "system", "content": prompt},
             {"role": "user", "content": json.dumps({"rubric": CRITERIA, "evidence": evidence})},
         ],
         "response_format": {"type": "json_object"},
-        "max_completion_tokens": 2000,
+        "max_completion_tokens": max_completion_tokens,
     }
+    if reasoning_effort is not None:
+        payload["reasoning_effort"] = reasoning_effort
     request = urllib.request.Request(
         endpoint.rstrip("/") + "/chat/completions",
         data=json.dumps(payload).encode(),
@@ -99,16 +116,66 @@ def http_judge(
         raw = response.read(262_145)
     if len(raw) > 262_144:
         raise ValueError("Judge response exceeds size limit")
-    data = json.loads(raw)
+    diagnostic: dict[str, Any] = {"phase": "response", "http_status": response.status}
+    try:
+        data = json.loads(raw)
+        choice = data["choices"][0]
+        message = choice["message"]
+        content = message.get("content")
+        usage = data.get("usage") or {}
+        details = usage.get("completion_tokens_details") or {}
+        diagnostic.update(
+            finish_reason=choice.get("finish_reason"),
+            content_chars=len(content) if isinstance(content, str) else 0,
+            completion_tokens=usage.get("completion_tokens"),
+            reasoning_tokens=details.get("reasoning_tokens"),
+        )
+        if choice.get("finish_reason") == "length":
+            raise JudgeFailure(
+                {
+                    **diagnostic,
+                    "exception_type": "OutputTruncated",
+                    "message": "Provider reached the completion token limit; "
+                    "increase the explicit token budget or reduce reasoning effort.",
+                }
+            )
+        if not isinstance(content, str) or not content.strip():
+            raise JudgeFailure(
+                {
+                    **diagnostic,
+                    "exception_type": "EmptyContent",
+                    "message": "Provider returned no final JSON content.",
+                }
+            )
+        scores = json.loads(content)
+    except JudgeFailure:
+        raise
+    except (ValueError, KeyError, IndexError, TypeError, AttributeError) as exc:
+        raise JudgeFailure(
+            {
+                **diagnostic,
+                "exception_type": type(exc).__name__,
+                "message": "Provider response is not a valid chat completion "
+                "containing final JSON; response content omitted.",
+            }
+        ) from None
     return {
-        "scores": json.loads(data["choices"][0]["message"]["content"]),
+        "scores": scores,
         "usage": data.get("usage"),
         "model": data.get("model", model),
+        "response_metadata": sanitize_diagnostic(diagnostic, key),
     }
 
 
 def call_judge(
-    endpoint: str, key: str, model: str, evidence: dict[str, Any], budget_seconds: float = 60
+    endpoint: str,
+    key: str,
+    model: str,
+    evidence: dict[str, Any],
+    budget_seconds: float = 60,
+    *,
+    max_completion_tokens: int = 2000,
+    reasoning_effort: str | None = None,
 ) -> dict[str, Any]:
     # A subprocess gives an actual wall-clock deadline even for a trickling HTTP peer.
     process = subprocess.Popen(
@@ -124,6 +191,8 @@ def call_judge(
             "model": model,
             "evidence": evidence,
             "budget_seconds": budget_seconds,
+            "max_completion_tokens": max_completion_tokens,
+            "reasoning_effort": reasoning_effort,
         }
     ).encode()
     try:
@@ -133,7 +202,21 @@ def call_judge(
         process.communicate()
         raise
     if process.returncode:
-        raise RuntimeError("Judge HTTP worker failed")
+        diagnostic = {
+            "exception_type": "WorkerProcessError",
+            "phase": "worker",
+            "http_status": None,
+            "worker_exit_code": process.returncode,
+            "message": "Judge worker exited without a valid diagnostic; raw output omitted",
+        }
+        if len(stdout) <= MAX_DIAGNOSTIC_BYTES:
+            try:
+                envelope = json.loads(stdout)
+                if isinstance(envelope, dict) and isinstance(envelope.get("error"), dict):
+                    diagnostic.update(sanitize_diagnostic(envelope["error"], key))
+            except ValueError:
+                pass
+        raise JudgeFailure(diagnostic)
     response: dict[str, Any] = json.loads(stdout)
     return response
 
@@ -146,6 +229,9 @@ def judge_sample(
     endpoint: str,
     key_env: str,
     caller: Callable[..., dict[str, Any]] = call_judge,
+    *,
+    max_completion_tokens: int = 2000,
+    reasoning_effort: str | None = None,
 ) -> Path:
     parsed = urllib.parse.urlsplit(endpoint)
     if parsed.username or parsed.password or parsed.query or parsed.fragment:
@@ -198,6 +284,9 @@ def judge_sample(
         "judge_cost": None,
         "input_character_limit": 24_000,
         "temperature": None,
+        "max_completion_tokens": max_completion_tokens,
+        "reasoning_effort": reasoning_effort,
+        "response_format": {"type": "json_object"},
         "timeout_seconds": task["timeouts"]["analysis"],
     }
     started = time.monotonic()
@@ -205,7 +294,16 @@ def judge_sample(
         if not key:
             raise ValueError(f"missing Judge credential environment: {key_env}")
         response = caller(
-            endpoint, key, model, redactor.value(evidence), task["timeouts"]["analysis"]
+            endpoint,
+            key,
+            model,
+            redactor.value(evidence),
+            task["timeouts"]["analysis"],
+            max_completion_tokens=max_completion_tokens,
+            reasoning_effort=reasoning_effort,
+        )
+        result["response_metadata"] = sanitize_diagnostic(
+            response.get("response_metadata", {}), key
         )
         result["judge_usage"] = response.get("usage")
         scores = RubricScores.model_validate(response["scores"])
@@ -221,7 +319,12 @@ def judge_sample(
             model=response.get("model", model),
         )
     except Exception as exc:
-        result["error"] = redactor.text(str(exc))
+        diagnostic = safe_error(exc, key)
+        metadata = result.get("response_metadata", {})
+        if metadata and diagnostic.get("http_status") is None:
+            diagnostic = {**diagnostic, **metadata, "phase": diagnostic["phase"]}
+        result["error_details"] = diagnostic
+        result["error"] = f"{diagnostic.get('exception_type')}: {diagnostic.get('message')}"
     result["duration_ms"] = (time.monotonic() - started) * 1000
     target = directory / "judge" / f"{analysis_id}.json"
     write_json(target, result, redactor)

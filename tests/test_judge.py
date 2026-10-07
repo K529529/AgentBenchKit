@@ -20,7 +20,7 @@ async def test_judge_failure_and_replay_preserve_correctness(
     before = evidence_hash(directory)
     monkeypatch.setenv("TEST_JUDGE_KEY", "synthetic-judge-secret")
 
-    def broken(*args: Any) -> dict[str, Any]:
+    def broken(*args: Any, **kwargs: Any) -> dict[str, Any]:
         raise RuntimeError("synthetic-judge-secret unavailable")
 
     failed = judge_sample(
@@ -36,7 +36,7 @@ async def test_judge_failure_and_replay_preserve_correctness(
     assert data["judge_status"] == "ERROR"
     assert "synthetic-judge-secret" not in failed.read_text()
 
-    def good(*args: Any) -> dict[str, Any]:
+    def good(*args: Any, **kwargs: Any) -> dict[str, Any]:
         return {
             "scores": {
                 "dimensions": [

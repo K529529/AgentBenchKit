@@ -49,14 +49,16 @@ claim would be unsupported. Versioned replay preserves original evidence.
 | Literal secret redaction and in-memory auth injection | test_execution.py, test_codex.py, test_docker.py |
 | Shared model mappings; unsupported controls; isolated config homes | test_model_spec.py |
 | Missing observability, immutable replay and comparison confounds | test_analysis.py |
-| Judge failure, HTTP deadline, historical analyses | test_judge.py |
+| Judge failure, safe HTTP diagnostics, deadline, historical analyses | test_judge.py, test_judge_diagnostics.py |
 | Corrupt SQLite file rebuild preserves source evidence | test_storage.py |
 | Read-only Viewer, HTML escaping, traversal and size boundaries | test_viewer.py |
 
 ## Explicitly not run
 
 - Real Codex explicit API-provider inference (configuration conversion tested).
-- Real optional LLM Judge inference (controlled HTTP and failure paths tested).
+- Successful real-sample LLM Judge acceptance: user reported ERROR; diagnostics fixed,
+  owner retest pending. A synthetic live diagnostic parsed JSON successfully; see
+  [Judge diagnostics](judge-diagnostics.md).
 - Optional public SWE-bench adapter / official leaderboard evaluation.
 
 These limits are documented rather than counted as successful real-model tests.

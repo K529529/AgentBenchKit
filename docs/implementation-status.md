@@ -12,7 +12,7 @@ real Agent/Docker runs. A failed evaluated Agent is not automatically a toolkit 
 | 4: benchmark/persistence | PASS | 8 tasks; all no-op FAIL/reference PASS on host and Docker; 100 tests; index rebuild and manifest identity checks |
 | 5: second real Agent + ModelSpec | PASS | Codex 2/2 smoke; common typed model contract; Nexus new-config regression 1/1; see phase-5-evidence.md |
 | 6: analysis/replay/compare | PASS | 5 focused tests; immutable versioned replay; real Nexus/Codex comparison correctly warns and returns INCONCLUSIVE |
-| 7: rubric/optional judge | PASS (controlled); real Judge NOT RUN | Four dimensions; isolated HTTP worker deadline; versioned results; Judge failure/replay preserve correctness |
+| 7: rubric/optional judge | PASS (controlled); user real Judge ERROR, retest pending | Four dimensions; isolated HTTP worker deadline; versioned results; Judge failure/replay preserve correctness |
 | 8: viewer | PASS | Read-only/XSS/path/size tests; actual browser run/sample pages checked; model/provider and subscription-smoke limits visible |
 | 9: public benchmark | OPTIONAL, NOT RUN | |
 | 10: release hardening | PASS (local) | 127 tests incl. 7 Docker; wheel assets/license; secret scan; MIT/docs; see acceptance-v0.md and latest branch CI |
@@ -23,3 +23,10 @@ Repeated public tool inputs: PASS (19 new cases; 139 passed / 7 Docker skipped).
 Existing real Nexus/Codex trajectories replayed without changing evidence or verdicts.
 Stagnation deliberately deferred: no complete per-step mutation evidence.
 See [trajectory analyzer assessment](trajectory-analyzers.md).
+
+
+Judge diagnostics: PASS (18 new controlled cases; 157 passed / 7 Docker skipped).
+Ruff and strict mypy pass. One synthetic live diagnostic returned parseable JSON;
+the historical real-sample cause remains unconfirmed because its exception was
+not retained. Final real-sample acceptance is reserved for the owner.
+See [diagnostics and retest evidence](judge-diagnostics.md).
