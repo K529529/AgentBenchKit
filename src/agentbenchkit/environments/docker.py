@@ -9,7 +9,7 @@ import sys
 import time
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field
 
@@ -57,6 +57,8 @@ class DockerLimits(Contract):
     cpus: int = Field(default=1, ge=1)
     pids: int = Field(default=128, ge=32)
     readonly: bool = True
+    workspace_readonly: bool | None = None
+    verification_network: Literal["none", "bridge"] = "none"
     workdir: str = "/workspace"
     python: str = "python"
 
@@ -113,7 +115,7 @@ class DockerSession:
     async def prepare(self) -> None:
         await self._close_container()
         name = "abk-" + uuid.uuid4().hex
-        network = "none" if self.verification else "bridge"
+        network = self.limits.verification_network if self.verification else "bridge"
         user = "1000"
         if sys.platform != "win32":
             user = str(os.getuid())
@@ -150,7 +152,12 @@ class DockerSession:
         ]
         if self.limits.readonly:
             args.append("--read-only")
-        mounts = [(self.workspace, self.limits.workdir, self.verification)]
+        workspace_readonly = (
+            self.verification
+            if self.limits.workspace_readonly is None
+            else self.limits.workspace_readonly
+        )
+        mounts = [(self.workspace, self.limits.workdir, workspace_readonly)]
         if self.verification:
             assets = self.workspace.parent / "protected"
             output = self.workspace.parent / "output"
@@ -312,12 +319,17 @@ class DockerEnvironment:
             "os": data["Os"],
             "architecture": data["Architecture"],
             "shell": "/bin/sh",
-            "network": "bridge",
-            "verifier_network": "none",
+            "network": self.limits.verification_network if self.verification else "bridge",
+            "verifier_network": self.limits.verification_network,
             "cpus": self.limits.cpus,
             "memory_mb": self.limits.memory_mb,
             "pids_limit": self.limits.pids,
             "root_filesystem": "read_only" if self.limits.readonly else "writable",
+            "workspace_read_only": self.verification
+            if self.limits.workspace_readonly is None
+            else self.limits.workspace_readonly,
+            "workdir": self.limits.workdir,
+            "bootstrap_python": self.limits.python,
         }
 
     async def create(self, workspace: Path, execution_id: str) -> DockerSession:

@@ -8,6 +8,7 @@
     <h1>评测运行总览</h1>
     <p class="lead">从 Agent 执行到独立验证，每个结论都有据可查。</p>
     <div class="context-tags">
+      <span class="context-tag">Benchmark <b>{{ manifest.get("benchmark", "micro_swe") }}</b></span>
       <span class="context-tag">Agent <b>{{ manifest.harness.name }}</b></span>
       <span class="context-tag">Environment <b>{{ manifest.environment.provider }}</b></span>
       {% if manifest.get('model') %}<span class="context-tag">Model <b>{{ manifest.model.model_id }}</b></span>{% endif %}
@@ -20,6 +21,7 @@
 {% elif not manifest.get('model') %}
 <div class="warning">此记录缺少统一模型配置，模型条件不可完整比较。</div>
 {% endif %}
+{% for notice in notices %}<div class="warning">{{ notice }}</div>{% endfor %}
 <div class="stats">
   <div class="metric-primary"><small>端到端成功</small><strong>{{ summary.get('samples_successful','N/A') }} <span class="metric-denominator">/ {{ summary.get('samples_planned','N/A') }}</span></strong><span class="metric-note">成功样本 / 计划样本</span></div>
   <div><small>候选通过率</small><strong>{{ rate(summary.get('candidate_pass_rate')) }}</strong><span class="metric-note">仅统计具有有效验证的样本</span></div>

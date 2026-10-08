@@ -106,6 +106,13 @@ def create_app(root: Path) -> FastAPI:
             manifest=manifest,
             summary=read_json(summary_path) if summary_path.exists() else {},
             samples=samples,
+            notices=sorted(
+                {
+                    task.get("metadata", {}).get("evaluation_notice", "")
+                    for task in manifest["tasks"]
+                }
+                - {""}
+            ),
             analyses=analyses,
         )
 
@@ -144,6 +151,7 @@ def create_app(root: Path) -> FastAPI:
             title=sample_id,
             run_id=run_id,
             sample=record,
+            benchmark=manifest.get("benchmark", "micro_swe"),
             task=task,
             files=files,
             analysis=analyze_sample(directory, paths[0], manifest["harness"]["capabilities"]),

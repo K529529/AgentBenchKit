@@ -11,7 +11,15 @@ from agentbenchkit.viewer.app import artifact_path, create_app
 
 
 async def test_viewer_routes_are_readonly_and_escape_html(tmp_path: Path) -> None:
-    task = load_tasks(("clamp",))[0].model_copy(update={"prompt": "<script>alert(1)</script>"})
+    task = load_tasks(("clamp",))[0].model_copy(
+        update={
+            "prompt": "<script>alert(1)</script>",
+            "metadata": {
+                "evaluation_protocol": "single-agent-run-hidden-tests",
+                "evaluation_notice": "Not directly comparable <notice>",
+            },
+        }
+    )
     directory = await evaluate([task], ControlledHarness(True), tmp_path)
     sample = next(directory.glob("tasks/*/*/sample.json"))
     before = {
@@ -24,6 +32,8 @@ async def test_viewer_routes_are_readonly_and_escape_html(tmp_path: Path) -> Non
         assert client.get(f"/runs/{directory.name}").status_code == 200
         response = client.get(f"/runs/{directory.name}/samples/{sample.parent.name}")
         assert response.status_code == 200
+        assert "single-agent-run-hidden-tests" in response.text
+        assert "Not directly comparable &lt;notice&gt;" in response.text
         assert "repeated-tool-calls-v1" in response.text
         assert "UNAVAILABLE" in response.text
         assert "&lt;script&gt;" in response.text

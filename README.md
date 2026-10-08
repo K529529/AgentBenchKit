@@ -27,9 +27,32 @@
 **AgentBenchKit** 是轻量、本地运行的 Coding Agent 评测基础设施。通过公共 CLI
 接入外部 Agent，保存执行证据、冻结候选代码、独立验证结果，再做轨迹分析与回归比较。
 
-V0 支持 **Nexus / Codex**，使用公共 **ModelSpec** 管理模型连接信息，
-在 **HostProcess / Docker** 中运行评测。内置的 micro_swe 包含 8 道小型 Python 任务，
-用于接入验证与回归检查；不把一次成功或启发式归因当成能力证明。
+支持 **Nexus / Codex**，使用公共 **ModelSpec** 管理模型连接信息，
+在 **HostProcess / Docker** 中运行评测。V0.2 开发分支新增 FeatureBench Fast、
+SWE-bench Lite 和 Aider Polyglot Adapter；内置 micro_swe 用于接入与回归。
+Qoder 接入及最终验收仍在进行中，当前状态见[实施记录](docs/implementation-status.md)。
+一次 smoke 不代表 Benchmark 能力成绩。
+
+## 公共 Benchmark（V0.2 开发中）
+
+| Benchmark | 完整任务目录 | 执行与判定 |
+| --- | ---: | --- |
+| [FeatureBench v1.1 Fast](docs/featurebench.md) | 100 | 官方 evaluator；后续固定实验集为 16 题 / 8 镜像 |
+| [SWE-bench Lite](docs/swe-bench-lite.md) | 300 | 官方 SWE-bench v4.1.0 evaluator |
+| [Aider Polyglot](docs/aider-polyglot.md) | 225 | 单次 Agent + 官方测试；隐藏测试，不能直接对比官方两轮成绩 |
+| micro_swe | 8 | 内置独立 verifier，适合本地回归 |
+
+```sh
+uv run agent-bench list benchmarks
+uv run agent-bench tasks featurebench
+uv run agent-bench make-config featurebench --all-tasks --output featurebench-plan.json
+uv run agent-bench make-config swe-bench-lite --all-tasks --output swe-lite-plan.json
+uv run agent-bench make-config aider-polyglot --all-tasks --output polyglot-plan.json
+```
+
+列任务与生成配置不会调用模型。真实执行须显式选择任务，并准备各 Adapter 要求的
+固定数据、官方源码和镜像；完整目录可用不表示已经全量运行或全部环境验收。
+公共 Benchmark 使用 Linux/WSL、Docker 和 ext4 工作目录。详见[接入与执行边界](docs/benchmarks.md)。
 
 <a id="web-viewer"></a>
 ## 🖥️ Web Viewer
@@ -83,7 +106,7 @@ Benchmark / Task + Agent Harness + Environment
 
 ## ✨ 核心能力
 
-| 层次 | V0 提供什么 |
+| 层次 | 提供什么 |
 | --- | --- |
 | 接入与配置 | Benchmark / Harness / Environment 解耦；Nexus + Codex 双真实 Harness；公共 ModelSpec 转原生配置、隔离 Agent HOME。 |
 | 执行与验证 | HostProcess / Docker 整个 Agent 执行；阶段超时、取消、启动前重试；Candidate Freeze；全新 protected verifier。 |

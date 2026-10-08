@@ -212,3 +212,43 @@ Regression: 186 passed / 7 opt-in Docker skipped, Ruff and mypy PASS. Real upstr
 control and Nexus E2E PASS; no full 300-task run. Phase 2's official FeatureBench
 verdict remains unchanged; no additional FeatureBench model calls were made.
 Polyglot and Qoder real acceptance remain NOT RUN at this phase.
+
+
+## V0.2 phase 4 checkpoint: Polyglot (acceptance pending)
+
+PASS: all 225 tasks are discoverable/selectable/configurable across six languages;
+package build includes complete 100/300/225 public catalogs. The adapter hides
+upstream tests and reference examples from Agent workspaces, collects only the
+upstream solution scope, and executes original pinned run_unit_tests /
+cleanup_test_output function bodies in independent verification. This is the
+owner-selected single Agent execution protocol, not official two-round scoring.
+
+Source pins and commands are documented in aider-polyglot.md. Official Python
+control: starter FAIL, reference PASS. JavaScript starter FAIL; official reference
+FAIL with 14/16 passing and two TypeError failures because Jest 30 removed
+expect(...).toThrowError. Upstream benchmark Dockerfile installs unpinned jest;
+the frozen dataset package.json explicitly requires ^29.7.0. The proposed image
+fix is Jest 29.7.0, preserving upstream tests/scripts/grading. Owner confirmation
+of this upstream configuration conflict is pending. No Polyglot model calls have
+been made and the >=2-task real Nexus acceptance is NOT RUN.
+
+Image build evidence: .agentbenchkit/polyglot-build-npm1099.log. Node 20 retained;
+npm 10.8.2 stalled, npm 10.9.9 completed the same dependency installation.
+Initial image config ID: c9153a8cc58a5458c96373a34c85f259e825569dba184a755ca84c24a6bda831.
+Controls are preserved under .agentbenchkit/polyglot-controls and Linux
+/tmp/abk-polyglot-controls. The first JavaScript starter archive copy failed on
+container-only dependency symlinks after verification; ext4 evidence remains
+intact, and the subsequent reference control used symlink-preserving archival.
+No failed control is an Agent result or accepted solved task.
+
+Independent Viewer/documentation work: pages show Benchmark and generic adapter
+protocol notices; sample pages show evaluation_protocol. Read-only routes and
+Replay analysis passed against the real FeatureBench and SWE runs. SHA256 of all
+55 existing evidence files stayed unchanged. Cross-benchmark Compare returned
+formal_comparable=false with benchmark/tasks/environment differences. README and
+benchmarks.md distinguish complete catalogs from actual execution/acceptance.
+
+Regression: 190 passed / 7 opt-in Docker skipped; Ruff/mypy PASS. Linux real Docker
+regression after generic verifier workspace/network controls: 7 passed (25.03s).
+QoderHarness and its FeatureBench real smoke remain pending the owner's configured
+CLI/login/BYOK; do not label V0.2 acceptance complete. No full benchmark was run.

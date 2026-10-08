@@ -126,3 +126,92 @@ def test_swe_lite_discovery_selection_and_official_results() -> None:
         swe_verdict("x", {"completed": False, "report": {"x": {"resolved": True}}}).status
         == "ERROR"
     )
+
+
+def test_polyglot_full_catalog_and_single_round_conditions() -> None:
+    from collections import Counter
+
+    from agentbenchkit.benchmarks.polyglot import PolyglotAdapter
+
+    tasks = PolyglotAdapter().load_tasks()
+    assert len(tasks) == len({t.task_id for t in tasks}) == 225
+    assert Counter(t.tags[0] for t in tasks) == {
+        "cpp": 26,
+        "go": 39,
+        "java": 47,
+        "javascript": 49,
+        "python": 34,
+        "rust": 30,
+    }
+    assert all(t.metadata["official_two_round_comparable"] is False for t in tasks)
+    assert len(make_config("aider-polyglot", (), all_tasks=True).task_ids) == 225
+    with pytest.raises(ValueError):
+        PolyglotAdapter().load_tasks(("unknown",))
+
+
+def test_polyglot_hides_tests_and_reference_but_restores_verifier_inputs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from agentbenchkit.benchmarks.polyglot import PolyglotAdapter
+
+    original = tmp_path / "original"
+    original.mkdir()
+    files = {
+        "solution.py": "pass",
+        "official_test.py": "assert False",
+        "build.cfg": "trusted",
+        ".meta/example.py": "gold",
+        ".docs/instructions.md": "prompt",
+    }
+    for name, content in files.items():
+        p = original / name
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(content)
+    adapter = PolyglotAdapter()
+    task = adapter.load_tasks()[0]
+    row = {
+        "example_files": [".meta/example.py"],
+        "test_files": ["official_test.py"],
+        "files_sha256": files,
+    }
+    monkeypatch.setattr(adapter, "exercise", lambda task: (original, row))
+    agent, verifier = tmp_path / "agent", tmp_path / "verifier"
+    adapter.materialize(task, agent, False)
+    adapter.materialize(task, verifier, True)
+    assert {p.name for p in agent.iterdir()} == {"solution.py", "build.cfg"}
+    assert (verifier / "official_test.py").read_text() == "assert False"
+    assert not (verifier / ".meta").exists()
+
+
+def test_polyglot_official_function_loader_does_not_import_agent_clients(tmp_path: Path) -> None:
+    from agentbenchkit.benchmarks.polyglot.worker import official_functions
+
+    source = tmp_path / "upstream.py"
+    source.write_text(
+        "raise RuntimeError('model stack must not import')\n"
+        "def run_unit_tests():\n return 'official failure'\n"
+        "def cleanup_test_output(value):\n return value\n"
+    )
+    assert official_functions(source)["run_unit_tests"]() == "official failure"
+
+
+@pytest.mark.asyncio
+async def test_polyglot_candidate_excludes_build_and_test_edits(tmp_path: Path) -> None:
+    from agentbenchkit.benchmarks.polyglot import PolyglotAdapter
+    from agentbenchkit.storage.artifacts import Redactor
+    from agentbenchkit.verification.repository import verified_patch
+    adapter = PolyglotAdapter()
+    task = adapter.load_tasks(('python--affine-cipher',))[0]
+    baseline, workspace = tmp_path / 'baseline', tmp_path / 'workspace'
+    baseline.mkdir()
+    workspace.mkdir()
+    name = adapter.rows[task.task_id]['solution_files'][0]
+    (baseline / name).write_text('pass\n')
+    (workspace / name).write_text('answer = 42\n')
+    (workspace / 'official_test.py').write_text('assert True\n')
+    (workspace / 'build.cfg').write_text('malicious\n')
+    candidate = tmp_path / 'sample/candidate'
+    await adapter.collect(task, workspace, candidate, Redactor())
+    patch = verified_patch(candidate)
+    assert '+answer = 42' in patch
+    assert 'official_test.py' not in patch and 'build.cfg' not in patch
