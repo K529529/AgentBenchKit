@@ -175,6 +175,13 @@ def create_app(root: Path) -> FastAPI:
             result = compare(root, baseline, candidate, persist_analysis=False)
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from None
-        return render(request, "compare.html", title="运行对比", comparison=result)
+        return render(
+            request,
+            "compare.html",
+            title="运行对比",
+            comparison=result,
+            baseline_manifest=read_json(run_dir(baseline) / "manifest.json"),
+            candidate_manifest=read_json(run_dir(candidate) / "manifest.json"),
+        )
 
     return app

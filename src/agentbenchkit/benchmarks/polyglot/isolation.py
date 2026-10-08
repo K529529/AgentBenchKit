@@ -71,6 +71,8 @@ def anchor(data: bytes) -> tuple[Node, list[Node]]:
     if len(matches) != 1:
         raise ValueError("protected ComputeCellId must be one top-level struct")
     item = matches[0]
+    # The node type also covers pub(crate), pub(super), pub(in ...) and crate.
+    # Only the exact bare pub token exposes the protected host to rustdoc.
     if not any(n.type == "visibility_modifier" and n.text == b"pub" for n in item.named_children):
         raise ValueError("protected ComputeCellId must remain public")
     if any(n.type == "inner_attribute_item" for n in nodes):

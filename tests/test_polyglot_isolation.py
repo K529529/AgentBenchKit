@@ -238,3 +238,13 @@ def test_react_rejects_deleted_test_host_or_changed_test_manifest(
     adapter.materialize(task, canonical, True)
     with pytest.raises(ValueError, match="protected"):
         adapter.apply_candidate(task, candidate, canonical, tmp_path)
+
+
+@pytest.mark.parametrize("visibility", ["pub(crate)", "pub(super)", "pub(in crate)", "crate", ""])
+def test_react_rejects_restricted_or_private_visibility(dataset: Path, visibility: str) -> None:
+    pristine, agent = react_sources(dataset)
+    candidate = agent.replace(
+        b"pub struct ComputeCellId", f"{visibility} struct ComputeCellId".encode()
+    )
+    with pytest.raises(ValueError):
+        restore_react(pristine, candidate)

@@ -517,6 +517,47 @@ tests; account delta may include other account activity/delayed billing; Compare
 metadata is one explicit field rather than a per-key experimental-design API.
 No Runtime benchmark/repository special case was introduced.
 
-CI: the coherent hardening commit is to be pushed and its Windows/Ubuntu jobs
-checked before handoff. This pre-push record does not claim CI has already passed;
-the immutable commit's Actions result is the post-push authority.
+The coherent hardening commit
+[`fff69a1ca498d083e61431376df7f48416faf2db`](https://github.com/K529529/AgentBenchKit/commit/fff69a1ca498d083e61431376df7f48416faf2db)
+was pushed to feature/V0.2.0-implementation. Its
+[Windows/Ubuntu CI run](https://github.com/K529529/AgentBenchKit/actions/runs/37751448148)
+completed successfully: both platforms reported **230 passed / 16 opt-in skipped**.
+No historical evidence or official correctness semantics changed.
+
+## V0.2 final cleanup
+
+This final cleanup retains the hardening acceptance above and adds only the
+requested visibility regressions, public-facing documentation and the explicitly
+authorized read-only Viewer presentation refresh.
+
+- The supplied hardening HEAD already required the exact bare `pub` token for
+  protected `ComputeCellId`. The check is unchanged; five new regression cases
+  reject `pub(crate)`, `pub(super)`, `pub(in crate)`, `crate` and private visibility.
+  No other Rust masking, restoration, candidate or official test semantics changed.
+- Viewer: one run page contains the complete task map and result table, with local
+  search and PASS/FAIL/N/A filters. Two runs share metric bars and a per-task
+  comparison table. Original correctness/E2E dimensions, missing values and
+  comparability warnings are preserved. The route additionally reads existing
+  manifests for display names; Runtime, metrics and Compare semantics are unchanged.
+- README is user-facing, documents the four built-in benchmarks and Agent extension
+  path, and credits Archer as maintainer and OpenAI Codex as AI collaboration.
+  The GitHub About description now names the built-in benchmarks.
+- PASS: `uv run ruff check .`, `uv run mypy`, `uv run mypy --platform linux`.
+- PASS: `uv run pytest` — **237 passed / 16 opt-in skipped**, with the same non-fatal
+  Starlette/httpx deprecation warning. This extends the 230-test hardening baseline
+  by five visibility cases and two multi-task/read-only Viewer regressions.
+- PASS: local headless Edge rendered the 16-task synthetic dashboard and comparison
+  at 1440px and 390px widths; filters, search, empty state, matrix anchor reset and
+  no page overflow/JavaScript errors checked. The desktop browser tool failed to
+  initialize, so the installed headless browser was used for development validation.
+  README screenshots are explicitly labeled synthetic layout demonstrations.
+- PASS: **171 historical evidence files byte-identical**, with no additions or
+  deletions. The frozen 16-task FeatureBench selection is untouched.
+- NOT RUN in cleanup: Docker controls (their prior **8/8 + 8/8** results remain
+  above), Nexus/Qoder/Codex inference, paid Judge, full benchmarks or 16 x 2.
+  No new model calls or model charges were incurred by this cleanup.
+
+The cleanup is a single follow-up commit on `feature/V0.2.0-implementation`.
+Its Windows/Ubuntu checks are recorded with that commit in
+[branch CI](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml?query=branch%3Afeature%2FV0.2.0-implementation).
+The preceding hardening commit and its completed CI are linked above.

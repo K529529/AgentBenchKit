@@ -5,7 +5,7 @@
 <p align="center">
   <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.12%2B-3776AB?style=flat-square&amp;logo=python&amp;logoColor=white" alt="Python 3.12+"></a>
   <a href="docs/adding-a-harness.md"><img src="https://img.shields.io/badge/Harnesses-Nexus%20%2B%20Codex%20%2B%20Qoder-147D70?style=flat-square" alt="Harnesses: Nexus, Codex and Qoder"></a>
-  <a href="docs/limitations.md"><img src="https://img.shields.io/badge/micro__swe-8%20tasks-266579?style=flat-square" alt="micro_swe: 8 tasks"></a>
+  <a href="docs/limitations.md"><img src="https://img.shields.io/badge/Benchmarks-4%20built--in-266579?style=flat-square" alt="4 built-in benchmarks"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-147D70?style=flat-square" alt="MIT License"></a>
 </p>
 
@@ -16,29 +16,31 @@
   <a href="#web-viewer">界面预览</a> ·
   <a href="#architecture">架构总览</a> ·
   <a href="docs/adding-a-harness.md">接入 Agent</a> ·
-  <a href="docs/release-notes-v0.2.0.md">V0.2 验收</a> ·
-  <a href="docs/implementation-status.md">实施记录</a>
+  <a href="docs/benchmarks.md">Benchmark 指南</a> ·
+  <a href="docs/release-notes-v0.2.0.md">版本说明</a>
 </p>
 
 ---
 
 ## 📖 项目简介
 
-**AgentBenchKit** 是轻量、本地运行的 Coding Agent 评测基础设施。通过公共 CLI
-接入外部 Agent，保存执行证据、冻结候选代码、独立验证结果，再做轨迹分析与回归比较。
+**AgentBenchKit** 是轻量、本地运行的 Coding Agent 评测工具。选择任务集和 Agent，
+运行评测，在同一个界面查看任务结果、对比不同运行，并追溯代码修改与验证证据。
 
-支持 **Nexus / Codex / Qoder CN**，使用公共 **ModelSpec** 管理模型连接信息，
-在 **HostProcess / Docker** 中运行评测。V0.2 新增 FeatureBench Fast、
-SWE-bench Lite 和 Aider Polyglot Adapter；内置 micro_swe 用于接入与回归。
-[Qoder CN](docs/qoder.md) 使用官方 SDK 和 Docker 账户登录隔离，支持 Credits 监测。
-三个公共 Benchmark 与 Qoder 的真实 smoke 管线已验收，结果与限制见[V0.2 说明](docs/release-notes-v0.2.0.md)。
-一次 smoke 不代表 Benchmark 能力成绩。
+内置 **micro_swe、FeatureBench Fast、SWE-bench Lite、Aider Polyglot** 四种 Benchmark，
+支持 **Nexus / Codex / Qoder CN**。公共 Benchmark 复用官方 evaluator 或测试流程，
+Agent 通过公开 CLI / SDK 执行，无需修改其源码。
 
-## 公共 Benchmark（V0.2）
+- **按需评测**：浏览任务目录，选择单题或任务集，配置模型、预算与执行环境。
+- **集中看结果**：汇总任务状态、候选正确性和端到端成功率，比较两次运行。
+- **追溯每次执行**：保留轨迹、冻结候选、独立验证报告和分析记录。
+- **扩展自己的 Agent**：通过 Harness 适配公开命令、配置与事件。
+
+## 内置 Benchmark
 
 | Benchmark | 完整任务目录 | 执行与判定 |
 | --- | ---: | --- |
-| [FeatureBench v1.1 Fast](docs/featurebench.md) | 100 | 官方 evaluator；后续固定实验集为 16 题 / 8 镜像 |
+| [FeatureBench v1.1 Fast](docs/featurebench.md) | 100 | 官方 evaluator；提供固定 16 题 / 8 镜像实验集 |
 | [SWE-bench Lite](docs/swe-bench-lite.md) | 300 | 官方 SWE-bench v4.1.0 evaluator |
 | [Aider Polyglot](docs/aider-polyglot.md) | 225 | 单次 Agent + 官方测试；隐藏测试，不能直接对比官方两轮成绩 |
 | micro_swe | 8 | 内置独立 verifier，适合本地回归 |
@@ -51,14 +53,15 @@ uv run agent-bench make-config swe-bench-lite --all-tasks --output swe-lite-plan
 uv run agent-bench make-config aider-polyglot --all-tasks --output polyglot-plan.json
 ```
 
-列任务与生成配置不会调用模型。真实执行须显式选择任务，并准备各 Adapter 要求的
-固定数据、官方源码和镜像；完整目录可用不表示已经全量运行或全部环境验收。
-公共 Benchmark 使用 Linux/WSL、Docker 和 ext4 工作目录。详见[接入与执行边界](docs/benchmarks.md)。
+列任务与生成配置不会调用模型。运行前请选择任务，并按对应指南准备固定数据、官方源码和镜像。
+公共 Benchmark 使用 Linux/WSL、Docker 和 ext4 工作目录。详见[Benchmark 使用指南](docs/benchmarks.md)。
 
 <a id="web-viewer"></a>
 ## 🖥️ Web Viewer
 
-在本地只读页面中查看 Agent 执行结果、独立验证与端到端状态，并展开检查轨迹、候选代码、验证证据和可选 Judge 评分。
+一个运行页集中显示全部任务：指标总览、任务状态矩阵、逐题结果，以及搜索和 PASS / FAIL / N/A 筛选。
+选择两次运行，即可并排查看两侧指标与每道题的结果；需要定位原因时，再进入样本证据。
+页面只读，保留正确性、端到端成功与可比性条件的区别。
 
 <table>
   <tr>
@@ -67,13 +70,13 @@ uv run agent-bench make-config aider-polyglot --all-tasks --output polyglot-plan
       <br><sub><b>评测运行总览</b><br>查看模型、环境、核心指标与任务结果</sub>
     </td>
     <td align="center" valign="top">
-      <a href="docs/assets/viewer-sample.png"><img src="docs/assets/viewer-sample.png" alt="样本详情：Agent 结果、独立验证与可展开的分析证据" height="270"></a>
-      <br><sub><b>样本详情与证据</b><br>分层查看执行、验证、轨迹与质量分析</sub>
+      <a href="docs/assets/viewer-compare.png"><img src="docs/assets/viewer-compare.png" alt="双运行对比：指标、逐题结果与可比性提示" height="270"></a>
+      <br><sub><b>双 Agent 运行对比</b><br>在同一页面比较指标与逐题结果</sub>
     </td>
   </tr>
 </table>
 
-<p align="center"><sub>Nexus / qwen3.8-flash / Docker 单任务示例</sub></p>
+<p align="center"><sub>16 题布局演示 · 截图使用合成数据，不代表实际实验结果</sub></p>
 
 <a id="architecture"></a>
 ## 🧭 架构总览
@@ -112,7 +115,7 @@ Benchmark / Task + Agent Harness + Environment
 | 接入与配置 | Benchmark / Harness / Environment 解耦；Nexus / Codex / Qoder 三种 Harness；公共 ModelSpec 转原生配置、隔离 Agent HOME。 |
 | 执行与验证 | HostProcess / Docker 整个 Agent 执行；阶段超时、取消、启动前重试；Candidate Freeze；全新 protected verifier。 |
 | 结果与分析 | candidate_pass 与 sample_success 分离；pass@k / coverage / success rate；Trajectory Evaluation、Failure / RCA、重复工具调用 observation。 |
-| 回归与质量 | 基于不可变 evidence 的 Replay；先检查实验条件的 Regression Compare；四维 Rubric + 已真实验收的可选 LLM Judge。 |
+| 回归与质量 | 基于不可变 evidence 的 Replay；先检查实验条件的 Regression Compare；四维 Rubric + 可选 LLM Judge。 |
 | 存储与展示 | 不可变文件证据 + 可重建 SQLite 索引；本地只读 Web Viewer，展示任务、轨迹、diff、判定与分析。 |
 
 <a id="quick-start"></a>
@@ -168,7 +171,7 @@ uv run agent-bench judge RUN_ID sample-clamp-1 --model qwen3.8-flash --endpoint 
 ```
 
 Compare 会标出模型、任务、环境等差异，不可比时返回 INCONCLUSIVE。
-Judge 示例使用已验收的配置，需要该 endpoint 的访问资格；它会单独调用模型，
+Judge 示例需要对应 endpoint 的访问资格；它会单独调用模型，
 发送限量任务/代码/公开轨迹并计入 Judge usage。其他 Provider 请调整显式配置。
 每次 Judge 生成独立 artifact，不改正确性；详见 [Judge 契约与证据](docs/judge-diagnostics.md)。
 
@@ -203,13 +206,14 @@ HostProcess 通过 `--env host_process` 使用本机 Agent，仅适合可信本�
 ## 🔌 Adding a new Agent
 
 已支持的 Nexus / Codex / Qoder 可直接运行；未知 Agent 需要适配其公开命令、配置和事件。
-当前是源码级 Harness 接入，**没有 plugin discovery**，也不要求修改被评测 Agent。
+Harness 通过源码扩展，不要求修改被评测 Agent。CLI 提供上表四种 Benchmark；
+新增 Benchmark 需要开发并注册 Adapter，不是通过配置文件上传任意题库。
 见 [接入指南](docs/adding-a-harness.md) 和
 [可运行 Harness 示例](examples/custom_harness.py)。
 
 ## 📌 Current scope / limitations
 
-- micro_swe 有 8 道小型 Python 任务；FeatureBench Fast / SWE-bench Lite / Polyglot 已接入，完整 catalog 分别为 100 / 300 / 225 题。Catalog/config 完整不等于全量 benchmark 已执行。
+- micro_swe 有 8 道小型 Python 任务；FeatureBench Fast / SWE-bench Lite / Polyglot 已接入，完整 catalog 分别为 100 / 300 / 225 题。具体运行覆盖见版本说明。
 - Codex ChatGPT 登录属于 smoke，不用于正式同模型公平比较；真实 Codex 显式 API inference 尚未执行。
 - Docker 不是 hostile-code 强隔离，Agent 可访问自身推理凭据；HostProcess 没有文件系统沙箱。
 - micro_swe 候选仅支持有界 UTF-8 文本，不支持 binary、symlink、junction；public Git-patch 支持 binary、删除和安全仓库 symlink。Polyglot 仅收集允许的普通 solution 文件，并保护内嵌官方测试。Windows bind mount 不保证 POSIX 执行位。
@@ -219,15 +223,18 @@ HostProcess 通过 `--env host_process` 使用本机 Agent，仅适合可信本�
 更多边界见 [limitations](docs/limitations.md)、[ModelSpec](docs/model-contract.md) 和
 [trajectory analyzers](docs/trajectory-analyzers.md)。
 
-## ✅ Validation / Acceptance
+## ✅ 验证与版本记录
 
-- V0.2 基线检查为 **202 passed / 8 Docker skipped**；本轮 hardening 的完整测试、Docker 与 CI 结果见 [implementation status](docs/implementation-status.md#v02-hardening)。
-- Windows / Ubuntu [CI](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml)。
-- 历史 micro_swe 真实证据：Nexus 8/8、Codex ChatGPT smoke 2/2；历史 LLM Judge `COMPLETED`。V0.2 public smoke：FeatureBench Nexus 官方 FAIL、SWE Lite Nexus PASS、Polyglot Nexus Python PASS / JavaScript FAIL、Qoder FeatureBench LIMITED / 官方 FAIL；均为小样本管线证据，不是全量成绩。
-- Docker 边界与 Viewer 已验收；本轮复用不可变证据，不重复消耗模型额度。
+项目在 Windows 与 Ubuntu 上执行自动化测试；Docker 与官方 Benchmark controls 单独验证。
 
-可复核 run ID、历史失败和未执行项目见 [V0 acceptance](docs/acceptance-v0.md) 与 [V0.2 summary](docs/release-notes-v0.2.0.md)；
-开发检查与阶段记录见 [implementation status](docs/implementation-status.md)。
+- [CI 状态](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml)
+- [V0.2 版本说明与验证结果](docs/release-notes-v0.2.0.md)
+- [完整验收记录](docs/implementation-status.md)
+
+## 🤝 维护与协作
+
+- **[Archer / K529529](https://github.com/K529529)**：项目作者与维护者。
+- **OpenAI Codex**：AI 开发协作，辅助方案讨论、代码实现、测试与文档维护。
 
 ## 📄 License
 

@@ -1,51 +1,37 @@
 {% extends "base.html" %}
-{% macro rate(value) %}{{ '%.0f%%' | format(value * 100) if value is not none else 'N/A' }}{% endmacro %}
+{% from "_components.html" import rate, result, benchmark, meter, filter %}
 {% block content %}
-<a class="back" href="/">← 全部运行</a>
+<nav class="breadcrumb"><a href="/">评测工作台</a><span>/</span><span>运行总览</span></nav>
+{% if manifest.get('preview_notice') %}<div class="warning">{{ manifest.preview_notice }}</div>{% endif %}
 <section class="run-hero">
-  <div>
-    <p class="eyebrow">EVALUATION REPORT</p>
-    <h1>评测运行总览</h1>
-    <p class="lead">从 Agent 执行到独立验证，每个结论都有据可查。</p>
-    <div class="context-tags">
-      <span class="context-tag">Benchmark <b>{{ manifest.get("benchmark", "micro_swe") }}</b></span>
-      <span class="context-tag">Agent <b>{{ manifest.harness.name }}</b></span>
-      <span class="context-tag">Environment <b>{{ manifest.environment.provider }}</b></span>
-      {% if manifest.get('model') %}<span class="context-tag">Model <b>{{ manifest.model.model_id }}</b></span>{% endif %}
-    </div>
-  </div>
-  <div class="run-identity"><span class="eyebrow">RUN ID</span><code>{{ run_id }}</code><small>{{ manifest.created_at }}</small></div>
+  <div><p class="eyebrow">RUN REPORT <span class="eyebrow-line"></span></p>
+    <h1>{{ manifest.harness.name }} <span class="hero-divider">/</span> {{ benchmark(manifest.get('benchmark', 'micro_swe')) }}</h1>
+    <p class="lead">{{ manifest.tasks | length }} 个任务，集中查看每一次执行。</p>
+    <div class="context-tags"><span class="context-tag">MODEL <b>{{ (manifest.get('model') or {}).get('model_id', 'N/A') }}</b></span><span class="context-tag">ENV <b>{{ manifest.environment.provider }}</b></span><span class="context-tag">SAMPLES <b>{{ summary.get('samples_planned', 'N/A') }}</b></span></div>
+  </div><div class="run-identity"><span class="eyebrow">RUN ID</span><code>{{ run_id }}</code><small>{{ manifest.created_at }}</small></div>
 </section>
-{% if manifest.get('agent_config', {}).get('evaluation_class') == 'subscription_smoke' %}
-<div class="warning">账户登录 smoke test：用于验证接入流程，不作为正式 API 可比评测。</div>
-{% elif not manifest.get('model') %}
-<div class="warning">此记录缺少统一模型配置，模型条件不可完整比较。</div>
-{% endif %}
-{% for notice in notices %}<div class="warning">{{ notice }}</div>{% endfor %}
+{% if manifest.get('agent_config', {}).get('evaluation_class') == 'subscription_smoke' %}<div class="notice">账户登录评测 · 可查看结果，正式 API 可比性受限。</div>{% elif not manifest.get('model') %}<div class="notice">此记录缺少统一模型配置，模型条件不可完整比较。</div>{% endif %}
+{% for notice in notices %}<div class="notice">{{ notice }}</div>{% endfor %}
 <div class="stats">
-  <div class="metric-primary"><small>端到端成功</small><strong>{{ summary.get('samples_successful','N/A') }} <span class="metric-denominator">/ {{ summary.get('samples_planned','N/A') }}</span></strong><span class="metric-note">成功样本 / 计划样本</span></div>
-  <div><small>候选通过率</small><strong>{{ rate(summary.get('candidate_pass_rate')) }}</strong><span class="metric-note">仅统计具有有效验证的样本</span></div>
-  <div><small>验证覆盖率</small><strong>{{ rate(summary.get('coverage_rate')) }}</strong><span class="metric-note">有效验证 / 计划样本</span></div>
-  <div><small>pass@{{ summary.get('k',1) }}</small><strong>{{ rate(summary.get('pass_at_k')) }}</strong><span class="metric-note">未知或不足采样保持 N/A</span></div>
+  <div class="metric-primary"><small>端到端成功 <span>01</span></small><strong>{{ summary.get('samples_successful','N/A') }}<span class="metric-denominator"> / {{ summary.get('samples_planned','N/A') }}</span></strong>{{ meter(summary.get('end_to_end_success_rate'), '端到端成功率') }}<span class="metric-note">成功样本 / 计划样本</span></div>
+  <div><small>候选通过率 <span>02</span></small><strong>{{ rate(summary.get('candidate_pass_rate')) }}</strong>{{ meter(summary.get('candidate_pass_rate'), '候选通过率') }}<span class="metric-note">分母为具有有效验证的样本</span></div>
+  <div><small>验证覆盖率 <span>03</span></small><strong>{{ rate(summary.get('coverage_rate')) }}</strong>{{ meter(summary.get('coverage_rate'), '验证覆盖率') }}<span class="metric-note">{{ summary.get('samples_with_valid_verdict','N/A') }} / {{ summary.get('samples_planned','N/A') }} 个计划样本已获有效验证</span></div>
+  <div><small>pass@{{ summary.get('k',1) }} <span>04</span></small><strong>{{ rate(summary.get('pass_at_k')) }}</strong>{{ meter(summary.get('pass_at_k'), 'pass at k') }}<span class="metric-note">{{ summary.get("tasks_with_valid_pass_at_k", "N/A") }} / {{ summary.get("tasks_planned", "N/A") }} 个任务纳入；未知或不足采样排除</span></div>
 </div>
-<section class="panel">
-  <div class="panel-heading"><div><h2>任务与样本</h2><p class="muted">执行、Agent 结果与正确性独立记录</p></div><span class="count-label">{{ samples | length }} 个样本</span></div>
-  <div class="table-wrap"><table>
-    <thead><tr><th>任务 / 样本</th><th>执行状态</th><th>Agent 结果</th><th>独立验证</th><th>候选正确</th><th>端到端成功</th></tr></thead>
-    <tbody>{% for sample in samples %}<tr>
-      <td><a class="task-link" href="/runs/{{ run_id }}/samples/{{ sample.sample_id }}">{{ sample.task_id }} <span aria-hidden="true">↗</span></a><small>{{ sample.sample_id }}</small></td>
-      <td><span class="badge {{ sample.execution_status }}">{{ sample.execution_status }}</span></td>
-      <td><span class="badge {{ sample.agent_outcome }}">{{ sample.agent_outcome }}</span></td>
-      <td><span class="badge {{ sample.verifier_status }}">{{ sample.verifier_status }}</span></td>
-      <td>{{ sample.candidate_pass if sample.candidate_pass is not none else 'N/A' }}</td>
-      <td>{{ sample.sample_success if sample.sample_success is not none else 'N/A' }}</td>
-    </tr>{% else %}<tr><td colspan="6" class="muted">尚无样本结果。</td></tr>{% endfor %}</tbody>
-  </table></div>
-</section>
-<div class="section-heading"><h2>证据与运行条件</h2><span class="muted">只读访问 · 保留历史记录</span></div>
+<section class="panel matrix-panel"><div class="panel-heading"><div><p class="eyebrow">TASK MAP</p><h2>全任务一览</h2></div><div class="legend"><span class="legend-pass">PASS</span><span class="legend-fail">FAIL</span><span class="legend-unknown">N/A</span><small>候选正确性 · 点击定位任务</small></div></div>
+<div class="task-map">{% for task in manifest.tasks %}{% set task_samples = samples | selectattr('task_id', 'equalto', task.task_id) | list %}<a class="task-tile" href="#task-{{ loop.index }}" title="{{ task.task_id }}"><span class="tile-number">{{ '%02d' | format(loop.index) }}</span><span class="tile-label">{{ task.task_id }}</span><span class="tile-results">{% for sample in task_samples %}{{ result(sample.candidate_pass) }}{% else %}{{ result(none) }}{% endfor %}</span></a>{% endfor %}</div></section>
+<section class="panel" data-result-filter>
+<div class="panel-heading"><div><p class="eyebrow">RESULTS</p><h2>逐题执行结果</h2><p class="muted">正确性与端到端成功独立展示。只在需要追溯时打开证据。</p></div><span class="count-label">{{ manifest.tasks | length }} TASKS</span></div>
+{{ filter() }}
+<div class="table-wrap"><table class="results-table"><thead><tr><th class="task-col">任务 / 样本</th><th>执行</th><th>Agent 结果</th><th>独立验证</th><th>候选正确</th><th>端到端成功</th><th><span class="sr-only">详情</span></th></tr></thead><tbody>
+{% for task in manifest.tasks %}{% set task_index = loop.index %}{% set task_samples = samples | selectattr('task_id', 'equalto', task.task_id) | list %}
+{% for sample in task_samples %}<tr {% if loop.first %}id="task-{{ task_index }}"{% endif %} data-result-row data-search="{{ task.task_id }} {{ sample.sample_id }}" data-status="{{ 'pass' if sample.candidate_pass is sameas true else 'fail' if sample.candidate_pass is sameas false else 'unknown' }}">
+<td><span class="row-number">{{ '%02d' | format(task_index) }}</span><div class="task-name"><a class="task-link" href="/runs/{{ run_id }}/samples/{{ sample.sample_id }}">{{ task.task_id }}</a><small>{{ sample.sample_id }}</small></div></td><td><span class="badge {{ sample.execution_status }}">{{ sample.execution_status }}</span></td><td><span class="badge {{ sample.agent_outcome }}">{{ sample.agent_outcome }}</span></td><td><span class="badge {{ sample.verifier_status }}">{{ sample.verifier_status }}</span></td><td>{{ result(sample.candidate_pass) }}</td><td>{{ result(sample.sample_success) }}</td><td><a class="detail-link" href="/runs/{{ run_id }}/samples/{{ sample.sample_id }}">证据 ↗</a></td></tr>
+{% else %}<tr id="task-{{ task_index }}" data-result-row data-search="{{ task.task_id }}" data-status="unknown"><td><span class="row-number">{{ '%02d' | format(task_index) }}</span><div class="task-name">{{ task.task_id }}</div></td><td colspan="6" class="muted">N/A · 尚无样本结果</td></tr>{% endfor %}{% endfor %}
+</tbody></table></div><p class="filter-empty" data-filter-empty hidden>没有匹配的任务。试试其他关键词或筛选条件。</p></section>
+<div class="section-heading"><h2>证据与运行条件</h2><span class="muted">展开查看原始数据</span></div>
 <div class="evidence-grid">
-  <details><summary><span class="detail-kicker">CONFIGURATION</span>已解析运行条件</summary><p class="muted">模型、环境与原生配置</p><pre>{{ manifest | pretty }}</pre></details>
-  <details><summary><span class="detail-kicker">STATISTICS</span>完整统计与排除项</summary><p class="muted">分母、覆盖与不可用原因</p><pre>{{ summary | pretty }}</pre></details>
-  <details><summary><span class="detail-kicker">ANALYSIS HISTORY</span>历史分析版本 ({{ analyses | length }})</summary>{% for file in analyses %}<p><a href="/runs/{{ run_id }}/artifact?path=analyses/{{ file }}">{{ file }}</a></p>{% else %}<p class="muted">暂无分析版本。</p>{% endfor %}</details>
-</div>
-{% endblock %}
+<details><summary><span class="detail-kicker">CONFIGURATION</span>运行配置</summary><pre>{{ manifest | pretty }}</pre></details>
+<details><summary><span class="detail-kicker">STATISTICS</span>统计口径与排除项</summary><pre>{{ summary | pretty }}</pre></details>
+<details><summary><span class="detail-kicker">ANALYSIS HISTORY</span>历史分析 · {{ analyses | length }}</summary>{% for file in analyses %}<p><a href="/runs/{{ run_id }}/artifact?path=analyses/{{ file }}">{{ file }}</a></p>{% else %}<p class="muted">暂无分析版本。</p>{% endfor %}</details>
+</div>{% endblock %}

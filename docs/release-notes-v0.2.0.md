@@ -79,7 +79,7 @@ Start with [benchmark configuration](benchmarks.md), then the individual
 [Polyglot](aider-polyglot.md) or [Qoder](qoder.md) guide.
 
 
-## Validation
+## Implementation baseline validation
 
 202 unit/integration tests passed; 8 opt-in Docker tests passed separately on Linux.
 Ruff, strict mypy for Windows and Linux, locked dependency sync, source/wheel builds,
@@ -89,3 +89,42 @@ hashes and account-comparison restrictions. Phase 5 Windows/Ubuntu CI passed;
 see [Actions](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml)
 for the final implementation commit's status. No additional model runs are needed
 for this delivery scope.
+
+
+## Hardening validation
+
+The 202-test implementation baseline above is retained as historical evidence.
+The subsequent hardening commit
+[`fff69a1ca498d083e61431376df7f48416faf2db`](https://github.com/K529529/AgentBenchKit/commit/fff69a1ca498d083e61431376df7f48416faf2db)
+was pushed and passed [Windows and Ubuntu CI](https://github.com/K529529/AgentBenchKit/actions/runs/37751448148).
+
+- **230 passed / 16 opt-in skipped**, locally and on both CI platforms.
+- Existing Linux Docker controls: **8/8** passed separately.
+- Official Polyglot starter/reference controls: **8/8** passed separately.
+- All 225 task visibility/scope contracts, protected Rust doctest restoration,
+  Qoder final usage failure handling, Credits metrics and granular Compare checks passed.
+- No new Nexus, Qoder, Codex or paid Judge model calls were made.
+- All **171 historical evidence files** remained byte-identical. Official tests,
+  evaluator commands and correctness semantics were preserved.
+
+Details, including retained failed controls and remaining boundaries, are in
+[the hardening acceptance record](implementation-status.md#v02-hardening).
+
+## Final cleanup and Viewer
+
+- **237 passed / 16 opt-in skipped** locally after five protected Rust visibility
+  regressions and two dashboard regressions; Ruff and strict Windows/Linux mypy pass.
+  The existing bare-`pub` check was already correct and remains unchanged.
+- The read-only Viewer now provides a complete task map, searchable/filterable
+  results and a side-by-side dashboard for two runs. It keeps candidate correctness,
+  E2E success, missing data and comparison eligibility distinct. All 16 tasks fit
+  within one run report; individual evidence pages remain available for drill-down.
+- Desktop and narrow-screen rendering/interaction checks passed on synthetic data.
+  README previews use clearly labeled synthetic records, not new benchmark results.
+- The **202-test implementation** and **230-test hardening** results above remain
+  separate historical milestones. The prior Docker controls (**8/8 + 8/8**) were
+  not rerun during cleanup. No new model calls were made; all **171 historical
+  evidence files** and official correctness semantics remain unchanged.
+
+The final cleanup's commit-linked Windows/Ubuntu status is available in
+[branch CI](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml?query=branch%3Afeature%2FV0.2.0-implementation).
