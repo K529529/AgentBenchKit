@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from agentbenchkit.analysis.credits import credit_metrics
 from agentbenchkit.analysis.repetition import repeated_tool_calls
 from agentbenchkit.core.events import Event
 from agentbenchkit.core.metrics import summarize
@@ -16,7 +17,7 @@ from agentbenchkit.storage.artifacts import write_json
 from agentbenchkit.storage.index import index_run, read_json, resolve_run
 from agentbenchkit.storage.trajectory import read_events
 
-VERSION = "rules-v2"
+VERSION = "rules-v3"
 
 
 def evidence_hash(directory: Path) -> str:
@@ -60,7 +61,8 @@ def metrics(events: list[Event], capabilities: dict[str, Any], complete: bool) -
         "cached_input_tokens": usage.get("cached_input_tokens")
         if capabilities.get("model_usage")
         else None,
-        "credits": terminal.get("total_credits"),
+        **credit_metrics(events, terminal),
+        "credits": terminal.get("total_credits"),  # Historical SDK-session alias only.
         "cost": None,
         "cost_reason": "no pinned provider price table",
         "trajectory_complete": complete,

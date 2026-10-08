@@ -11,6 +11,14 @@ from typing import Any
 
 from pydantic import JsonValue
 
+from agentbenchkit.benchmarks.polyglot.isolation import (
+    POLICY_HASH,
+    REGIONS,
+    mask,
+    restore_react,
+    sha,
+    visible_files,
+)
 from agentbenchkit.core.models import CommandSpec, PhaseBudgets, TaskSpec, VerificationResult
 from agentbenchkit.core.protocols import Environment
 from agentbenchkit.core.status import Verdict
@@ -82,6 +90,8 @@ class PolyglotAdapter:
                         "with official Aider two-round scores."
                     ),
                     "solution_files": self.rows[key]["solution_files"],
+                    "visibility_policy_sha256": POLICY_HASH,
+                    "embedded_test_policy": "rust-ast-protected-docs-v1",
                     "language": self.rows[key]["language"],
                 },
             )
@@ -137,16 +147,21 @@ class PolyglotAdapter:
 
     def materialize(self, task: TaskSpec, target: Path, include_tests: bool) -> dict[str, Any]:
         folder, row = self.exercise(task)
-        excluded = set(row["example_files"])
-        if not include_tests:
-            excluded.update(row["test_files"])
+        names = (
+            set(row["files_sha256"]) - set(row["example_files"])
+            if include_tests
+            else visible_files(task.task_id, row)
+        )
         target.mkdir(parents=True, exist_ok=False)
-        for name in row["files_sha256"]:
-            if name in excluded or name.startswith((".meta/", ".docs/")):
+        for name in sorted(names):
+            if include_tests and name.startswith((".meta/", ".docs/")):
                 continue
             dest = target / name
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(folder / name, dest)
+            if not include_tests:
+                data = mask(task.task_id, name, dest.read_bytes(), row["files_sha256"][name])
+                dest.write_bytes(data)
         return row
 
     async def prepare(self, task: TaskSpec, workspace: Path, evidence: Path) -> Environment | None:
@@ -163,6 +178,19 @@ class PolyglotAdapter:
                 "solution_files": row["solution_files"],
                 "hidden_test_files": row["test_files"],
                 "dataset_revision": REVISION,
+                "visibility_policy_sha256": POLICY_HASH,
+                "agent_visible_files": sorted(visible_files(task.task_id, row)),
+                "masked_files": [
+                    {
+                        "path": name,
+                        "original_sha256": row["files_sha256"][name],
+                        "agent_view_sha256": sha((workspace / name).read_bytes()),
+                        "rule": "rust-ast-protected-docs-v1",
+                        "regions": regions,
+                    }
+                    for (task_id, name), regions in REGIONS.items()
+                    if task_id == task.task_id
+                ],
             },
         )
         return DockerEnvironment(
@@ -185,14 +213,12 @@ class PolyglotAdapter:
             redactor,
         )
 
-    async def verify(
-        self, task: TaskSpec, candidate_dir: Path, directory: Path, environment: Environment | None
-    ) -> VerificationResult:
+    def apply_candidate(
+        self, task: TaskSpec, candidate_dir: Path, testdir: Path, directory: Path
+    ) -> None:
+        """Overlay solution changes onto pristine inputs, protecting embedded tests."""
         verified_patch(candidate_dir)
         row = self.rows[task.task_id]
-        workspace, protected = directory / "workspace", directory / "protected"
-        testdir = workspace / row["path"]
-        await asyncio.to_thread(self.materialize, task, testdir, True)
         manifest = json.loads(
             (candidate_dir.parent / "candidate_manifest.json").read_text(encoding="utf-8")
         )
@@ -200,6 +226,9 @@ class PolyglotAdapter:
         for name in manifest["changed"] + manifest["deleted"]:
             if name not in allowed:
                 raise ValueError("candidate changes a protected Polyglot file")
+        if task.task_id == "rust--react":
+            if "src/lib.rs" in manifest["deleted"]:
+                raise ValueError("candidate deletes protected embedded doctests")
         for name in manifest["deleted"]:
             (testdir / name).unlink(missing_ok=True)
         for item in manifest["files"]:
@@ -209,7 +238,32 @@ class PolyglotAdapter:
                 raise ValueError("Polyglot solution symlinks are not supported")
             target = testdir / item["path"]
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(candidate_dir / item["path"], target)
+            if task.task_id == "rust--react" and item["path"] == "src/lib.rs":
+                pristine = target.read_bytes()
+                candidate = (candidate_dir / item["path"]).read_bytes()
+                canonical = restore_react(pristine, candidate)
+                target.write_bytes(canonical)
+                write_json(
+                    directory / "embedded-test-restoration.json",
+                    {
+                        "path": item["path"],
+                        "rule": "rust-ast-protected-docs-v1",
+                        "pristine_sha256": sha(pristine),
+                        "candidate_sha256": sha(candidate),
+                        "canonical_sha256": sha(canonical),
+                    },
+                )
+            else:
+                shutil.copy2(candidate_dir / item["path"], target)
+
+    async def verify(
+        self, task: TaskSpec, candidate_dir: Path, directory: Path, environment: Environment | None
+    ) -> VerificationResult:
+        row = self.rows[task.task_id]
+        workspace, protected = directory / "workspace", directory / "protected"
+        testdir = workspace / row["path"]
+        await asyncio.to_thread(self.materialize, task, testdir, True)
+        self.apply_candidate(task, candidate_dir, testdir, directory)
         assert self.source and self.dataset
         protected.mkdir(parents=True)
         shutil.copy2(self.source / "benchmark/benchmark.py", protected / "benchmark.py")
@@ -233,6 +287,9 @@ class PolyglotAdapter:
         output = directory / "output"
         evidence = candidate_dir.parent / "verify"
         evidence.mkdir(exist_ok=True)
+        restoration = directory / "embedded-test-restoration.json"
+        if restoration.exists():
+            shutil.copy2(restoration, evidence / restoration.name)
         environment = DockerEnvironment(
             self.resolve_image(),
             verification=True,

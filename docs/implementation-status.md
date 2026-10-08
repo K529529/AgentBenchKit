@@ -443,3 +443,80 @@ All requested V0.2 implementation phases are complete. Stop adding features.
 The remaining formal evaluation experiment is a separate owner-directed run.
 Known single-run task failures and the earlier Qoder integration failure remain
 visible; none is reclassified as a solved task or hidden by this scope closure.
+
+
+## V0.2 hardening
+
+Owner-authorized follow-up to baseline a380e903b7da17ea3f52aeee344fbcd2d7da9e2d,
+on feature/V0.2.0-implementation. No Agent/model/Judge inference was invoked.
+
+| Original finding | Final disposition |
+| --- | --- |
+| P0 Polyglot contamination | FIXED: explicit 225-task allowlist; hidden undeclared tests/references/approaches; protected Rust merge and audit hashes |
+| P1 Qoder final usage fail-open | FIXED: None/empty after snapshot limits outcome, never COMPLETED; no-query observer retained |
+| P1 Credits ambiguity | FIXED: request/session/account/billable observations separated, missing=null; legacy alias retained |
+| P1 README stale claims | FIXED: V0.2 catalogs/adapters, candidate bounds and real smoke coverage reconciled |
+| P2 Compare tasks waiver | FIXED: tasks membership alias cannot waive shared prompt/verifier/baseline/timeouts/metadata; explicit field selectors |
+| P2 Environment hint | CLARIFIED + TESTED: prepared environment is Agent-only; outer hint remains for independent Adapter verifier construction |
+
+The pinned inventory contains 225 tasks / 2,356 files, all matching catalog hashes.
+One necessary non-solution helper (rust--doubly-linked-list) and one editable
+solution (rust--react) contain two compile-fail doctests each. 24 tasks contain 37
+additional verifier-only assets and 11 tasks contain approaches/articles. Generic
+build/test declarations remain visible, as do go--counter's supplied test subjects.
+See [Polyglot's policy and invariant](aider-polyglot.md#v02-hardening-agent-view-and-canonical-verifier).
+Neither upstream checkout, official tests, commands nor grading logic changed.
+
+Validation (free; controlled reference/starter code is not model acceptance):
+
+- PASS: uv sync --locked; Ruff; strict mypy on Windows and with --platform linux.
+- PASS: full local pytest **230 passed / 16 opt-in skipped**. Eight skips are
+  existing Docker regressions, eight are new Polyglot Docker controls, executed
+  separately below. The known non-fatal Starlette/httpx deprecation warning remains.
+- PASS: existing Linux Docker regression **8/8** (27.47s).
+- PASS: new Linux official Polyglot controls **8/8** (112.66s): Rust react,
+  Rust doubly-linked-list, Python affine-cipher and JavaScript affine-cipher;
+  every starter officially FAIL and every reference officially PASS.
+- PASS: both Rust Agent views build with actual non-root Docker UID. react
+  canonical doctests: **2 passed**; deliberately collapsed ID types: **2 failed**.
+  doubly-linked-list pristine helper hash matches and separate advanced tests,
+  including both compile-fail doctests, execute successfully. Its official default
+  cargo test command is unchanged; advanced checks are extra regression evidence.
+- PASS: all 225 real pinned task materializations/solution scopes and pristine
+  verifier bytes; special support files; embedded test masking/restoration;
+  abnormal/deleted/conditional anchors fail closed. Both CI platforms fetch the
+  exact official dataset revision for these contracts; no fake file tree is used.
+- PASS: Qoder None/empty final snapshot, missing-versus-zero request/account
+  Credits, deduplication/billable flags, Replay/Viewer and Compare field controls.
+- PASS: complete 100/300/225 CLI configuration generation, frozen FeatureBench
+  16-task file fingerprint unchanged from baseline.
+- PASS: seven historical public run manifests (including failed/partial runs)
+  remain readable through analysis/Compare/Viewer; **171 existing files byte-identical**.
+  No analyses are appended to historical runs. Accepted Qoder remains request
+  Credits 4.518009265, SDK session 0, observed account delta 0, 20 billable=false
+  observations; outcome/correctness unchanged. Both earlier affine smoke Agent
+  input file sets are unchanged by the new visibility policy.
+- PASS: sdist/wheel build and independent wheel install; new visibility policy,
+  Rust parser and Credits modules included; no runtime artifacts packaged.
+- NOT RUN by scope: any real Nexus/Qoder/Codex inference, paid Judge, full benchmark,
+  frozen 16 x 2 formal evaluation, merge/tag/release/publication.
+
+The first free Rust controls exposed an image permission bug, not a model or
+correctness failure: non-root UID with default GID 0 could not traverse /root
+(mode 705) to execute cargo. Four Rust controls ERROR; four affine controls passed.
+The image builder now grants a+rx on /root. A new derived image, leaving the old
+image/evidence intact, passed all eight controls:
+`sha256:f49703ae1dd073037db5997a20b320609aeac2a184d1a346f916f0ed086ca6a6`.
+Success and failure artifacts are retained under .agentbenchkit/v02-hardening-controls;
+read-only compatibility/inventory records under .agentbenchkit/v02-hardening-inventory.
+
+Remaining design limits: protected Rust merge intentionally rejects unsupported
+anchor/attribute structures; upstream go--counter's deprecated test-authoring
+contract is not repaired or regraded; C++'s official test build target needs hidden
+tests; account delta may include other account activity/delayed billing; Compare
+metadata is one explicit field rather than a per-key experimental-design API.
+No Runtime benchmark/repository special case was introduced.
+
+CI: the coherent hardening commit is to be pushed and its Windows/Ubuntu jobs
+checked before handoff. This pre-push record does not claim CI has already passed;
+the immutable commit's Actions result is the post-push authority.

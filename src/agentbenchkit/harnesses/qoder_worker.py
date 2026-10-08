@@ -196,6 +196,9 @@ async def run(prompt: str | None) -> None:
             with contextlib.suppress(asyncio.CancelledError):
                 await monitoring
         after = safe_usage(await observer.get_usage_info())
+        if remaining(after) is None:
+            emit("usage_unavailable", {"phase": "after", "error_type": "MissingAccountCredits"})
+            reason = reason or "usage_monitor_unavailable"
         emit("usage_snapshot", {"phase": "after", "usage": after})
         reason = reason or limit_reason(before, after, runtime["max_credits"])
         if final is None:
@@ -223,7 +226,7 @@ async def run(prompt: str | None) -> None:
                 "steps": final["num_turns"],
                 "model_calls": None,
                 "observed_request_count": len(requests),
-                "reported_request_credits": sum(requests.values()),
+                "reported_request_credits": sum(requests.values()) if requests else None,
                 "total_credits": final.get("total_credits"),
                 "usage": token_usage(usage),
             },

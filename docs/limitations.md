@@ -63,3 +63,12 @@
   smoke combinations have real execution evidence. Full FeatureBench 16 x 2,
   full-suite runs, remaining Polyglot languages and all Harness/Benchmark
   combinations are NOT RUN. Implementation completion does not assert those results.
+
+- Polyglot's protected Rust merge supports the documented public top-level struct
+  and fixed doctest-host manifest; unsupported structural changes fail closed.
+  See [the exact policy](aider-polyglot.md#v02-hardening-agent-view-and-canonical-verifier).
+  All 225 file contracts are checked; this is not all-language/all-task runtime
+  acceptance. `go--counter` retains upstream's deprecated test-authoring semantics.
+- Compare task fields are granular, but `tasks.metadata` remains one explicit
+  selector, not a per-key experimental-design language. Expected differences and
+  matched manifests cannot prove a causal capability change.

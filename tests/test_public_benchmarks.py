@@ -169,7 +169,15 @@ def test_polyglot_hides_tests_and_reference_but_restores_verifier_inputs(
         p.write_text(content)
     adapter = PolyglotAdapter()
     task = adapter.load_tasks()[0]
+    from agentbenchkit.benchmarks.polyglot.isolation import VISIBILITY
+
+    monkeypatch.setitem(
+        VISIBILITY,
+        task.task_id,
+        {"support_files": ["build.cfg"]},
+    )
     row = {
+        "solution_files": ["solution.py"],
         "example_files": [".meta/example.py"],
         "test_files": ["official_test.py"],
         "files_sha256": files,
@@ -200,21 +208,22 @@ async def test_polyglot_candidate_excludes_build_and_test_edits(tmp_path: Path) 
     from agentbenchkit.benchmarks.polyglot import PolyglotAdapter
     from agentbenchkit.storage.artifacts import Redactor
     from agentbenchkit.verification.repository import verified_patch
+
     adapter = PolyglotAdapter()
-    task = adapter.load_tasks(('python--affine-cipher',))[0]
-    baseline, workspace = tmp_path / 'baseline', tmp_path / 'workspace'
+    task = adapter.load_tasks(("python--affine-cipher",))[0]
+    baseline, workspace = tmp_path / "baseline", tmp_path / "workspace"
     baseline.mkdir()
     workspace.mkdir()
-    name = adapter.rows[task.task_id]['solution_files'][0]
-    (baseline / name).write_text('pass\n')
-    (workspace / name).write_text('answer = 42\n')
-    (workspace / 'official_test.py').write_text('assert True\n')
-    (workspace / 'build.cfg').write_text('malicious\n')
-    candidate = tmp_path / 'sample/candidate'
+    name = adapter.rows[task.task_id]["solution_files"][0]
+    (baseline / name).write_text("pass\n")
+    (workspace / name).write_text("answer = 42\n")
+    (workspace / "official_test.py").write_text("assert True\n")
+    (workspace / "build.cfg").write_text("malicious\n")
+    candidate = tmp_path / "sample/candidate"
     await adapter.collect(task, workspace, candidate, Redactor())
     patch = verified_patch(candidate)
-    assert '+answer = 42' in patch
-    assert 'official_test.py' not in patch and 'build.cfg' not in patch
+    assert "+answer = 42" in patch
+    assert "official_test.py" not in patch and "build.cfg" not in patch
 
 
 @pytest.mark.parametrize("jest", [None, "30.5.2", "29.7.0"])
@@ -234,3 +243,13 @@ def test_polyglot_refuses_incompatible_jest_image(
     else:
         with pytest.raises(ValueError, match="Jest 29.7.0"):
             adapter.resolve_image()
+
+
+def test_frozen_featurebench_evalset_bytes() -> None:
+    import hashlib
+
+    path = Path("examples/evalsets/featurebench-fast-evalset-v1.json")
+    assert (
+        hashlib.sha256(path.read_bytes()).hexdigest()
+        == "41956101f6380708b8e6939e146d1d98ed94e0463c54e326eecea54dbf827bfc"
+    )

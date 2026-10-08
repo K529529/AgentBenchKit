@@ -9,11 +9,18 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
+      - run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.11.30"
           python-version: "3.12"
+      - uses: actions/checkout@v4
+        with:
+          repository: Aider-AI/polyglot-benchmark
+          ref: 7e0611e77b54e2dea774cdc0aa00cf9f7ed6144f
+          path: .agentbenchkit/upstream/polyglot-linux
+          persist-credentials: false
       - run: uv sync --locked
       - run: uv run ruff check .
       - run: uv run mypy

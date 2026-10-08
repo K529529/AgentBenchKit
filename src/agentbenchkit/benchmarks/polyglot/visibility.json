@@ -1,0 +1,1531 @@
+{
+  "cpp--all-your-base": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--allergies": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--bank-account": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--binary-search-tree": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--circular-buffer": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--clock": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--complex-numbers": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--crypto-square": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--diamond": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--dnd-character": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--gigasecond": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--grade-school": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--kindergarten-garden": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--knapsack": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--linked-list": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--meetup": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--parallel-letter-frequency": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--perfect-numbers": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--phone-number": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--queen-attack": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--robot-name": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--space-age": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--spiral-matrix": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--sublist": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--yacht": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "cpp--zebra-puzzle": {
+    "support_files": [
+      "CMakeLists.txt",
+      "test/catch.hpp",
+      "test/tests-main.cpp"
+    ]
+  },
+  "go--alphametics": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--beer-song": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--book-store": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--bottle-song": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--bowling": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--connect": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--counter": {
+    "support_files": [
+      "go.mod",
+      "impl1.go",
+      "impl2.go",
+      "impl3.go",
+      "impl4.go",
+      "interface.go",
+      "maker.go"
+    ]
+  },
+  "go--crypto-square": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--dnd-character": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--dominoes": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--error-handling": {
+    "support_files": [
+      "common.go",
+      "go.mod"
+    ]
+  },
+  "go--food-chain": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--forth": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--hexadecimal": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--kindergarten-garden": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--ledger": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--markdown": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--matrix": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--octal": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--paasio": {
+    "support_files": [
+      "go.mod",
+      "interface.go"
+    ]
+  },
+  "go--palindrome-products": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--pig-latin": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--poker": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--pov": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--protein-translation": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--react": {
+    "support_files": [
+      "go.mod",
+      "interfaces.go"
+    ]
+  },
+  "go--robot-simulator": {
+    "support_files": [
+      "defs.go",
+      "go.mod"
+    ]
+  },
+  "go--say": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--scale-generator": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--simple-linked-list": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--sublist": {
+    "support_files": [
+      "go.mod",
+      "relations.go"
+    ]
+  },
+  "go--transpose": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--tree-building": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--trinary": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--two-bucket": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--variable-length-quantity": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--word-search": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--wordy": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "go--zebra-puzzle": {
+    "support_files": [
+      "go.mod"
+    ]
+  },
+  "java--affine-cipher": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--all-your-base": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--alphametics": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/UnsolvablePuzzleException.java"
+    ]
+  },
+  "java--bank-account": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/BankAccountActionInvalidException.java"
+    ]
+  },
+  "java--book-store": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--bottle-song": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--bowling": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--change": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--circular-buffer": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/BufferIOException.java"
+    ]
+  },
+  "java--connect": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/Winner.java"
+    ]
+  },
+  "java--custom-set": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--dominoes": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/ChainNotFoundException.java",
+      "src/main/java/Domino.java"
+    ]
+  },
+  "java--food-chain": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--forth": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--go-counting": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/Player.java"
+    ]
+  },
+  "java--hangman": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/Part.java",
+      "src/main/java/Status.java"
+    ]
+  },
+  "java--house": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--kindergarten-garden": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/Plant.java"
+    ]
+  },
+  "java--ledger": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--mazy-mice": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--ocr-numbers": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--palindrome-products": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--phone-number": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--pig-latin": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--poker": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--pov": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--protein-translation": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--pythagorean-triplet": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--queen-attack": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--rational-numbers": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--react": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--resistor-color-trio": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--rest-api": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/Iou.java"
+    ]
+  },
+  "java--satellite": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/Node.java",
+      "src/main/java/Tree.java"
+    ]
+  },
+  "java--series": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--sgf-parsing": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/SgfNode.java",
+      "src/main/java/SgfParsingException.java"
+    ]
+  },
+  "java--simple-linked-list": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--state-of-tic-tac-toe": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/GameState.java"
+    ]
+  },
+  "java--transpose": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--tree-building": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/InvalidRecordsException.java",
+      "src/main/java/Record.java",
+      "src/main/java/TreeNode.java"
+    ]
+  },
+  "java--twelve-days": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--two-bucket": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--variable-length-quantity": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--word-search": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat",
+      "src/main/java/Pair.java",
+      "src/main/java/WordLocation.java"
+    ]
+  },
+  "java--wordy": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--zebra-puzzle": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "java--zipper": {
+    "support_files": [
+      "build.gradle",
+      "gradle/wrapper/gradle-wrapper.jar",
+      "gradle/wrapper/gradle-wrapper.properties",
+      "gradlew",
+      "gradlew.bat"
+    ]
+  },
+  "javascript--affine-cipher": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--alphametics": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--beer-song": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--binary": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--book-store": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--bottle-song": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--bowling": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--complex-numbers": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--connect": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--food-chain": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--forth": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--go-counting": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--grade-school": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--grep": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "data/iliad.txt",
+      "data/midsummer-night.txt",
+      "data/paradise-lost.txt",
+      "package.json"
+    ]
+  },
+  "javascript--house": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--killer-sudoku-helper": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--ledger": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--list-ops": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--meetup": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--ocr-numbers": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--palindrome-products": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--parallel-letter-frequency": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--phone-number": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--pig-latin": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--poker": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--promises": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--queen-attack": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--rational-numbers": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--react": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--rectangles": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--resistor-color-trio": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--rest-api": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--robot-name": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--say": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--scale-generator": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--simple-linked-list": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--space-age": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--state-of-tic-tac-toe": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--sum-of-multiples": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--tournament": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--transpose": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--triangle": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--twelve-days": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--two-bucket": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--variable-length-quantity": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--word-search": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--wordy": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--zebra-puzzle": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "javascript--zipper": {
+    "support_files": [
+      ".eslintrc",
+      ".npmrc",
+      "LICENSE",
+      "babel.config.js",
+      "package.json"
+    ]
+  },
+  "python--affine-cipher": {
+    "support_files": []
+  },
+  "python--beer-song": {
+    "support_files": []
+  },
+  "python--book-store": {
+    "support_files": []
+  },
+  "python--bottle-song": {
+    "support_files": []
+  },
+  "python--bowling": {
+    "support_files": []
+  },
+  "python--connect": {
+    "support_files": []
+  },
+  "python--dominoes": {
+    "support_files": []
+  },
+  "python--dot-dsl": {
+    "support_files": []
+  },
+  "python--food-chain": {
+    "support_files": []
+  },
+  "python--forth": {
+    "support_files": []
+  },
+  "python--go-counting": {
+    "support_files": []
+  },
+  "python--grade-school": {
+    "support_files": []
+  },
+  "python--grep": {
+    "support_files": []
+  },
+  "python--hangman": {
+    "support_files": []
+  },
+  "python--list-ops": {
+    "support_files": []
+  },
+  "python--paasio": {
+    "support_files": []
+  },
+  "python--phone-number": {
+    "support_files": []
+  },
+  "python--pig-latin": {
+    "support_files": []
+  },
+  "python--poker": {
+    "support_files": []
+  },
+  "python--pov": {
+    "support_files": []
+  },
+  "python--proverb": {
+    "support_files": []
+  },
+  "python--react": {
+    "support_files": []
+  },
+  "python--rest-api": {
+    "support_files": []
+  },
+  "python--robot-name": {
+    "support_files": []
+  },
+  "python--scale-generator": {
+    "support_files": []
+  },
+  "python--sgf-parsing": {
+    "support_files": []
+  },
+  "python--simple-linked-list": {
+    "support_files": []
+  },
+  "python--transpose": {
+    "support_files": []
+  },
+  "python--tree-building": {
+    "support_files": []
+  },
+  "python--two-bucket": {
+    "support_files": []
+  },
+  "python--variable-length-quantity": {
+    "support_files": []
+  },
+  "python--wordy": {
+    "support_files": []
+  },
+  "python--zebra-puzzle": {
+    "support_files": []
+  },
+  "python--zipper": {
+    "support_files": []
+  },
+  "rust--accumulate": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--acronym": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--alphametics": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--book-store": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--bowling": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--decimal": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--dot-dsl": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--doubly-linked-list": {
+    "support_files": [
+      "Cargo.toml",
+      "src/pre_implemented.rs"
+    ]
+  },
+  "rust--fizzy": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--forth": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--gigasecond": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--grade-school": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--grep": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--luhn-from": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--macros": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--nucleotide-codons": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--ocr-numbers": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--parallel-letter-frequency": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--pig-latin": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--poker": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--react": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--robot-name": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--say": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--scale-generator": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--simple-cipher": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--two-bucket": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--variable-length-quantity": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--word-count": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--wordy": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  },
+  "rust--xorcism": {
+    "support_files": [
+      "Cargo.toml"
+    ]
+  }
+}

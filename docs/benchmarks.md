@@ -60,3 +60,25 @@ Replay reanalyzes stored evidence without model calls or official test reruns.
 Compare checks benchmark, task metadata/protocol, images, model and other run
 conditions before interpreting result differences. Cross-benchmark runs are not
 formal comparable experiments. No smoke result estimates a full benchmark score.
+
+
+`prepare()`'s returned Environment is Agent-only. `verify()` receives the outer
+caller's Environment as a fallback hint. Each Adapter must construct independent
+verification from pristine inputs; Runtime must not silently reuse an Agent
+snapshot/image. A contract regression checks these distinct objects.
+
+Compare retains `changed_conditions=["tasks", ...]` for historical readers and
+adds `task_condition_changes`. Legacy `expected_changes=("tasks",)` authorizes
+membership changes only (alias `tasks.selection`). Shared-task changes need the
+specific `tasks.prompt`, `tasks.verifier_hash`, `tasks.fixture_hash`,
+`tasks.baseline_revision`, `tasks.timeouts` or `tasks.metadata` selector. Unspecified
+changes remain inconclusive. Missing model controls/account-login caveats still
+prevent formal comparability; expected changes do not establish causality.
+
+Replay rules-v3/metrics-v2 separates `reported_request_credits`,
+`sdk_session_credits`, `observed_account_delta` and deduplicated
+`request_billable_flags`. Historical `credits` remains an SDK-session alias.
+Unavailable fields are null, while measured zero is retained. Account delta is
+before minus after across matching quota buckets, possibly including unrelated
+account activity. Request Credits are not actual billed currency. No conversion
+or price estimate is performed; raw trajectories are unchanged.

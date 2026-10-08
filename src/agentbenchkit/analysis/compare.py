@@ -60,6 +60,15 @@ def compare(
         "analyzers",
         "k",
     }
+    task_fields = {
+        "fixture_hash",
+        "verifier_hash",
+        "baseline_revision",
+        "timeouts",
+        "prompt",
+        "metadata",
+    }
+    allowed.update({"tasks.selection", *(f"tasks.{field}" for field in task_fields)})
     if set(expected_changes) - allowed:
         raise ValueError("unknown expected-change field")
     base_dir, next_dir = resolve_run(root, baseline_id), resolve_run(root, candidate_id)
@@ -68,7 +77,21 @@ def compare(
         conditions(read_json(next_dir / "manifest.json")),
     )
     changes = [key for key in before if before[key] != after[key]]
-    unexpected = [key for key in changes if key not in expected_changes]
+    task_changes = []
+    if before["tasks"].keys() != after["tasks"].keys():
+        task_changes.append("tasks.selection")
+    for field in sorted(task_fields):
+        if any(
+            before["tasks"][task][field] != after["tasks"][task][field]
+            for task in before["tasks"].keys() & after["tasks"].keys()
+        ):
+            task_changes.append(f"tasks.{field}")
+    expected = set(expected_changes)
+    # Legacy "tasks" now permits membership changes only, never shared-task conditions.
+    if "tasks" in expected:
+        expected.add("tasks.selection")
+    unexpected = [key for key in changes if key != "tasks" and key not in expected]
+    unexpected.extend(key for key in task_changes if key not in expected)
     eligibility_warnings = []
     for label, condition in (("baseline", before), ("candidate", after)):
         config = condition.get("agent_config") or {}
@@ -115,6 +138,7 @@ def compare(
         "baseline_run": baseline_id,
         "candidate_run": candidate_id,
         "changed_conditions": changes,
+        "task_condition_changes": task_changes,
         "expected_changes": list(expected_changes),
         "comparability_warnings": unexpected + eligibility_warnings,
         "formal_comparable": not unexpected and not eligibility_warnings,

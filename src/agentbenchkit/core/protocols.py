@@ -77,6 +77,10 @@ class BenchmarkAdapter(Protocol):
 
     Runtime owns deadlines, process execution, stop/freeze ordering and cleanup.
     Implementations must never expose protected evaluator inputs to the Agent.
+    prepare() may return an Agent-only task environment. verify(environment=...)
+    receives the outer caller's environment as a fallback hint, NOT that Agent
+    environment. Adapters own independent verifier construction from pristine
+    inputs; automatically reusing an Agent-prepared image would break isolation.
     """
 
     name: str

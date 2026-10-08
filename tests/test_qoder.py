@@ -103,7 +103,9 @@ def test_version_probe_uses_disposable_config(monkeypatch: pytest.MonkeyPatch) -
     assert observed and not observed[0].exists()
 
 
-@pytest.mark.parametrize("mode", ["request_limit", "empty_poll", "empty_initial"])
+@pytest.mark.parametrize(
+    "mode", ["request_limit", "empty_poll", "empty_initial", "empty_after", "empty_dict_after"]
+)
 async def test_sdk_driver_separates_observer_and_bounds_usage(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mode: str
 ) -> None:
@@ -150,6 +152,8 @@ async def test_sdk_driver_separates_observer_and_bounds_usage(
             self.polls += 1
             if mode == "empty_initial" or (mode == "empty_poll" and self.polls > 1):
                 return None
+            if mode in {"empty_after", "empty_dict_after"} and self.polls > 1:
+                return {} if mode == "empty_dict_after" else None
             return {"addOnQuota": {"remaining": 390}}
 
         async def query(self, prompt: str) -> None:
@@ -164,7 +168,7 @@ async def test_sdk_driver_separates_observer_and_bounds_usage(
                 # Duplicate delivery must not charge/count the same request twice.
                 for request in ("a", "a", "b", "c"):
                     yield Assistant([], "Qwen3.8-Flash", {"request_id": request, "credits": 1.7})
-            else:
+            elif mode == "empty_poll":
                 for _ in range(100):
                     if self.interrupted:
                         break
@@ -205,7 +209,8 @@ async def test_sdk_driver_separates_observer_and_bounds_usage(
         assert not any(client.queried for client in clients)
         return
     await qoder_worker.run("task")
-    assert clients[0].queried and clients[0].interrupted
+    assert clients[0].queried
+    assert clients[0].interrupted is (mode in {"request_limit", "empty_poll"})
     assert not clients[1].queried
     terminal = next(e["data"] for e in reversed(events) if e["kind"] == "run_finished")
     assert terminal["outcome"] == "limited"
@@ -216,3 +221,4 @@ async def test_sdk_driver_separates_observer_and_bounds_usage(
         assert terminal["reported_request_credits"] == pytest.approx(5.1)
     else:
         assert terminal["reason"] == "usage_monitor_unavailable"
+        assert terminal["reported_request_credits"] is None

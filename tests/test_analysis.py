@@ -77,3 +77,37 @@ async def test_missing_sample_keeps_planned_denominator_and_compare_unknown(tmp_
     assert result["samples"][0]["sample_success"] is None
     compared = compare(tmp_path, directory.name, directory.name)
     assert compared["tasks"]["clamp"]["status"] == "INCONCLUSIVE"
+
+
+async def test_expected_tasks_only_waives_membership_not_shared_conditions(tmp_path: Path) -> None:
+    tasks = load_tasks(("clamp",))
+    first = await evaluate(tasks, ControlledHarness(True), tmp_path)
+    second = await evaluate(tasks, ControlledHarness(True), tmp_path)
+    path = second / "manifest.json"
+    original = json.loads(path.read_text())
+    for field in (
+        "fixture_hash",
+        "verifier_hash",
+        "baseline_revision",
+        "timeouts",
+        "prompt",
+        "metadata",
+    ):
+        manifest = json.loads(json.dumps(original))
+        manifest["tasks"][0][field] = (
+            {"changed": True} if field in {"timeouts", "metadata"} else "changed"
+        )
+        path.write_text(json.dumps(manifest))
+        result = compare(tmp_path, first.name, second.name, ("tasks",), persist_analysis=False)
+        assert f"tasks.{field}" in result["comparability_warnings"]
+        assert result["tasks"]["clamp"]["status"] == "INCONCLUSIVE"
+        explicit = compare(
+            tmp_path, first.name, second.name, (f"tasks.{field}",), persist_analysis=False
+        )
+        assert f"tasks.{field}" not in explicit["comparability_warnings"]
+    manifest = json.loads(json.dumps(original))
+    manifest["tasks"].append({**manifest["tasks"][0], "task_id": "added"})
+    path.write_text(json.dumps(manifest))
+    result = compare(tmp_path, first.name, second.name, ("tasks",), persist_analysis=False)
+    assert result["task_condition_changes"] == ["tasks.selection"]
+    assert "tasks.selection" not in result["comparability_warnings"]

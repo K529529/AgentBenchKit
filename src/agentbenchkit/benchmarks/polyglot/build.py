@@ -40,7 +40,7 @@ def build(source: Path, tag: str, uv_binary: Path, nexus_archive: Path) -> None:
             "uv pip install --python /opt/abk/bin/python /tmp/nexus.zip && rm /tmp/nexus.zip\n"
             # Upstream installs Rust under root. ABK runs the Agent as the host UID.
             # Only this disposable image's toolchain/cache directories are changed.
-            "RUN chmod o+rx /root && chmod -R a+rX /root/.rustup && "
+            "RUN chmod a+rx /root && chmod -R a+rX /root/.rustup && "
             "chmod -R a+rwX /root/.cargo\n"
             'ENV RUSTUP_HOME="/root/.rustup" CARGO_HOME="/root/.cargo"\n'
             'ENV PATH="/usr/local/bin:/usr/bin:/bin:/opt/abk/bin:${PATH}"\n'

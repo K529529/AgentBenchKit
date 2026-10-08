@@ -202,17 +202,17 @@ HostProcess 通过 `--env host_process` 使用本机 Agent，仅适合可信本�
 
 ## 🔌 Adding a new Agent
 
-已支持的 Nexus / Codex 可直接运行；未知 Agent 需要适配其公开命令、配置和事件。
-V0 是源码级 Harness 接入，**没有 plugin discovery**，也不要求修改被评测 Agent。
+已支持的 Nexus / Codex / Qoder 可直接运行；未知 Agent 需要适配其公开命令、配置和事件。
+当前是源码级 Harness 接入，**没有 plugin discovery**，也不要求修改被评测 Agent。
 见 [接入指南](docs/adding-a-harness.md) 和
 [可运行 Harness 示例](examples/custom_harness.py)。
 
 ## 📌 Current scope / limitations
 
-- micro_swe 只有 8 道小型 Python 任务，不是 leaderboard；SWE-bench adapter deferred。
+- micro_swe 有 8 道小型 Python 任务；FeatureBench Fast / SWE-bench Lite / Polyglot 已接入，完整 catalog 分别为 100 / 300 / 225 题。Catalog/config 完整不等于全量 benchmark 已执行。
 - Codex ChatGPT 登录属于 smoke，不用于正式同模型公平比较；真实 Codex 显式 API inference 尚未执行。
 - Docker 不是 hostile-code 强隔离，Agent 可访问自身推理凭据；HostProcess 没有文件系统沙箱。
-- 候选仅支持有界 UTF-8 文本；binary、symlink、junction 不支持，Windows bind mount 不保证 POSIX 执行位。
+- micro_swe 候选仅支持有界 UTF-8 文本，不支持 binary、symlink、junction；public Git-patch 支持 binary、删除和安全仓库 symlink。Polyglot 仅收集允许的普通 solution 文件，并保护内嵌官方测试。Windows bind mount 不保证 POSIX 执行位。
 - 重复工具调用是 observation；Stagnation 因逐步 mutation 证据不足未实现。
 - 公开事件和可配置模型参数有 Agent 差异；配置相同不自动证明实验公平可比。
 
@@ -221,12 +221,12 @@ V0 是源码级 Harness 接入，**没有 plugin discovery**，也不要求修�
 
 ## ✅ Validation / Acceptance
 
-- 最终本地检查：**175 tests passed / 7 Docker skipped**；Ruff、严格 mypy 通过。
+- V0.2 基线检查为 **202 passed / 8 Docker skipped**；本轮 hardening 的完整测试、Docker 与 CI 结果见 [implementation status](docs/implementation-status.md#v02-hardening)。
 - Windows / Ubuntu [CI](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml)。
-- 已有真实证据：Nexus 8/8；Codex ChatGPT smoke 2/2；真实 LLM Judge `COMPLETED`、四维严格解析。
+- 历史 micro_swe 真实证据：Nexus 8/8、Codex ChatGPT smoke 2/2；历史 LLM Judge `COMPLETED`。V0.2 public smoke：FeatureBench Nexus 官方 FAIL、SWE Lite Nexus PASS、Polyglot Nexus Python PASS / JavaScript FAIL、Qoder FeatureBench LIMITED / 官方 FAIL；均为小样本管线证据，不是全量成绩。
 - Docker 边界与 Viewer 已验收；本轮复用不可变证据，不重复消耗模型额度。
 
-可复核 run ID、历史失败和未执行项目见 [acceptance](docs/acceptance-v0.md)；
+可复核 run ID、历史失败和未执行项目见 [V0 acceptance](docs/acceptance-v0.md) 与 [V0.2 summary](docs/release-notes-v0.2.0.md)；
 开发检查与阶段记录见 [implementation status](docs/implementation-status.md)。
 
 ## 📄 License
