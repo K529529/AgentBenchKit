@@ -215,3 +215,22 @@ async def test_polyglot_candidate_excludes_build_and_test_edits(tmp_path: Path) 
     patch = verified_patch(candidate)
     assert '+answer = 42' in patch
     assert 'official_test.py' not in patch and 'build.cfg' not in patch
+
+
+@pytest.mark.parametrize("jest", [None, "30.5.2", "29.7.0"])
+def test_polyglot_refuses_incompatible_jest_image(
+    monkeypatch: pytest.MonkeyPatch, jest: str | None
+) -> None:
+    from agentbenchkit.benchmarks.polyglot import EVALUATOR, PolyglotAdapter
+
+    labels = {"agentbenchkit.aider.commit": EVALUATOR}
+    if jest:
+        labels["agentbenchkit.polyglot.jest"] = jest
+    image = [{"Id": "sha256:fixed", "Config": {"Labels": labels}}]
+    monkeypatch.setattr("subprocess.check_output", lambda *args, **kwargs: json.dumps(image))
+    adapter = PolyglotAdapter(agent_image="test-image")
+    if jest == "29.7.0":
+        assert adapter.resolve_image() == "sha256:fixed"
+    else:
+        with pytest.raises(ValueError, match="Jest 29.7.0"):
+            adapter.resolve_image()

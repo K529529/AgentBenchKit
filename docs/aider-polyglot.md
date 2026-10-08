@@ -62,7 +62,7 @@ agent-bench run aider-polyglot nexus --env docker \
 Use clean LF source checkouts at the pinned commits and an ext4 output/workspace.
 The image builder starts with upstream's benchmark Dockerfile, adds a separate
 unchanged Nexus environment and makes its installed Rust toolchain accessible to
-the non-root runtime. Node 20 and the official dependency list are retained; npm 10.9.9 replaces the
+the non-root runtime. Node 20 and the official test commands are retained; npm 10.9.9 replaces the
 stalled 10.8.2 installer. Network diagnostics/timeouts affect installation only.
 Dataset contents are checked against the bundled file hashes before execution.
 The upstream dataset and Exercism language repositories retain their licenses;
@@ -70,3 +70,24 @@ the official Aider source is Apache-2.0. No reference code is bundled into ABK.
 
 Real acceptance status is recorded in implementation-status.md. Full-suite model
 execution is never required to discover or generate configuration for all tasks.
+
+## Upstream Jest dependency correction (owner approved 2026-10-08)
+
+The pinned Aider Dockerfile installs unversioned `jest`, which resolved to 30.5.2.
+The pinned Polyglot JavaScript package.json requires `^29.7.0` and its tests use
+`toThrowError`, removed in Jest 30. The official affine-cipher reference solution
+therefore passed 14/16 tests and failed two on the missing assertion method.
+These failed control artifacts are preserved; they are not model outcomes.
+
+The derived image explicitly installs Jest **29.7.0** and checks its reported
+version. It labels the pin, which the adapter requires before execution. Official
+test files, npm-test.sh, run_unit_tests and grading logic remain unchanged.
+Reference and starter controls must be repeated before real Nexus smoke.
+
+
+Revalidation completed: both Python and JavaScript starter solutions FAIL and
+reference solutions PASS with Jest 29.7.0. Real Nexus smoke then completed exactly
+two tasks, one in each language: Python PASS (16/16), JavaScript FAIL (14/16,
+exception-message mismatch). Both candidates were frozen and cleanup completed.
+See implementation-status.md for run IDs and evidence fingerprints. No model
+retry or official-test change was used to turn the JavaScript result into a pass.

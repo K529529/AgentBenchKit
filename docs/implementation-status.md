@@ -252,3 +252,63 @@ Regression: 190 passed / 7 opt-in Docker skipped; Ruff/mypy PASS. Linux real Doc
 regression after generic verifier workspace/network controls: 7 passed (25.03s).
 QoderHarness and its FeatureBench real smoke remain pending the owner's configured
 CLI/login/BYOK; do not label V0.2 acceptance complete. No full benchmark was run.
+
+
+## V0.2 phase 4 acceptance: Jest correction and two-language Nexus smoke
+
+Completed on 2026-10-08. The owner approved Jest **29.7.0**, matching the pinned
+JavaScript dataset package.json ^29.7.0. Upstream Dockerfile's unversioned Jest
+had resolved to 30.5.2, removing toThrowError and breaking the reference control.
+The derived image changes only that dependency; official test files, npm-test.sh,
+run_unit_tests and grading logic are unchanged. Their fingerprints and clean
+Linux checkout status were checked before execution. Older failed controls remain
+preserved. Adapter rejects images without the declared Jest 29.7.0 pin.
+
+Controls repeated on the corrected image: Python starter FAIL / reference PASS;
+JavaScript starter FAIL / reference PASS. All four cleanups completed. Evidence:
+.agentbenchkit/polyglot-controls-jest29; build log: .agentbenchkit/polyglot-build-jest29.log.
+Image ID: sha256:7be4e8877180fde90295e2fa7c66a5f58b1c491b40fd4274b0adf0d007cfe3fe.
+
+Real Nexus smoke run: `20261008T001621Z-17a32242`, exactly two tasks in serial,
+one sample each, startup_retries=0, max_steps=30, agent timeout 600s. The two task
+IDs were selected before model outcomes; no result-driven task replacement,
+second repair round, candidate edits or model reruns were performed.
+
+- Python affine-cipher: FINISHED / Agent COMPLETED / official PASS (16/16) /
+  cleanup COMPLETED; candidate_pass=true, sample_success=true.
+- JavaScript affine-cipher: FINISHED / Agent COMPLETED / official FAIL (14/16) /
+  cleanup COMPLETED; candidate_pass=false, sample_success=false. Both failed
+  assertions concern exception message text: official expected `a and m must be
+  coprime.`, candidate produced `Key and alphabet length must be coprime (a and m
+  must be relatively prime).` Jest 29 executes these assertions normally. This is
+  a candidate failure, distinct from the earlier Jest 30 infrastructure conflict.
+- Real two-language pipeline acceptance is complete; solved tasks are 1/2. This
+  small single-run hidden-test smoke is not an official Aider two-round score.
+- Nexus v0.2.0 is unchanged; qwen3.8-flash, reasoning low, max output 16384.
+  Combined reported usage: 17 model calls, 122,108 input tokens (92,672 cached),
+  12,072 output tokens. Monetary cost remains unverified/null.
+
+Exact execution source snapshot .agentbenchkit/polyglot-smoke-source-jest29.zip:
+`452bc20f9d5362c80499e92aaa932cf5dc585de3435c4dc186b89a999ad551b6`.
+The checked-in runtime source was not edited during either model execution, and
+all archived source bytes were compared with final source after completion.
+Local immutable evidence: .agentbenchkit/v02-results/20261008T001621Z-17a32242.
+
+Task `javascript--affine-cipher`:
+
+- Physical execution: `756b88a712f742be9a035cc867c35631`.
+- Patch SHA256: `451f1e4ffc326c05ba72f4341dc996575b2fc508cb657d0bde357127dbfd918d`.
+- Official report SHA256: `714ef224bb1bf4a04eb0c35bddb2fc280462e89eb950e3e4c478d428cff927d1`.
+
+Task `python--affine-cipher`:
+
+- Physical execution: `00f9359293154beaa7bc9db3fb0310be`.
+- Patch SHA256: `051f525bc865bcdba6b148776400f46fb1dd94966bd406b8d424dda3557456e0`.
+- Official report SHA256: `c308300f93011036699ef27bf76370dee0f21465ff076efdf1ab2b78c03bceb5`.
+
+Validation: 193 passed / 7 opt-in Docker skipped; Ruff and mypy PASS. The four
+real controls and both Nexus executions ran in Docker. Viewer and Replay analysis
+read the new run successfully; protocol notices render and SHA256 of all 40
+existing run evidence files remained unchanged. No full 225-task run occurred.
+QoderHarness / Qoder FeatureBench smoke remain pending CLI/login/BYOK configuration;
+V0.2 as a whole is not yet fully accepted.

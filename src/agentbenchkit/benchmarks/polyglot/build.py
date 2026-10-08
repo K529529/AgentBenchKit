@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 
 from agentbenchkit.benchmarks.images import NEXUS_ARCHIVE_SHA256
-from agentbenchkit.benchmarks.polyglot import EVALUATOR, checked_checkout
+from agentbenchkit.benchmarks.polyglot import EVALUATOR, JEST_VERSION, checked_checkout
 
 
 def build(source: Path, tag: str, uv_binary: Path, nexus_archive: Path) -> None:
@@ -46,6 +46,12 @@ def build(source: Path, tag: str, uv_binary: Path, nexus_archive: Path) -> None:
             'ENV PATH="/usr/local/bin:/usr/bin:/bin:/opt/abk/bin:${PATH}"\n'
             f'LABEL agentbenchkit.aider.commit="{EVALUATOR}"\n'
             "RUN nexus --version\n"
+            # Upstream installs unpinned Jest; the fixed dataset requires ^29.7.0.
+            # Correct only the installed dependency, never tests/scripts/grading.
+            "RUN cd /npm-install && "
+            f"timeout 300 npm install --save-exact jest@{JEST_VERSION} && "
+            f'test "$(./node_modules/.bin/jest --version)" = "{JEST_VERSION}"\n'
+            f'LABEL agentbenchkit.polyglot.jest="{JEST_VERSION}"\n'
         )
         path = context / "Dockerfile"
         path.write_text(dockerfile, encoding="utf-8")

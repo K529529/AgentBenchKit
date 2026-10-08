@@ -20,6 +20,7 @@ from agentbenchkit.verification.repository import freeze_repository, verified_pa
 
 REVISION = "7e0611e77b54e2dea774cdc0aa00cf9f7ed6144f"
 EVALUATOR = "5dc9490bb35f9729ef2c95d00a19ccd30c26339c"
+JEST_VERSION = "29.7.0"
 CATALOG = Path(__file__).with_name("catalog.json")
 
 
@@ -101,6 +102,8 @@ class PolyglotAdapter:
         )[0]
         if (image["Config"].get("Labels") or {}).get("agentbenchkit.aider.commit") != EVALUATOR:
             raise ValueError("Polyglot image must declare the pinned official Aider commit")
+        if (image["Config"].get("Labels") or {}).get("agentbenchkit.polyglot.jest") != JEST_VERSION:
+            raise ValueError("Polyglot image must pin Jest 29.7.0 to match the dataset")
         self.image_id = str(image["Id"])
         return self.image_id
 
