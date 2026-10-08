@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1100" height="228" viewBox="0 0 1100 228" role="img" aria-labelledby="title desc">
-<title id="title">AgentBenchKit</title><desc id="desc">Lightweight Coding Agent Evaluation and Benchmark Infrastructure. Execute, verify, understand.</desc>
+<title id="title">AgentBenchKit</title><desc id="desc">A unified open-source evaluation framework for coding agents. Execute, verify, understand.</desc>
 <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#102536"/><stop offset="1" stop-color="#183e49"/></linearGradient><linearGradient id="accent"><stop stop-color="#5ee0c0"/><stop offset="1" stop-color="#95dfea"/></linearGradient><pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#9fe9dc" stroke-opacity=".045"/></pattern></defs>
 <rect width="1100" height="228" rx="20" fill="url(#bg)"/><rect width="1100" height="228" rx="20" fill="url(#grid)"/>
 <g fill="none" stroke="#56bcae" stroke-opacity=".18"><circle cx="1030" cy="30" r="115"/><circle cx="1030" cy="30" r="155"/><path d="M935 172h72l25-25h68"/></g>
@@ -7,6 +7,6 @@
 <g fill="none" stroke="url(#accent)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="m79 83-18 29 18 29m48-58 18 29-18 29"/><path d="m87 113 12 12 21-27"/></g>
 <g font-family="Segoe UI,Arial,sans-serif"><text x="194" y="57" fill="#85c8bf" font-size="12" letter-spacing="3">CODING AGENT EVALUATION</text>
 <text x="190" y="121" fill="#f2fafb" font-size="61" font-weight="750" letter-spacing="-2">Agent<tspan fill="url(#accent)">BenchKit</tspan></text>
-<text x="194" y="153" fill="#b2cbd4" font-size="18">Lightweight Coding Agent Evaluation &amp; Benchmark Infrastructure</text>
+<text x="194" y="153" fill="#b2cbd4" font-size="18">A Unified Open-Source Evaluation Framework for Coding Agents</text>
 <text x="194" y="193" fill="#64d6bb" font-size="12" font-weight="600" letter-spacing="2">EXECUTE<tspan dx="22" fill="#567c89">/</tspan><tspan dx="22" fill="#64d6bb">VERIFY</tspan><tspan dx="22" fill="#567c89">/</tspan><tspan dx="22" fill="#64d6bb">UNDERSTAND</tspan></text></g>
 </svg>

@@ -577,3 +577,12 @@ Viewer regression now covers 1/7/16/30 tasks plus zero, single and multiple run
 records. README screenshots use the updated generic wording and synthetic data.
 All 171 historical evidence files remain byte-identical. No execution, correctness,
 metrics, model calls or official benchmark semantics changed.
+
+### Product positioning wording
+
+README, its banner, Python package description and GitHub About now describe
+AgentBenchKit as a unified open-source evaluation framework for coding agents,
+with lightweight local execution retained as a characteristic. This is a wording
+change only. PASS: Ruff, strict mypy on Windows/Linux, **241 passed / 16 opt-in
+skipped**; TOML and SVG parse checks. No Viewer behavior, evaluation semantics,
+historical evidence or model execution changed.

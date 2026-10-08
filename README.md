@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/readme-banner.svg" alt="AgentBenchKit — Lightweight Coding Agent Evaluation &amp; Benchmark Infrastructure" width="960">
+  <img src="docs/assets/readme-banner.svg" alt="AgentBenchKit — A Unified Open-Source Evaluation Framework for Coding Agents" width="960">
 </p>
 
 <p align="center">
@@ -24,8 +24,9 @@
 
 ## 📖 项目简介
 
-**AgentBenchKit** 是轻量、本地运行的 Coding Agent 评测工具。选择任务集和 Agent，
-运行评测，在同一个界面查看任务结果、对比不同运行，并追溯代码修改与验证证据。
+**AgentBenchKit** 是面向 **Coding Agent 的统一开源评测框架**，轻量、支持本地运行。
+通过统一的任务配置、Agent 执行、独立验证与证据分析流程，
+在同一个界面查看任务结果、对比不同运行，并追溯代码修改与验证证据。
 
 内置 **micro_swe、FeatureBench Fast、SWE-bench Lite、Aider Polyglot** 四种 Benchmark，
 支持 **Nexus / Codex / Qoder CN**。公共 Benchmark 复用官方 evaluator 或测试流程，
