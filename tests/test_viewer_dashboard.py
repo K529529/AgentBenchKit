@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 
 from agentbenchkit.core.metrics import summarize
@@ -12,15 +13,17 @@ from agentbenchkit.core.models import SampleResult
 from agentbenchkit.viewer.app import create_app
 
 
-def write_dashboard_fixture(root: Path, run_id: str, agent: str, offset: int = 0) -> Path:
+def write_dashboard_fixture(
+    root: Path, run_id: str, agent: str, offset: int = 0, task_count: int = 16
+) -> Path:
     directory = root / run_id
     directory.mkdir(parents=True, exist_ok=True)
     tasks = [
         {"task_id": f"preview-repo--task-{i:02}", "prompt": "Synthetic UI fixture"}
-        for i in range(1, 17)
+        for i in range(1, task_count + 1)
     ]
     manifest: dict[str, Any] = {
-        "preview_notice": "布局预览 · 合成数据，不是 16×2 实验结果",
+        "preview_notice": "布局预览 · 合成数据，不代表实际评测结果",
         "created_at": "2026-10-08T10:00:00Z",
         "benchmark": "featurebench-v1.1-fast",
         "harness": {"name": agent, "capabilities": {}},
@@ -70,23 +73,25 @@ def snapshot(root: Path) -> dict[str, bytes]:
     return {p.relative_to(root).as_posix(): p.read_bytes() for p in root.rglob("*") if p.is_file()}
 
 
-def test_dashboard_all_tasks_comparison_and_readonly(tmp_path: Path) -> None:
-    write_dashboard_fixture(tmp_path, "preview-a", "Nexus <script>")
-    write_dashboard_fixture(tmp_path, "preview-b", "Qoder CN", 1)
+@pytest.mark.parametrize("task_count", [1, 7, 16, 30])
+def test_dashboard_all_tasks_comparison_and_readonly(tmp_path: Path, task_count: int) -> None:
+    write_dashboard_fixture(tmp_path, "preview-a", "Nexus <script>", task_count=task_count)
+    write_dashboard_fixture(tmp_path, "preview-b", "Qoder CN", 1, task_count=task_count)
     before = snapshot(tmp_path)
     with TestClient(create_app(tmp_path)) as client:
         overview = client.get("/runs/preview-a")
         comparison = client.get("/compare?baseline=preview-a&candidate=preview-b")
         assert overview.status_code == comparison.status_code == 200
-        assert overview.text.count("data-result-row") == 16
-        assert comparison.text.count("data-result-row") == 16
-        assert overview.text.count('class="task-tile"') == 16
+        assert overview.text.count("data-result-row") == task_count
+        assert comparison.text.count("data-result-row") == task_count
+        assert f"共 {task_count} 个任务" in comparison.text
+        assert overview.text.count('class="task-tile"') == task_count
         assert 'data-filter="unknown"' in overview.text
         assert 'src="/static/viewer.js"' in overview.text
         assert client.get("/static/viewer.js").status_code == 200
         assert "Nexus &lt;script&gt;" in comparison.text
         assert "Nexus <script>" not in comparison.text
-        for i in range(1, 17):
+        for i in range(1, task_count + 1):
             assert f"preview-repo--task-{i:02}" in overview.text
             assert f"preview-repo--task-{i:02}" in comparison.text
         # Preserve the independent dimensions instead of collapsing them into one verdict.
@@ -129,3 +134,24 @@ def test_dashboard_missing_results_and_planned_only_samples(tmp_path: Path) -> N
         assert 'href="/runs/preview-a/samples/' not in compare.text
         assert 'class="badge UNKNOWN">N/A' in compare.text
     assert snapshot(tmp_path) == before
+
+
+def test_workspace_runs_are_independent_and_comparison_optional(tmp_path: Path) -> None:
+    with TestClient(create_app(tmp_path)) as client:
+        empty = client.get("/")
+        assert empty.status_code == 200
+        assert 'action="/compare"' not in empty.text
+        write_dashboard_fixture(tmp_path, "only-run", "Custom Agent", task_count=2)
+        single = client.get("/")
+        assert 'href="/runs/only-run"' in single.text
+        assert 'action="/compare"' not in single.text
+        assert client.get("/runs/only-run").text.count("data-result-row") == 2
+        write_dashboard_fixture(tmp_path, "second-run", "Custom Agent", task_count=3)
+        write_dashboard_fixture(tmp_path, "third-run", "Another Agent", task_count=5)
+        before = snapshot(tmp_path)
+        library = client.get("/")
+        assert 'action="/compare"' in library.text
+        for run_id, count in [("only-run", 2), ("second-run", 3), ("third-run", 5)]:
+            assert f'href="/runs/{run_id}"' in library.text
+            assert client.get(f"/runs/{run_id}").text.count("data-result-row") == count
+        assert snapshot(tmp_path) == before

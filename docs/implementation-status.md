@@ -561,3 +561,19 @@ The cleanup is a single follow-up commit on `feature/V0.2.0-implementation`.
 Its Windows/Ubuntu checks are recorded with that commit in
 [branch CI](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml?query=branch%3Afeature%2FV0.2.0-implementation).
 The preceding hardening commit and its completed CI are linked above.
+
+### Viewer general-use clarification
+
+The personal 16 x 2 experiment is not a product requirement. Task counts were
+already data-driven; each run remains independently viewable. Following user
+feedback, the comparison heading is now simply “运行对比”, README describes arbitrary
+selected task counts and independent runs, and the optional pairwise comparison
+form appears only when at least two records exist. Refresh updates the complete
+workspace, including its run count and optional comparison form. The existing
+pairwise Compare engine is unchanged; this does not add multi-run aggregation.
+
+PASS: Ruff, Windows/Linux strict mypy, **241 passed / 16 opt-in skipped**.
+Viewer regression now covers 1/7/16/30 tasks plus zero, single and multiple run
+records. README screenshots use the updated generic wording and synthetic data.
+All 171 historical evidence files remain byte-identical. No execution, correctness,
+metrics, model calls or official benchmark semantics changed.

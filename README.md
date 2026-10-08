@@ -32,7 +32,7 @@
 Agent 通过公开 CLI / SDK 执行，无需修改其源码。
 
 - **按需评测**：浏览任务目录，选择单题或任务集，配置模型、预算与执行环境。
-- **集中看结果**：汇总任务状态、候选正确性和端到端成功率，比较两次运行。
+- **集中看结果**：按运行汇总任务状态、候选正确性和端到端成功率，按需对比结果。
 - **追溯每次执行**：保留轨迹、冻结候选、独立验证报告和分析记录。
 - **扩展自己的 Agent**：通过 Harness 适配公开命令、配置与事件。
 
@@ -60,7 +60,9 @@ uv run agent-bench make-config aider-polyglot --all-tasks --output polyglot-plan
 ## 🖥️ Web Viewer
 
 一个运行页集中显示全部任务：指标总览、任务状态矩阵、逐题结果，以及搜索和 PASS / FAIL / N/A 筛选。
-选择两次运行，即可并排查看两侧指标与每道题的结果；需要定位原因时，再进入样本证据。
+任务数量取决于所选任务集，每次运行都生成独立报告，不要求固定题数或重复运行。
+工作台汇集运行记录；需要对比时，再任选两条记录查看指标与逐题差异。
+需要定位原因时，可进入样本证据页面。
 页面只读，保留正确性、端到端成功与可比性条件的区别。
 
 <table>
@@ -70,13 +72,13 @@ uv run agent-bench make-config aider-polyglot --all-tasks --output polyglot-plan
       <br><sub><b>评测运行总览</b><br>查看模型、环境、核心指标与任务结果</sub>
     </td>
     <td align="center" valign="top">
-      <a href="docs/assets/viewer-compare.png"><img src="docs/assets/viewer-compare.png" alt="双运行对比：指标、逐题结果与可比性提示" height="270"></a>
-      <br><sub><b>双 Agent 运行对比</b><br>在同一页面比较指标与逐题结果</sub>
+      <a href="docs/assets/viewer-compare.png"><img src="docs/assets/viewer-compare.png" alt="运行对比：指标、逐题结果与可比性提示" height="270"></a>
+      <br><sub><b>运行结果对比</b><br>在同一页面比较指标与逐题结果</sub>
     </td>
   </tr>
 </table>
 
-<p align="center"><sub>16 题布局演示 · 截图使用合成数据，不代表实际实验结果</sub></p>
+<p align="center"><sub>界面演示 · 截图使用合成数据，题数与 Agent 仅作示例</sub></p>
 
 <a id="architecture"></a>
 ## 🧭 架构总览
