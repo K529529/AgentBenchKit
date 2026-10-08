@@ -128,3 +128,21 @@ Details, including retained failed controls and remaining boundaries, are in
 
 The final cleanup's commit-linked Windows/Ubuntu status is available in
 [branch CI](https://github.com/K529529/AgentBenchKit/actions/workflows/ci.yml?query=branch%3Afeature%2FV0.2.0-implementation).
+
+## Final release candidate validation
+
+The current V0.2 release candidate has completed final verification.
+The historical 202 / 230 / 237 test milestones above remain unchanged.
+
+- **241 passed / 16 opt-in skipped**.
+- **Windows CI: PASS**.
+- **Ubuntu CI: PASS**.
+- Ruff and strict mypy for Windows and Linux: **PASS**.
+
+The reviewed candidate is
+[`958ad4dcfc777b583fa30ca4a30b2d5d2e872a28`](https://github.com/K529529/AgentBenchKit/commit/958ad4dcfc777b583fa30ca4a30b2d5d2e872a28),
+with [both CI platforms passing](https://github.com/K529529/AgentBenchKit/actions/runs/37759958562).
+This release closeout only appends this validation record. Runtime, evaluation,
+Viewer, Benchmark, Harness and official correctness semantics are unchanged.
+No new model inference, paid Judge, full benchmark or 16 x 2 experiment was run;
+historical evidence remains unchanged.
