@@ -44,6 +44,11 @@ def signature(event: Event) -> Signature | None:
         if not isinstance(args, dict):
             return None
         scope = "published_arguments"
+    elif event.source == "qoder" and isinstance(data, dict):
+        name, args = data.get("name"), data.get("arguments")
+        if not isinstance(name, str) or not name or not isinstance(args, dict):
+            return None
+        scope = "published_arguments"
     elif event.source == "codex":
         codex = native.get("codex")
         item = codex.get("item") if isinstance(codex, dict) else None

@@ -312,3 +312,91 @@ read the new run successfully; protocol notices render and SHA256 of all 40
 existing run evidence files remained unchanged. No full 225-task run occurred.
 QoderHarness / Qoder FeatureBench smoke remain pending CLI/login/BYOK configuration;
 V0.2 as a whole is not yet fully accepted.
+
+
+## V0.2 phase 5: Qoder CN public SDK integration
+
+Qoder CN CLI 1.1.65, qodercn-agent-sdk 1.0.15, requested Qwen3.8-Flash / low /
+16384 output tokens. The owner authorized their configured account. Public model
+listing and the real SDK messages both confirmed Qwen3.8-Flash. Managed account
+runs are subscription_smoke; no equivalent Bailian API endpoint is claimed.
+Login cache files enter Docker tmpfs through stdin, never image layers or evidence.
+SDK settings sources, MCP servers and skills are empty. No external Agent source
+was changed. Official FeatureBench correctness remains upstream-owned.
+
+Initial observed balance: 390 Credits (400 total, 10 used). The first launch failed
+before inference because CLI --version creates a config directory on a read-only
+root. Version probing now uses a disposable config directory. Original log:
+.agentbenchkit/qoder-featurebench-version-failure.log. No model calls in that launch.
+
+First physical inference: `20261008T012023Z-391a0ae2`, execution
+`ce8d71de8c064f3198271215840ab07d`, task
+`pypa__packaging.013f3b03.test_metadata.e00b5801.lv1`.
+In-session get_usage_info returned empty while inference continued. Independent
+no-query SDK checks repeatedly returned 390 Credits. At 5.665586718 observed
+request Credits (all billable=false), the operator sent SIGINT to the owned Agent
+container. This run is **ERROR / UNKNOWN / official FAIL / cleanup COMPLETED**,
+not accepted as a successful Harness integration. Its frozen candidate was empty;
+upstream completed with patch_exists=false. Evidence, failed attempt and external
+stop record are preserved. No task replacement or candidate edit occurred.
+
+The corrected driver uses a separate no-query SDK connection for 10-second account
+polling, rejects empty snapshots, and independently deduplicates request Credits
+by explicit request_id before applying the cumulative threshold. The owner raised
+the next attempt's cumulative threshold to 10.0 Credits; per-request 2 Credits,
+20 turns and 600 seconds remain. These are observed interruption thresholds with
+possible in-flight overshoot, not provider-enforced billing caps. A request's
+billable flag, reported Credits and observed account delta remain distinct.
+
+Streaming message IDs are not counted as requests. Full model-call count is null;
+observed request count remains in terminal evidence. All-zero managed token
+placeholders normalize to null; raw SDK messages are preserved. Qoder tool input
+objects support repeated-call observations, and is_error supports TOOL_ERROR RCA.
+Neither analysis changes the official candidate verdict.
+
+Final driver source archive .agentbenchkit/qoder-smoke-source-r2.zip SHA256:
+`520a64c59c00e0a956747fc147b54a805fb7a482fb594d0b4286ccacc7dfd311`.
+Driver wheel SHA256:
+`01dd43802e4ab710b7012a9495956fc1fceb3dd8ad421a43b1c24394106b1205`.
+Inference image abk-featurebench-packaging-qoder:v0.2.0-r2:
+`sha256:f72b2ee702b561d1899f947c350d76cbc872efede54c5ae1e1205aa65fb7711d`.
+The wheel retains pre-release package version 0.1.0; its exact source hash is the
+implementation identity, not a claim that the final V0.2 package was already released.
+
+Validation so far: 202 passed / 8 opt-in Docker skipped; Ruff and mypy PASS.
+Real Linux Docker regression: 8 PASS, including opaque login-cache tmpfs injection,
+file permissions, absence from Docker inspect and complete cleanup. Real final-image
+SDK dual-connection preflight PASS without any prompt/model call. Full catalog CLI
+checks found/configured 100/300/225 tasks, fixed selection stayed 16, and all eight
+micro_swe no-op/reference controls produced FAIL/PASS. No full benchmark was run.
+
+
+Corrected real Qoder run: `20261008T013419Z-9762cc1a`, execution
+`d01141a9a47d4b1c8ee939730a92e4b2`, same fixed packaging task.
+**FINISHED / LIMITED / official FAIL / cleanup COMPLETED**. SDK returned
+error_max_turns at 20 turns; process exit 0, no timeout, no protocol error and no
+output truncation. Candidate was frozen with no changes: the official evaluator
+completed and rejected the empty patch (patch_exists=false), so no F2P/P2P tests
+were run. This is valid negative pipeline evidence, not a solved FeatureBench task.
+No retry was made to improve that verdict.
+
+- 20 observed unique billing request IDs; reported request Credits 4.518009265,
+  all billable=false. SDK ResultMessage total_credits=0. Account remained
+  390 before, during (26 snapshots), after, and in an independent post-run query.
+  Thus observed account decrease was 0 Credits; delayed billing cannot be excluded.
+- 28 valid usage snapshots total; no empty snapshots or monitor errors in this run.
+  The 10-Credit cumulative and 2-Credit single-request thresholds were not reached.
+- Empty patch SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.
+- Official result SHA256: 358314f4620b7518937e65327882c166aa4d2746326e94136651d20c48dbfd78.
+- Final source bytes matched the frozen execution archive. Known opaque credential
+  bytes/base64 were absent from both physical-run archives; no .auth cache persisted.
+- Viewer, Replay and Compare read the result successfully; all 19 original files
+  remained byte-identical. Trajectory complete, 20 public tools analyzed, no repeated
+  input observations. Full model calls and token counts remain unavailable, not zero.
+- Prior real Feature/SWE/Polyglot and failed Qoder evidence also passed Viewer/Replay
+  checks with 111 pre-existing files unchanged. Qoder/Nexus comparison correctly
+  returned formal_comparable=false. Local evidence: .agentbenchkit/v02-results.
+
+The required Qoder real E2E pipeline acceptance is complete. Correctness is FAIL;
+this is not an official benchmark score. Final package/docs regression remains the
+last V0.2 step; no further model execution is required for the requested scope.

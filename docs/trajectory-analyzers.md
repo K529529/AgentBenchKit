@@ -11,6 +11,7 @@
 | --- | --- | --- |
 | Nexus tool_started 的 name、arguments_json、call_id、step | 同一工具和完整公开参数的重复 | 相同输入执行时 workspace 状态相同 |
 | Codex command_execution 的 command、item ID | 公开命令字符串重复 | 全部底层工具参数、隐藏 cwd/env 或模型步数相同 |
+| Qoder ToolUseBlock 的 name、input、id | 同一工具和公开参数对象的重复 | 完整模型调用数、隐藏 Agent 内部活动 |
 | Codex file_change；最终 candidate diff | 一部分修改事实、最终候选差异 | 每一步是否有修改、修改后是否回滚 |
 
 Stagnation 缺少逐步且完整的 mutation 证据：shell 可写文件，最终 diff 为空也可能
@@ -44,7 +45,7 @@ Stagnation 缺少逐步且完整的 mutation 证据：shell 可写文件，最�
 新运行的 manifest 标明所用 Analyzer 版本。Viewer 样本页增加只读展示区。
 
 输入不重复拷贝到报告，只保存参数指纹和事件引用；可通过引用检查原始公开输入。
-当前只支持已检查的 Nexus/Codex 公共事件形状，新增 Agent 需单独确认输入契约。
+当前支持已检查的 Nexus/Codex/Qoder 公共事件形状，新增 Agent 需单独确认输入契约。
 
 ## 该阶段的历史验证
 

@@ -216,3 +216,23 @@ def test_quoted_shell_whitespace_is_significant() -> None:
     a = nexus(1, "a", json.dumps({"command": "printf 'a  b'"}))
     b = nexus(2, "b", json.dumps({"command": "printf 'a b'"}))
     assert analyze([a, b])["observations"] == []
+
+
+def test_qoder_public_inputs_are_distinct_from_results() -> None:
+    def event(seq: int, call: str, kind: str, data: dict[str, Any]) -> Event:
+        return nexus(seq, call, source="qoder", type=kind, attributes={"native": {"data": data}})
+
+    result = analyze(
+        [
+            event(
+                1, "a", "tool_call_started", {"name": "Bash", "arguments": {"command": "pytest"}}
+            ),
+            event(2, "a", "tool_call_finished", {"content": "pytest", "is_error": False}),
+            event(
+                3, "b", "tool_call_started", {"name": "Bash", "arguments": {"command": "pytest"}}
+            ),
+        ]
+    )
+    assert result["analyzed_calls"] == 2
+    assert result["observations"][0]["call_ids"] == ["a", "b"]
+    assert result["observations"][0]["occurrences"] == 2

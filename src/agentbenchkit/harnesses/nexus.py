@@ -76,6 +76,8 @@ class NexusHarness:
         return spec, options
 
     def native_config(self, model: ModelSpec, options: HarnessOptions) -> NativeAgentConfig:
+        if options.max_credits is not None:
+            raise ValueError("Nexus does not expose Qoder Credits limits")
         if model.credential.kind != "api_key":
             raise ValueError("Nexus requires API-key authentication")
         unsupported = [

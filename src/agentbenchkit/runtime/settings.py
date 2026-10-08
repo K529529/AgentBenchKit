@@ -1,5 +1,6 @@
 """Shared credential resolution and isolated configuration; no Agent-specific model schema."""
 
+import base64
 import json
 import os
 import tomllib
@@ -30,6 +31,7 @@ class AgentSettings:
         self.model = self.native.effective_model
         self.auth: str | None = None
         self.key = ""
+        self.private_files: dict[str, str] = {}
         if model.credential.kind == "api_key":
             if auth_file is not None:
                 raise ValueError("auth cache conflicts with API-key ModelSpec")
@@ -40,6 +42,24 @@ class AgentSettings:
                     f"missing credential environment variable: {model.credential.env_var}"
                 )
             secrets = [self.key]
+        elif self.native.credential_files:
+            if auth_file is None or not auth_file.is_dir():
+                raise ValueError("account login requires an explicit credential directory")
+            secrets = []
+            for name in self.native.credential_files:
+                source = auth_file / name
+                if source.is_symlink() or not source.resolve().is_relative_to(auth_file.resolve()):
+                    raise ValueError("credential file escapes the explicit directory")
+                if source.stat().st_size > 65536:
+                    raise ValueError("credential file exceeds 64 KiB")
+                raw = source.read_bytes()
+                encoded = base64.b64encode(raw).decode()
+                self.private_files[name] = encoded
+                secrets.append(encoded)
+                try:
+                    secrets.append(raw.decode("utf-8"))
+                except UnicodeDecodeError:
+                    pass
         else:
             if auth_file is None or self.native.credential_file is None:
                 raise ValueError(
@@ -61,21 +81,22 @@ class AgentSettings:
         config_dir = home / self.native.config_directory
         config_dir.mkdir(parents=True, exist_ok=True)
         (config_dir / "config.toml").write_text(self.native.config_toml, encoding="utf-8")
-        effective_home = "/agent-private/home" if self.auth else str(home)
+        effective_home = "/agent-private/home" if self.auth or self.private_files else str(home)
         env = {"HOME": effective_home, "USERPROFILE": effective_home}
         if self.native.config_home_env:
             env[self.native.config_home_env] = (
                 effective_home + "/" + self.native.config_directory
-                if self.auth
+                if self.auth or self.private_files
                 else str(config_dir)
             )
-        if self.auth:
+        if self.auth or self.private_files:
             env["ABK_MEMORY_HOME"] = json.dumps(
                 {
                     "directory": self.native.config_directory,
                     "config": self.native.config_toml,
                     "credential_file": self.native.credential_file,
                     "auth": self.auth,
+                    "files": self.private_files,
                 }
             )
         else:
@@ -90,5 +111,7 @@ class AgentSettings:
             "controls": self.native.controls,
             "config_home": "isolated",
             "credential_source": self.model.credential.model_dump(),
-            "evaluation_class": "subscription_smoke" if self.auth else "explicit_api",
+            "evaluation_class": "subscription_smoke"
+            if self.auth or self.private_files
+            else "explicit_api",
         }

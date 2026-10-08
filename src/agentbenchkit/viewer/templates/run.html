@@ -17,7 +17,7 @@
   <div class="run-identity"><span class="eyebrow">RUN ID</span><code>{{ run_id }}</code><small>{{ manifest.created_at }}</small></div>
 </section>
 {% if manifest.get('agent_config', {}).get('evaluation_class') == 'subscription_smoke' %}
-<div class="warning">ChatGPT 登录 smoke test：用于验证接入流程，不作为正式 API 可比评测。</div>
+<div class="warning">账户登录 smoke test：用于验证接入流程，不作为正式 API 可比评测。</div>
 {% elif not manifest.get('model') %}
 <div class="warning">此记录缺少统一模型配置，模型条件不可完整比较。</div>
 {% endif %}

@@ -17,7 +17,7 @@ from agentbenchkit.core.models import CommandSpec, Contract
 from agentbenchkit.core.protocols import OutputSink, ProcessResult, StartupError
 from agentbenchkit.storage.artifacts import write_json
 
-BOOTSTRAP = """import json,os,pathlib,sys
+BOOTSTRAP = """import base64,json,os,pathlib,sys
 spec=json.loads(sys.stdin.readline())
 material=spec['env'].pop('ABK_MEMORY_HOME',None)
 if material:
@@ -27,9 +27,17 @@ if material:
     config=home/settings['directory']
     config.mkdir(mode=0o700)
     (config/'config.toml').write_text(settings['config'],encoding='utf-8')
-    target=config/settings['credential_file']
-    target.write_text(settings['auth'],encoding='utf-8')
-    target.chmod(0o600)
+    if settings.get('auth'):
+        target=config/settings['credential_file']
+        target.write_text(settings['auth'],encoding='utf-8')
+        target.chmod(0o600)
+    for name,data in settings.get('files',{}).items():
+        target=config/name
+        if not target.resolve().is_relative_to(config.resolve()):
+            raise ValueError('private file escapes config directory')
+        target.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
+        target.write_bytes(base64.b64decode(data,validate=True))
+        target.chmod(0o600)
 os.chdir(spec['cwd'])
 os.environ.update(spec['env'])
 os.execvp(spec['argv'][0],spec['argv'])

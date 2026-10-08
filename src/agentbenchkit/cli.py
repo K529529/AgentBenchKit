@@ -29,6 +29,7 @@ from agentbenchkit.core.status import Verdict
 from agentbenchkit.environments.docker import DockerEnvironment
 from agentbenchkit.harnesses.codex import CodexHarness
 from agentbenchkit.harnesses.nexus import NexusHarness
+from agentbenchkit.harnesses.qoder import QoderHarness
 from agentbenchkit.runtime.recovery import recover
 from agentbenchkit.runtime.runner import evaluate
 from agentbenchkit.runtime.settings import AgentSettings, load_model
@@ -55,7 +56,7 @@ def list_components(kind: str) -> None:
     """List currently implemented benchmarks, harnesses or environments."""
     values = {
         "benchmarks": list(NAMES),
-        "harnesses": ["nexus", "codex"],
+        "harnesses": ["nexus", "codex", "qoder"],
         "envs": ["host_process", "docker"],
     }
     if kind not in values:
@@ -138,6 +139,9 @@ def run(
     provider: Annotated[str | None, typer.Option()] = None,
     base_url: Annotated[str | None, typer.Option()] = None,
     codex_auth: Annotated[Path | None, typer.Option()] = None,
+    qoder_auth: Annotated[Path | None, typer.Option()] = None,
+    qoder_python: Annotated[str, typer.Option()] = "/opt/abk/bin/python",
+    max_credits: Annotated[float | None, typer.Option(min=0.001)] = None,
     key_env: Annotated[str | None, typer.Option()] = None,
     reasoning_effort: Annotated[str | None, typer.Option()] = None,
     agent_timeout: Annotated[float, typer.Option(min=1)] = 120,
@@ -154,7 +158,7 @@ def run(
     """Evaluate an external Agent with fresh workspaces and independent verification."""
     if (
         benchmark not in NAMES
-        or harness not in {"nexus", "codex"}
+        or harness not in {"nexus", "codex", "qoder"}
         or env not in {"host_process", "docker"}
     ):
         raise typer.BadParameter("choose an implemented benchmark, harness and environment")
@@ -164,11 +168,17 @@ def run(
         adapter: Harness
         if harness == "nexus":
             adapter = NexusHarness(binary if env == "host_process" else "nexus")
+        elif harness == "qoder":
+            adapter = QoderHarness(python=qoder_python, docker=env == "docker")
         else:
             codex_binary = codex_executable or Path(shutil.which("codex") or "codex")
             adapter = CodexHarness(
                 codex_binary if env == "host_process" else "codex", docker=env == "docker"
             )
+        if qoder_auth is not None and harness != "qoder":
+            raise ValueError("--qoder-auth requires QoderHarness")
+        if codex_auth is not None and harness != "codex":
+            raise ValueError("--codex-auth requires CodexHarness")
         options = HarnessOptions()
         if model_config:
             if any(
@@ -184,6 +194,16 @@ def run(
             ):
                 raise ValueError("use --model-config for explicit Nexus Model/Provider conditions")
             spec, options = NexusHarness.import_model(config)
+        elif harness == "qoder":
+            if provider is not None or base_url is not None or key_env is not None:
+                raise ValueError("Qoder account manages its provider/endpoint")
+            spec = ModelSpec(
+                model_id=model or "Qwen3.8-Flash",
+                provider_id="qoder_cn",
+                credential=CredentialRef(kind="qoder_login"),
+                reasoning_effort=reasoning_effort or "low",
+                max_output_tokens=16384,
+            )
         else:
             if not model:
                 raise ValueError("provide --model-config or an explicit --model")
@@ -208,7 +228,9 @@ def run(
                 )
         if max_steps is not None:
             options = options.model_copy(update={"max_steps": max_steps})
-        settings = AgentSettings(adapter, spec, options, auth_file=codex_auth)
+        if max_credits is not None:
+            options = options.model_copy(update={"max_credits": max_credits})
+        settings = AgentSettings(adapter, spec, options, auth_file=qoder_auth or codex_auth)
         selection = tuple(task or ())
         configuration = None
         if benchmark_config:

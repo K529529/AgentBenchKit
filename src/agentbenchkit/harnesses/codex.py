@@ -36,6 +36,8 @@ class CodexHarness:
         self.docker = docker
 
     def native_config(self, model: ModelSpec, options: HarnessOptions) -> NativeAgentConfig:
+        if model.credential.kind not in {"api_key", "chatgpt_login"}:
+            raise ValueError("Codex requires API-key or ChatGPT authentication")
         unsupported = [
             name
             for name in (

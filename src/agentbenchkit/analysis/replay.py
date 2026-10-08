@@ -60,6 +60,7 @@ def metrics(events: list[Event], capabilities: dict[str, Any], complete: bool) -
         "cached_input_tokens": usage.get("cached_input_tokens")
         if capabilities.get("model_usage")
         else None,
+        "credits": terminal.get("total_credits"),
         "cost": None,
         "cost_reason": "no pinned provider price table",
         "trajectory_complete": complete,
@@ -133,6 +134,7 @@ def analyze_sample(
         if event.type == "tool_call_finished" and isinstance(data, dict):
             if (
                 data.get("ok") is False
+                or data.get("is_error") is True
                 or data.get("status") == "failed"
                 or isinstance(data.get("exit_code"), int)
                 and data["exit_code"] != 0

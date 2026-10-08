@@ -5,13 +5,13 @@ Agent 原生配置，描述启动命令，解释公开事件与结束状态。�
 也不负责进程执行、候选冻结或测试判定。可类比 Java 的接口适配层：
 `Harness` 是 Protocol，`ModelSpec` 是公共 DTO，Environment 才负责实际执行。
 
-Nexus v0.2.0 和 Codex 0.155.1 已有真实 Harness，可直接使用
+Nexus v0.2.0、Codex 0.155.1 和 Qoder CN 1.1.65 已有 Harness，可直接使用
 `agent-bench run micro_swe nexus ...` / `agent-bench run micro_swe codex ...`。
 Agent 本体须安装在执行环境中；安装 AgentBenchKit 不会自动安装这些 Agent。
 未知 Agent 的命令、认证配置、JSONL 事件和退出语义不同，所以需要新的 Adapter。
 **Adapter 应使用公开 CLI/SDK，不应要求修改被评测 Agent 的源码或注入内部埋点。**
 
-## V0 的接入位置
+## 当前接入位置
 
 V0 采用源码级接入，没有插件管理器、注册装饰器或自动发现 API。
 
@@ -21,11 +21,11 @@ V0 采用源码级接入，没有插件管理器、注册装饰器或自动发�
    `AgentSettings(harness, model, options)` 会调用它的配置转换方法。
 3. 若要通过 CLI 选择它，修改 [cli.py](../src/agentbenchkit/cli.py) 的导入、
    `list_components()` 列表、`run()` 名称校验、实例构造及模型配置分支。
-   当前 `run()` 仅认识 Nexus/Codex；不能只添加文件就执行 `run ... new-agent`。
+   当前 `run()` 认识 Nexus/Codex/Qoder；不能只添加文件就执行 `run ... new-agent`。
 4. 增加对应事件/退出状态/不支持配置的测试，并使用 micro_swe 验证完整链路。
    记录 Agent 版本、认证方式、可观测范围和真实验收限制。
 
-本次发布不修改这些注册分支，不增加第三个内置 Agent。
+Qoder 的登录缓存、SDK 运行和 Credits 监测见 [Qoder 接入指南](qoder.md)。
 
 ## 五个方法的职责
 
@@ -49,22 +49,22 @@ V0 采用源码级接入，没有插件管理器、注册装饰器或自动发�
 ## ModelSpec → 原生配置
 
 模型身份与连接由公共 [ModelSpec](model-contract.md) 表达；不要再创建独立
-`NewAgentModelSettings` 与 Nexus/Codex 分叉。`HarnessOptions` 表达 Agent 控制项。
+`NewAgentModelSettings` 与已有 Harness 分叉。`HarnessOptions` 表达 Agent 控制项。
 
 `native_config()` 返回：
 
-- `config_directory`：如 `.nexus` / `.codex`；`config_toml`：原生 TOML 内容。
+- `config_directory`：如 `.nexus` / `.codex`；`config_toml`：启动配置 TOML；Qoder 使用明确标注的 ABK SDK 启动配置。
 - `effective_model`：实际生成配置对应的 ModelSpec；只解析已知默认值。
 - `credential_env`：密钥环境变量名；`config_home_env`：Agent 特定配置 HOME 变量（可选）。
-- `wire_api`：当前仅允许 `chat_completions`、`responses`、`chatgpt`。
-- `controls`：非模型的有效原生控制项；登录缓存使用可选 `credential_file`。
+- `wire_api`：允许 `chat_completions`、`responses`、`chatgpt`、`qoder_managed`。
+- `controls`：非模型的有效原生控制项；登录缓存使用可选 `credential_file` 或 `credential_files`（安全相对路径列表）。
 
 公共 `AgentSettings` 负责解析凭据引用、脱敏、每次物理执行建立隔离 HOME 和写入
 `<HOME>/<config_directory>/config.toml`。Docker 的配置路径由 Environment 处理。
 密钥不能出现在 argv、TOML、manifest 或 stdout；不要读取用户全局配置冒充隔离配置。
 不支持的显式字段必须报错，不能默默丢弃；未知默认值保留 null。
 
-当前配置装配对 TOML、API key / ChatGPT 登录及上述三种协议有明确边界。
+当前配置装配支持 TOML、API key、ChatGPT 登录及 Qoder 不透明登录缓存。
 若新 Agent 只接受其他配置格式或认证方式，需要单独评审公共契约扩展；
 不能在示例中假装这些机制已经存在。
 
@@ -91,7 +91,7 @@ V0 采用源码级接入，没有插件管理器、注册装饰器或自动发�
 保持 N/A，不能伪造一个 ID 声称它来自 Agent。私有推理与 `protocol_data` 不应输出。
 
 统一事件 envelope 不保证所有 Analyzer 自动兼容新 Agent。
-[重复工具调用观察](trajectory-analyzers.md) 当前仅识别 Nexus/Codex 的已核实输入形状，
+[重复工具调用观察](trajectory-analyzers.md) 识别已有 Harness 的已核实输入形状，
 [分析实现](../src/agentbenchkit/analysis/repetition.py) 有来源判断；新增 Agent 必须独立
 确认工具输入契约并补充分析支持，否则相关分析应不可用，不能改名冒充 Nexus。
 
@@ -128,7 +128,7 @@ Runtime 另行记录 `ProcessResult.timed_out/cancelled/cleanup_complete` 和
 
 [examples/custom_harness.py](../examples/custom_harness.py) 展示最小组合式 Harness：
 它接入的确实是 Nexus，复用已测试的 `NexusHarness` 原生映射，显式实现五个方法。
-这不是虚构 Agent CLI，也不是第三个内置 Agent。`name=nexus` 对应真实来源，
+这个示例使用真实 Nexus CLI，并未引入另一个 Agent。`name=nexus` 对应真实来源，
 因此保留现有分析支持。换成另一个 Agent 时，必须替换它的配置、命令、事件与结果映射，
 并使用该 Agent 自己的名字，不能只改类名或可执行文件名。
 
@@ -151,4 +151,4 @@ uv run python examples/custom_harness.py --model-config examples/models/nexus-ap
 ## 后续演进方向（未实现）
 
 未来可评审 Python entry-point / plugin discovery、版本兼容声明以及更通用的配置
-文件装配。V0 不承诺这些 API；本次仅提供文档和符合当前接口的示例。
+文件装配。当前版本不承诺这些 API。

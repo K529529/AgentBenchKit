@@ -1,0 +1,8 @@
+schema_version = 1
+model_id = "Qwen3.8-Flash"
+provider_id = "qoder_cn"
+reasoning_effort = "low"
+max_output_tokens = 16384
+
+[credential]
+kind = "qoder_login"

@@ -12,8 +12,8 @@ ModelSpec + HarnessOptions
 ```
 
 `ModelSpec` 描述模型 ID、Provider ID、显式 endpoint、凭据引用、上下文窗口、
-输出上限和可选生成参数。凭据只保存环境变量名，不保存密钥。
-`HarnessOptions` 与模型分离，承载循环步数和原生传输选项。
+输出上限和可选生成参数。API 凭据只保存环境变量名；账户认证只声明登录方式，不保存密钥或登录缓存。
+`HarnessOptions` 与模型分离，承载循环步数、原生传输选项及可选 Credits 停止阈值。
 Harness 构造函数不持有模型名或 Provider；转换函数负责兼容性检查。
 
 可以类比 Java：`ModelSpec` 是公共不可变 DTO，`Harness.native_config` 是适配器，
@@ -40,7 +40,7 @@ schema v2 manifest 的 `requested_model` 和 `model` 均由 Pydantic 验证。
 | ChatGPT 登录 | 不支持 | Docker tmpfs，仅 smoke |
 
 拒绝不支持的显式参数发生在读取凭据和启动 Agent 之前，不能静默丢弃。
-同一公共配置可以供两种 Harness 转换，但必须在双方支持能力的交集内；
+同一公共配置可以供多个 Harness 转换，但必须在双方支持能力的交集内；
 协议、Agent 内部策略和不可控制的默认值仍可能不同。
 
 ## 配置与隔离
@@ -80,3 +80,18 @@ uv run agent-bench run micro_swe codex --env docker --docker-image agentbenchkit
 新增 Agent 的开发流程见 [Adding a Harness](adding-a-harness.md)。未来 plugin discovery
 尚未实现。Optional Judge 有独立请求配置与 usage，严格输出和框架版本归属见
 [Judge 契约](judge-diagnostics.md)；其真实验收已通过，不改变以上 Agent 模型可比性边界。
+
+
+## Qoder CN managed account
+
+Qoder CN uses `credential.kind=qoder_login`, `provider_id=qoder_cn` and
+`wire_api=qoder_managed`. Its public SDK controls model ID, reasoning effort,
+maximum output tokens, optional context window and maximum turns. Unsupported
+API endpoint, temperature, top_p, seed and request timeout controls are rejected.
+Its TOML is explicitly an ABK SDK launch configuration, not a claimed native CLI
+configuration format. See [Qoder setup and Credits monitoring](qoder.md).
+
+`NativeAgentConfig.credential_files` declares safe relative opaque cache paths.
+The shared settings/bootstrap path copies only those files through stdin into
+private Docker tmpfs. Both ChatGPT and Qoder account login runs are classified
+as subscription_smoke; neither proves formal API-provider comparability.

@@ -185,3 +185,40 @@ async def test_auth_cache_uses_tmpfs_only(tmp_path: Path) -> None:
         assert not await asyncio.to_thread(lambda: list(tmp_path.rglob("auth.json")))
     finally:
         await session.close()
+
+
+async def test_opaque_account_cache_uses_private_tmpfs(tmp_path: Path) -> None:
+    import base64
+
+    session = DockerSession(tmp_path, "python:3.12-slim")
+
+    async def sink(stream: str, text: str) -> None:
+        pass
+
+    script = (
+        "import pathlib,os; "
+        "p=pathlib.Path('/agent-private/home/.account/.auth/user'); "
+        "assert p.read_bytes()==b'opaque-cache'; "
+        "assert p.stat().st_mode & 0o777 == 0o600; "
+        "assert 'ABK_MEMORY_HOME' not in os.environ"
+    )
+    try:
+        result = await session.execute(
+            CommandSpec(argv=(sys.executable, "-c", script)),
+            sink,
+            {
+                "ABK_MEMORY_HOME": json.dumps(
+                    {
+                        "directory": ".account",
+                        "config": "",
+                        "files": {".auth/user": base64.b64encode(b"opaque-cache").decode()},
+                    }
+                )
+            },
+        )
+        assert result.returncode == 0
+        assert session.name
+        assert "opaque-cache" not in await docker("inspect", session.name)
+        assert not await asyncio.to_thread(lambda: list(tmp_path.rglob("user")))
+    finally:
+        await session.close()

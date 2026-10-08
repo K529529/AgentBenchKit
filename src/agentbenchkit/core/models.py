@@ -14,13 +14,13 @@ class Contract(BaseModel):
 
 
 class CredentialRef(Contract):
-    kind: Literal["api_key", "chatgpt_login"] = "api_key"
+    kind: Literal["api_key", "chatgpt_login", "qoder_login"] = "api_key"
     env_var: str | None = Field(default=None, pattern=r"^[A-Za-z_][A-Za-z0-9_]*$")
 
     @model_validator(mode="after")
     def valid_reference(self) -> "CredentialRef":
         if (self.kind == "api_key") != (self.env_var is not None):
-            raise ValueError("API keys require env_var; ChatGPT login must not specify env_var")
+            raise ValueError("API keys require env_var; account login must not specify env_var")
         return self
 
 
@@ -49,8 +49,8 @@ class ModelSpec(Contract):
     def validate_connection(self) -> "ModelSpec":
         if self.credential.kind == "api_key" and self.base_url is None:
             raise ValueError("API model connections require an explicit base_url")
-        if self.credential.kind == "chatgpt_login" and self.base_url is not None:
-            raise ValueError("ChatGPT login endpoint is managed; do not claim an API base_url")
+        if self.credential.kind != "api_key" and self.base_url is not None:
+            raise ValueError("Account login endpoint is managed; do not claim an API base_url")
         if self.base_url is not None:
             parsed = urlsplit(self.base_url)
             if (
@@ -69,6 +69,7 @@ class HarnessOptions(Contract):
     """Agent-loop options, deliberately separate from model connection settings."""
 
     max_steps: int | None = Field(default=None, gt=0)
+    max_credits: float | None = Field(default=None, gt=0, allow_inf_nan=False)
     include_usage: bool = True
     output_token_parameter: Literal["max_tokens", "max_completion_tokens"] = "max_tokens"
 
@@ -79,9 +80,23 @@ class NativeAgentConfig(Contract):
     credential_env: str | None = None
     config_home_env: str | None = None
     credential_file: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_.-]+$")
+    credential_files: tuple[str, ...] = ()
     effective_model: ModelSpec
-    wire_api: Literal["chat_completions", "responses", "chatgpt"]
+    wire_api: Literal["chat_completions", "responses", "chatgpt", "qoder_managed"]
     controls: dict[str, JsonValue] = Field(default_factory=dict)
+
+    @field_validator("credential_files")
+    @classmethod
+    def safe_private_paths(cls, names: tuple[str, ...]) -> tuple[str, ...]:
+        for name in names:
+            if (
+                not name
+                or "\\" in name
+                or ":" in name
+                or any(part in {"", ".", ".."} for part in name.split("/"))
+            ):
+                raise ValueError("private credential paths must stay inside config home")
+        return names
 
 
 class CommandSpec(Contract):
