@@ -233,11 +233,6 @@ Harness 通过源码扩展，不要求修改被评测 Agent。CLI 提供上表�
 - [V0.2 版本说明与验证结果](docs/release-notes-v0.2.0.md)
 - [完整验收记录](docs/implementation-status.md)
 
-## 🤝 维护与协作
-
-- **[Archer / K529529](https://github.com/K529529)**：项目作者与维护者。
-- **OpenAI Codex**：AI 开发协作，辅助方案讨论、代码实现、测试与文档维护。
-
 ## 📄 License
 
 [MIT](LICENSE)。随包 HTMX 的第三方许可见
