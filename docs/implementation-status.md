@@ -3,7 +3,17 @@
 Contract: [architecture-v0.3.1.md](architecture-v0.3.1.md).
 A failed evaluated Agent is not automatically a toolkit failure.
 
-## Current v0.1.0
+## Current V0.2 implementation
+
+All requested adapters and Harness integration are implemented; real smoke pipeline
+acceptance is complete. Final summary: [V0.2 notes](release-notes-v0.2.0.md).
+FeatureBench/Nexus FAIL, SWE-bench Lite/Nexus PASS, Polyglot Python/Nexus PASS,
+Polyglot JavaScript/Nexus FAIL, FeatureBench/Qoder LIMITED with empty candidate FAIL.
+Those negative outcomes are preserved. No full benchmark or formal 16 x 2 run.
+The detailed chronological phases below retain historical blockers and failed
+attempts; later entries explicitly resolve them. No release/merge is implied.
+
+## Historical v0.1.0 baseline
 
 - Final local suite: **175 passed / 7 opt-in Docker skipped**; locked sync, Ruff,
   strict Windows/Linux-target mypy (including examples), CLI help and benchmark validation PASS.
@@ -400,3 +410,36 @@ No retry was made to improve that verdict.
 The required Qoder real E2E pipeline acceptance is complete. Correctness is FAIL;
 this is not an official benchmark score. Final package/docs regression remains the
 last V0.2 step; no further model execution is required for the requested scope.
+
+
+## V0.2 final regression and scope closure
+
+Package and CLI version are 0.2.0. README, benchmark/Harness/model guides, Viewer
+protocol/account notices and [V0.2 summary](release-notes-v0.2.0.md) are current.
+No architecture additions beyond the requested Adapters/Harness were introduced.
+
+- PASS: uv sync --locked; uv run pytest **202 passed / 8 opt-in Docker skipped**;
+  uv run ruff check .; uv run mypy; uv run mypy --platform linux.
+- PASS: independent real Linux Docker regression **8/8**, including the new
+  private opaque-cache path. Real public-benchmark executions/controls are listed
+  in their phase records, separately from controlled test cases.
+- PASS: all eight micro_swe no-op/reference FAIL/PASS controls, both source install
+  and fresh 0.2.0 wheel install. Full public catalog discovery/config generation
+  100/300/225, frozen evalset 16, and Nexus/Codex/Qoder CLI listing.
+- PASS: sdist and wheel build; package metadata/version/py.typed; all three catalogs
+  and Qoder modules in the wheel; no local runtime/IDE files in distributions;
+  clean wheel installation and public catalog use from site-packages.
+- PASS: local Markdown links, git diff --check, existing evidence immutability,
+  Replay/Compare/Viewer against all real smoke types; managed-account comparison
+  remains non-formal. Runtime/Core contain no public-benchmark/repository special cases.
+- PASS: pushed phase 5 commit 67b4f47 has successful Windows/Ubuntu CI:
+  https://github.com/K529529/AgentBenchKit/actions/runs/37714314826.
+  Final commit CI is available in the same branch's Actions history.
+- NOT RUN by scope: full benchmark model suites, fixed FeatureBench 16 x 2 formal
+  evaluation, all other task/image/language/Harness combinations, a new paid Judge
+  run, package publication, main merge or release tag.
+
+All requested V0.2 implementation phases are complete. Stop adding features.
+The remaining formal evaluation experiment is a separate owner-directed run.
+Known single-run task failures and the earlier Qoder integration failure remain
+visible; none is reclassified as a solved task or hidden by this scope closure.

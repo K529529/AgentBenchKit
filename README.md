@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="pyproject.toml"><img src="https://img.shields.io/badge/Python-3.12%2B-3776AB?style=flat-square&amp;logo=python&amp;logoColor=white" alt="Python 3.12+"></a>
-  <a href="docs/adding-a-harness.md"><img src="https://img.shields.io/badge/Harnesses-Nexus%20%2B%20Codex-147D70?style=flat-square" alt="Harnesses: Nexus and Codex"></a>
+  <a href="docs/adding-a-harness.md"><img src="https://img.shields.io/badge/Harnesses-Nexus%20%2B%20Codex%20%2B%20Qoder-147D70?style=flat-square" alt="Harnesses: Nexus, Codex and Qoder"></a>
   <a href="docs/limitations.md"><img src="https://img.shields.io/badge/micro__swe-8%20tasks-266579?style=flat-square" alt="micro_swe: 8 tasks"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-147D70?style=flat-square" alt="MIT License"></a>
 </p>
@@ -16,8 +16,8 @@
   <a href="#web-viewer">界面预览</a> ·
   <a href="#architecture">架构总览</a> ·
   <a href="docs/adding-a-harness.md">接入 Agent</a> ·
-  <a href="docs/acceptance-v0.md">验收证据</a> ·
-  <a href="docs/release-notes-v0.1.0.md">v0.1.0 说明</a>
+  <a href="docs/release-notes-v0.2.0.md">V0.2 验收</a> ·
+  <a href="docs/implementation-status.md">实施记录</a>
 </p>
 
 ---
@@ -27,13 +27,14 @@
 **AgentBenchKit** 是轻量、本地运行的 Coding Agent 评测基础设施。通过公共 CLI
 接入外部 Agent，保存执行证据、冻结候选代码、独立验证结果，再做轨迹分析与回归比较。
 
-支持 **Nexus / Codex**，使用公共 **ModelSpec** 管理模型连接信息，
-在 **HostProcess / Docker** 中运行评测。V0.2 开发分支新增 FeatureBench Fast、
+支持 **Nexus / Codex / Qoder CN**，使用公共 **ModelSpec** 管理模型连接信息，
+在 **HostProcess / Docker** 中运行评测。V0.2 新增 FeatureBench Fast、
 SWE-bench Lite 和 Aider Polyglot Adapter；内置 micro_swe 用于接入与回归。
-Qoder 接入及最终验收仍在进行中，当前状态见[实施记录](docs/implementation-status.md)。
+[Qoder CN](docs/qoder.md) 使用官方 SDK 和 Docker 账户登录隔离，支持 Credits 监测。
+三个公共 Benchmark 与 Qoder 的真实 smoke 管线已验收，结果与限制见[V0.2 说明](docs/release-notes-v0.2.0.md)。
 一次 smoke 不代表 Benchmark 能力成绩。
 
-## 公共 Benchmark（V0.2 开发中）
+## 公共 Benchmark（V0.2）
 
 | Benchmark | 完整任务目录 | 执行与判定 |
 | --- | ---: | --- |
@@ -108,7 +109,7 @@ Benchmark / Task + Agent Harness + Environment
 
 | 层次 | 提供什么 |
 | --- | --- |
-| 接入与配置 | Benchmark / Harness / Environment 解耦；Nexus + Codex 双真实 Harness；公共 ModelSpec 转原生配置、隔离 Agent HOME。 |
+| 接入与配置 | Benchmark / Harness / Environment 解耦；Nexus / Codex / Qoder 三种 Harness；公共 ModelSpec 转原生配置、隔离 Agent HOME。 |
 | 执行与验证 | HostProcess / Docker 整个 Agent 执行；阶段超时、取消、启动前重试；Candidate Freeze；全新 protected verifier。 |
 | 结果与分析 | candidate_pass 与 sample_success 分离；pass@k / coverage / success rate；Trajectory Evaluation、Failure / RCA、重复工具调用 observation。 |
 | 回归与质量 | 基于不可变 evidence 的 Replay；先检查实验条件的 Regression Compare；四维 Rubric + 已真实验收的可选 LLM Judge。 |

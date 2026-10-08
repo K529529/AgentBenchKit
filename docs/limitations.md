@@ -1,19 +1,20 @@
-# Current limitations (V0.2 development)
+# Current limitations (V0.2)
 
 - The internal benchmark has eight small Python tasks. It is integration evidence,
   not a broad coding-capability ranking or official SWE-bench result.
-- Nexus v0.2.0 and Codex 0.155.1 use public CLI interfaces. Agent source is unchanged.
+- Nexus v0.2.0 and Codex 0.155.1 use public CLI interfaces; Qoder CN 1.1.65
+  uses official SDK 1.0.15. Agent source is unchanged.
   Model inputs are unavailable; model outputs are partial; missing measurements
   remain null. No pinned pricing table means cost is null, never zero.
 - Common ModelSpec does not imply equivalent model transports or controllable
   generation parameters. Nexus uses Chat Completions; Codex API uses Responses.
-  Unsupported explicit fields are rejected. ChatGPT login runs are smoke only.
+  Unsupported explicit fields are rejected. ChatGPT and Qoder account login runs are smoke only.
   Real Codex API-provider inference is NOT RUN. Real optional Judge acceptance is
   COMPLETED; its four quality scores do not replace the deterministic verifier.
 - `model` in schema v2 records the configuration generated for the Agent, not a
   proof of the provider's server-side model version, routing or defaults. Old run
   manifests remain untouched and have incomplete comparability information.
-- Docker is required for ChatGPT auth-cache injection and isolated acceptance.
+- Docker is required for account auth-cache injection and isolated acceptance.
   Host execution is trusted local development only. Docker uses network bridge
   for the Agent; micro_swe verification uses network none. Public adapters record
   their verifier conditions separately; this is not an egress allowlist.
@@ -35,7 +36,8 @@
   does not depend on httpx; tests currently use the locked httpx version.
 - Public adapters discover all 100 FeatureBench Fast, 300 SWE-bench Lite and
   225 Polyglot tasks. Full-suite execution is NOT RUN. The implementation status
-  records exact real smoke evidence; Qoder acceptance is pending configuration.
+  records exact real smoke evidence. Qoder completed a valid negative pipeline:
+  20-turn LIMITED with an empty candidate, officially rejected; not a solved task.
 - Polyglot uses one Agent execution with hidden tests and official test semantics;
   it is not directly comparable with Aider two-round scores. Its verifier permits
   network access for language dependencies and writes into a fresh disposable
@@ -47,7 +49,17 @@
 
 - Harness discovery is source-level only. A new Agent may require reviewed extensions
   to TOML configuration, authentication or the limited wire_api enum; there is no
-  general plugin system. Repeated-tool analysis recognizes only verified Nexus/Codex
+  general plugin system. Repeated-tool analysis recognizes only verified Nexus/Codex/Qoder
   public input shapes. See [adding a Harness](adding-a-harness.md).
 - Stagnation detection is deferred because complete per-step workspace mutation
   evidence is unavailable. Repeated tool inputs alone are not proof of stagnation.
+
+- Qoder's managed channel reports all-zero token placeholders; normalized token
+  metrics and full model-call count stay null. Unique reported request Credits,
+  billable flags, SDK session Credits and account deltas have distinct meanings.
+  Budget interruption is observation-based with possible in-flight overshoot and
+  delayed account reporting; it is not a provider-enforced hard billing limit.
+- All public catalogs are available, but only the documented task/image/language
+  smoke combinations have real execution evidence. Full FeatureBench 16 x 2,
+  full-suite runs, remaining Polyglot languages and all Harness/Benchmark
+  combinations are NOT RUN. Implementation completion does not assert those results.

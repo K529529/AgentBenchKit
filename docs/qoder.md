@@ -36,7 +36,7 @@ uv run python -m agentbenchkit.harnesses.qoder_build \
   --image docker.io/libercoders/featurebench-specs_packaging-instance_c393a6a8@sha256:96b12548b35b5983ac1dab9a101b4a49946fceb6a05c97690cd942ff014be916 \
   --tag abk-featurebench-packaging-qoder:v0.2.0 \
   --uv-binary "$(command -v uv)" --cli-archive qoderclicn.tar.gz \
-  --wheel dist/agentbenchkit-0.1.0-py3-none-any.whl
+  --wheel dist/agentbenchkit-0.2.0-py3-none-any.whl
 ```
 
 The builder verifies archive SHA256

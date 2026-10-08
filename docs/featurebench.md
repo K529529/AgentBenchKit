@@ -59,6 +59,8 @@ trajectory, upstream logs/reports and separate cleanup status. Candidate patch
 collection uses an independent Git index; the Agent's `.git` cannot alter it.
 
 Nexus pipeline smoke is recorded in implementation-status.md (LIMITED / official FAIL).
+Qoder CN pipeline smoke is also recorded (20-turn LIMITED, empty candidate, official FAIL);
+see [Qoder setup](qoder.md) for its pinned image and managed account protocol.
 A smoke is pipeline evidence,
 not a full-Fast or fixed-evalset accuracy estimate.
 
