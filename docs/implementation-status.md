@@ -586,3 +586,27 @@ with lightweight local execution retained as a characteristic. This is a wording
 change only. PASS: Ruff, strict mypy on Windows/Linux, **241 passed / 16 opt-in
 skipped**; TOML and SVG parse checks. No Viewer behavior, evaluation semantics,
 historical evidence or model execution changed.
+
+### sh-agent experiment branch (2026-10-11, in progress)
+
+The owner requested an experiment branch from ABK V0.2 and C08/C17/C13 with the
+external sh-agent. Branch: `codex/sh-agent-c08-c17-c13`.
+[Integration and frozen protocol](sh-agent.md).
+
+- PASS: minimal Python harness and standalone upstream graph driver; agent Python
+  source hash integrity; final driver image hashes; unchanged testbed Git trees;
+  fresh network isolation preflight.
+- PASS: Windows `uv run pytest` **252 passed / 16 skipped**, `uv run ruff check .`,
+  `uv run mypy` (85 files). The skipped opt-in integrations are not passed tests.
+- NOT RUN: completed real-agent acceptance or official verdicts. The first C08
+  physical attempt was interrupted during PREPARE by a WSL restart, before the
+  agent started. Host monitoring recorded available commit memory falling to
+  517,877,760 bytes; the exact reboot cause is not established. This is not an
+  agent failure or candidate FAIL. C17 and C13 had not started.
+- The original attempt, logs, image-build revisions and host-memory samples are
+  retained. No task retry or replacement has been performed.
+
+The owner subsequently authorized one separate C08 preparation retry followed by
+C17/C13. A new frozen continuation retains all original attempts and adds a
+host-memory launch gate and scoped interruption guard. Its results are pending;
+this authorization does not convert the interrupted attempt into a successful run.
