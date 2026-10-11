@@ -98,3 +98,33 @@ it sends SIGINT only to its verified experiment runner if available commit
 falls below 2 GiB or physical memory below 0.75 GiB (2-second observation interval).
 These operational thresholds are precautions, not guaranteed memory bounds.
 No user applications are terminated and no global WSL settings are changed.
+
+The authorized C08 retry also stopped before inference: run
+`20261011T092054Z-5cfe17d3`, PREPARE ERROR / verifier NOT_RUN, cleanup COMPLETED.
+The host guard observed 699,576,320 bytes physical memory available and sent
+SIGINT to the experiment runner. The official worker's record is cancelled=true,
+returncode=-9; no model calls occurred. No third C08 attempt was made.
+
+Afterward WSL reported about 13 GiB file cache with only 1.2 GiB used by processes.
+A `sync` followed by releasing reclaimable filesystem caches reduced Linux cache
+to about 0.3 GiB, and Windows recovered to about 10 GiB available physical memory
+and 12.7 GiB available commit. This is observed resource evidence, not proof of
+the first reboot's exact cause. No applications were closed by the agent.
+
+Untouched C17/C13 continue in a third manifest under
+`.agentbenchkit/experiments/sh-agent-c08-c17-c13-20261011-remaining/`.
+The guard additionally releases reclaimable WSL filesystem caches when host
+available commit is below 8 GiB or physical memory below 6 GiB, only if Linux
+cache exceeds 2 GiB, at most every 15 seconds. Each operation is recorded in the
+host-memory log. The abort thresholds remain unchanged. This environmental
+intervention must be included when interpreting timing against earlier runs.
+
+## Final experiment outcome
+
+See the [final report](sh-agent-experiment-20261011.md) for all three outcomes.
+After separate owner authorization, C08 successfully reached inference with the
+same cache-reclamation guard. It timed out at the 900-second Agent budget while
+searching the container root; C17/C13 exhausted the default graph recursion limit.
+All three candidates were empty and received completed official FAIL verdicts.
+Five physical attempts are retained, including both earlier preparation failures.
+Final evidence/source/frozen-input integrity checks passed; no task containers remain.

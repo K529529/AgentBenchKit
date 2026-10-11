@@ -610,3 +610,34 @@ The owner subsequently authorized one separate C08 preparation retry followed by
 C17/C13. A new frozen continuation retains all original attempts and adds a
 host-memory launch gate and scoped interruption guard. Its results are pending;
 this authorization does not convert the interrupted attempt into a successful run.
+
+Recovery update: the single authorized C08 retry also ended in PREPARE before any
+model call, with ERROR / verifier NOT_RUN and cleanup COMPLETED; the host guard
+interrupted it under renewed physical memory pressure. Both physical attempts
+remain archived. WSL reclaimable file cache was identified as a major contributor
+to retained host memory, and releasing it restored host headroom. Untouched
+C17/C13 continue under a separate manifest with logged cache reclamation and the
+same abort guard. C17 has entered real model/tool execution; verdicts are pending.
+
+### sh-agent experiment final result (2026-10-11)
+
+[Final report](sh-agent-experiment-20261011.md). The owner explicitly authorized
+one further C08 preparation after the cache issue was isolated. Actual inference
+order was C17, C13, C08; all three retained the same upstream source and model.
+
+- PASS integration/evidence: all three real Agent executions reached frozen
+  candidates and the pinned official evaluator; all three cleanups COMPLETED.
+  Five physical attempts (including the two pre-inference interruptions) retained;
+  raw/archive hashes, original interrupted snapshot, frozen inputs, release ABK
+  runtime and unchanged sh-agent Python files all verified.
+- FAIL task correctness: **0/3 resolved**, all empty patches. Official evaluation
+  completed, but its empty-patch path did not execute the test suites.
+- C08: **TIMED_OUT**, 900.83 s Agent phase, 9 model calls, 20 tool starts / 19 ends;
+  root-directory searches stalled. C17/C13: **FAILED**, 86.30 s / 229.28 s,
+  14 model calls each, 29 / 30 tool calls, default recursion limit 25 exhausted.
+- PASS code checks: 252 passed / 16 opt-in skipped, Ruff and strict mypy. Both
+  [Ubuntu and Windows CI](https://github.com/K529529/AgentBenchKit/actions/runs/38127975722)
+  passed for integration commit `21269a5`.
+- No upstream repair, post-outcome inference retry, broader benchmark, or paid
+  judge was performed. These three selected tasks do not establish a general
+  model or full-benchmark score.
