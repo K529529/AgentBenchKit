@@ -1,5 +1,6 @@
-"""Public CLI adapter for Nexus v0.2.0; no Agent source changes."""
+"""Public CLI adapter for Nexus V0.2/V0.3; no Agent source changes."""
 
+import copy
 import json
 import tomllib
 from pathlib import Path
@@ -21,6 +22,7 @@ from agentbenchkit.core.models import (
 from agentbenchkit.core.protocols import ProcessResult
 from agentbenchkit.core.status import AgentOutcome
 from agentbenchkit.harnesses.config import toml_config
+from agentbenchkit.harnesses.nexus_evidence import root_event, statistics
 
 NEXUS_COMMIT = "677fc997dcdc2f369fa8d4a667d400de99e35f84"
 
@@ -45,6 +47,8 @@ class NexusHarness:
             config = tomllib.load(stream)
         native = config["model"]
         allowed = {
+            "provider",
+            "enable_thinking",
             "name",
             "base_url",
             "api_key_env",
@@ -68,7 +72,23 @@ class NexusHarness:
             reasoning_effort=native.get("reasoning_effort"),
             request_timeout_seconds=native.get("request_timeout_seconds", 120),
         )
+        supported = {
+            "model",
+            "compaction_model",
+            "runtime",
+            "execution",
+            "security",
+            "multi_agent",
+            "models",
+            "memory",
+            "mcp",
+            "web",
+            "tracing",
+        }
+        if config.keys() - supported:
+            raise ValueError("unsupported Nexus configuration sections; refusing silent loss")
         options = HarnessOptions(
+            nexus_config=config,
             max_steps=config.get("runtime", {}).get("max_steps", 40),
             include_usage=native.get("include_usage", True),
             output_token_parameter=native.get("output_token_parameter", "max_tokens"),
@@ -115,15 +135,40 @@ class NexusHarness:
             "skills": [],
             "tools": None,
         }
+        config = copy.deepcopy(options.nexus_config)
+        supplied_model = config.get("model", {})
+        if not isinstance(supplied_model, dict):
+            raise ValueError("Nexus model must be a table")
+        config["model"] = {**supplied_model, **native}
+        runtime = config.get("runtime", {})
+        if not isinstance(runtime, dict):
+            raise ValueError("Nexus runtime must be a table")
+        config["runtime"] = {**runtime, "max_steps": options.max_steps or 40}
+        controls["native_config"] = config
+        references: set[str] = set()
+
+        def credentials(value: JsonValue) -> None:
+            if isinstance(value, dict):
+                for key, item in value.items():
+                    if key == "api_key_env":
+                        ref = CredentialRef(env_var=str(item))
+                        assert ref.env_var is not None
+                        references.add(ref.env_var)
+                    else:
+                        credentials(item)
+            elif isinstance(value, list):
+                for item in value:
+                    credentials(item)
+
+        credentials(config)
         return NativeAgentConfig(
             config_directory=".nexus",
             effective_model=effective,
             credential_env=model.credential.env_var,
+            additional_credential_env=tuple(sorted(references - {model.credential.env_var})),
             wire_api="chat_completions",
             controls=controls,
-            config_toml=toml_config(
-                {"model": native, "runtime": {"max_steps": options.max_steps or 40}}
-            ),
+            config_toml=toml_config(config),
         )
 
     def version_command(self) -> CommandSpec:
@@ -145,7 +190,9 @@ class NexusHarness:
         return cast(dict[str, JsonValue], value)
 
     def result(self, process: ProcessResult, events: list[dict[str, JsonValue]]) -> AgentResult:
-        final = next((e for e in reversed(events) if e.get("kind") == "run_finished"), None)
+        final = next(
+            (e for e in reversed(events) if e.get("kind") == "run_finished" and root_event(e)), None
+        )
         if final is None:
             return AgentResult(returncode=process.returncode)
         data = final.get("data")
@@ -172,4 +219,8 @@ class NexusHarness:
             outcome=outcome,
             returncode=process.returncode,
             final_answer=final_text if isinstance(final_text, str) else None,
+            reported_usage={
+                k: statistics(events)[k]
+                for k in ("input_tokens", "output_tokens", "total_tokens", "cached_input_tokens")
+            },
         )

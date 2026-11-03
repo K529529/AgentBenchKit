@@ -36,6 +36,8 @@ class QoderHarness:
         self.python, self.cli, self.docker = python, cli, docker
 
     def native_config(self, model: ModelSpec, options: HarnessOptions) -> NativeAgentConfig:
+        if options.nexus_config:
+            raise ValueError("nexus_config requires the Nexus harness")
         if not self.docker:
             raise ValueError("Qoder account credentials require Docker tmpfs")
         if model.credential.kind != "qoder_login" or model.provider_id != "qoder_cn":

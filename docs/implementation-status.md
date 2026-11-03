@@ -586,3 +586,14 @@ with lightweight local execution retained as a characteristic. This is a wording
 change only. PASS: Ruff, strict mypy on Windows/Linux, **241 passed / 16 opt-in
 skipped**; TOML and SVG parse checks. No Viewer behavior, evaluation semantics,
 historical evidence or model execution changed.
+
+
+### Nexus V0.3 FeatureBench adapter (2026-11-04)
+
+Added source commit/archive verification, native configuration preservation, isolated
+credential forwarding, root-only outcomes, full-tree attempt usage and redacted session
+archival before cleanup. Added a frozen-plan tmux launcher with stop/exit evidence.
+See [adaptation and validation](nexus-v03-featurebench.md). Official verifier and candidate
+semantics are unchanged. PASS: Windows/Linux 225 tests, 37 opt-in skips; Ruff/mypy;
+real single/multi CLI and compaction smoke. Formal fixed16 is a separate runtime action,
+not counted as passed by this implementation record. Multi-Agent formal group is not started.

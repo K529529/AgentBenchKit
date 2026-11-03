@@ -73,6 +73,13 @@ class AgentSettings:
                 self.auth,
                 *(str(value) for value in data.get("tokens", {}).values() if value),
             ]
+        self.additional_keys: dict[str, str] = {}
+        for name in self.native.additional_credential_env:
+            value = os.environ.get(name, "")
+            if not value:
+                raise ValueError(f"missing credential environment variable: {name}")
+            self.additional_keys[name] = value
+            secrets.append(value)
         self.redactor = Redactor(tuple(secrets))
         if self.redactor.text(self.native.config_toml) != self.native.config_toml:
             raise ValueError("credential value cannot be persisted in native configuration")
@@ -102,6 +109,7 @@ class AgentSettings:
         else:
             assert self.native.credential_env is not None
             env[self.native.credential_env] = self.key
+        env.update(self.additional_keys)
         return env
 
     def manifest(self) -> dict[str, Any]:

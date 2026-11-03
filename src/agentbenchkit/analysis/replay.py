@@ -5,13 +5,16 @@ import uuid
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
+
+from pydantic import JsonValue
 
 from agentbenchkit.analysis.credits import credit_metrics
 from agentbenchkit.analysis.repetition import repeated_tool_calls
 from agentbenchkit.core.events import Event
 from agentbenchkit.core.metrics import summarize
 from agentbenchkit.core.models import SampleResult
+from agentbenchkit.harnesses.nexus_evidence import statistics
 from agentbenchkit.runtime.recovery import load_sample
 from agentbenchkit.storage.artifacts import write_json
 from agentbenchkit.storage.index import index_run, read_json, resolve_run
@@ -151,6 +154,14 @@ def analyze_sample(
     if verifier.exists():
         refs.append(verifier.relative_to(directory).as_posix())
     derived = metrics(events, capabilities, complete)
+    nexus = [
+        event.attributes["native"]
+        for event in events
+        if event.source == "nexus" and isinstance(event.attributes.get("native"), dict)
+    ]
+    if nexus:
+        derived.update(statistics(cast(list[dict[str, JsonValue]], nexus)))
+    derived["agent_duration_ms"] = execution.get("agent_duration_ms")
     derived["latency_ms"] = (
         sum(float(data.get("duration_ms", 0)) for _, data in records) if records else None
     )

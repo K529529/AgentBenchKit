@@ -37,6 +37,12 @@ async def agent_identity(
             "source_commit": None,
             "harness_version": "1",
         }
+        if isinstance(environment, DockerEnvironment):
+            observed = await environment.resolve()
+            labels = observed["image_labels"]
+            identity["source_commit"] = labels.get("agentbenchkit.nexus.commit")
+            identity["source_archive_sha256"] = labels.get("agentbenchkit.nexus.archive-sha256")
+            identity["image_id"] = observed["image_id"]
         executable = Path(harness.version_command().argv[0])
         if not isinstance(environment, DockerEnvironment) and await asyncio.to_thread(
             executable.is_file

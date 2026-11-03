@@ -68,6 +68,7 @@ class ModelSpec(Contract):
 class HarnessOptions(Contract):
     """Agent-loop options, deliberately separate from model connection settings."""
 
+    nexus_config: dict[str, JsonValue] = Field(default_factory=dict)
     max_steps: int | None = Field(default=None, gt=0)
     max_credits: float | None = Field(default=None, gt=0, allow_inf_nan=False)
     include_usage: bool = True
@@ -78,6 +79,7 @@ class NativeAgentConfig(Contract):
     config_directory: str = Field(pattern=r"^\.[A-Za-z0-9_-]+$")
     config_toml: str
     credential_env: str | None = None
+    additional_credential_env: tuple[str, ...] = ()
     config_home_env: str | None = None
     credential_file: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_.-]+$")
     credential_files: tuple[str, ...] = ()

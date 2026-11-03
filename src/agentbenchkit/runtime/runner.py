@@ -21,6 +21,7 @@ from agentbenchkit.core.protocols import BenchmarkAdapter, Environment, Harness,
 from agentbenchkit.core.status import AgentOutcome, AuxiliaryStatus, ExecutionStatus, Verdict
 from agentbenchkit.environments.docker import DockerEnvironment
 from agentbenchkit.environments.host import HostProcessEnvironment
+from agentbenchkit.harnesses.nexus_evidence import archive_sessions, statistics
 from agentbenchkit.runtime.manifest import agent_identity, runtime_identity
 from agentbenchkit.runtime.recovery import RunLease, cleanup_resources, recover
 from agentbenchkit.runtime.settings import AgentSettings
@@ -209,6 +210,7 @@ async def evaluate_attempt(
                 parse_line(line)
         process_data = process.model_dump()
         agent_result = harness.result(process, native_events)
+        write_json(execution_dir / "agent_result.json", agent_result.model_dump(), redactor)
         outcome = agent_result.outcome
         if process.timed_out:
             deadline_phase = "AGENT"
@@ -276,6 +278,18 @@ async def evaluate_attempt(
                     resource_errors = await cleanup_resources(work)
                     if resource_errors:
                         raise RuntimeError("; ".join(resource_errors))
+                    if harness.name == "nexus":
+                        archive_sessions(
+                            work / "agent_home", execution_dir / "nexus-sessions", redactor
+                        )
+                        usage = statistics(native_events)
+                        if settings is not None:
+                            root_agent = next(a for a in usage["agents"] if a["agent_id"] == "root")
+                            root_agent.update(
+                                model=settings.model.model_id,
+                                reasoning_effort=settings.model.reasoning_effort,
+                            )
+                        write_json(execution_dir / "nexus-usage.json", usage, redactor)
                     remove_work(work, work_root)
             cleanup = AuxiliaryStatus.ERROR if verifier_cleanup_error else AuxiliaryStatus.COMPLETED
         except (OSError, ValueError, RuntimeError, TimeoutError) as exc:
@@ -315,6 +329,7 @@ async def evaluate_attempt(
             "agent_outcome": outcome,
             "cleanup_status": cleanup,
             "duration_ms": (time.monotonic() - started) * 1000,
+            "agent_duration_ms": process_data.get("duration_ms"),
             "process": process_data,
             "phase": phase,
             "agent_started": agent_started,
