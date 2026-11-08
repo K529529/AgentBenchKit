@@ -45,4 +45,10 @@ async def test_full_controlled_pipeline_keeps_completion_separate(
         assert sample["sample_success"] is repair
         assert sample["cleanup_status"] == "COMPLETED"
         assert list(sample_path.parent.glob("executions/*/trajectory.jsonl"))
+        execution_path = next(sample_path.parent.glob("executions/*/execution.json"))
+        execution = json.loads(execution_path.read_text())
+        timings = execution["phase_timings_ms"]
+        assert set(timings) == {"PREPARE", "AGENT", "COLLECT", "VERIFY", "CLEANUP"}
+        assert all(value >= 0 for value in timings.values())
+        assert 0 < sum(timings.values()) <= execution["duration_ms"]
     assert not list((run_dir / "work").glob("*"))

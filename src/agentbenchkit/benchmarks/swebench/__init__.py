@@ -72,6 +72,7 @@ class SweBenchAdapter:
         if task.task_id in self.images:
             return self.images[task.task_id]
         image_name = str(task.metadata["image_name"])
+        # 官方派生镜像
         reference = self.agent_images.get(image_name, self.agent_image)
         if not reference:
             raise ValueError("SWE-bench execution requires a derived agent image")

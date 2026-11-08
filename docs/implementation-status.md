@@ -586,3 +586,47 @@ with lightweight local execution retained as a characteristic. This is a wording
 change only. PASS: Ruff, strict mypy on Windows/Linux, **241 passed / 16 opt-in
 skipped**; TOML and SVG parse checks. No Viewer behavior, evaluation semantics,
 historical evidence or model execution changed.
+
+### Pi public CLI adapter (2026-11-07, acceptance in progress)
+
+Added Pi 1.4.0 through the existing Harness interface and CLI registry. The launcher
+uses public models/settings files and JSONL CLI events; no Pi source changes and no
+Benchmark, Runtime, Candidate Freeze, Official Verifier or metric changes.
+
+Windows regression before the final launcher isolation test: 247 passed, 16 skipped.
+Pi-focused tests including the added launcher test: 7 passed. Ruff and strict mypy
+pass. Real FeatureBench Smoke was attempted as Run `20261107T103315Z-8becdee5`, but
+WSL 2.7.11 / msrdc crashed with Windows exception 0xC00000FD during PREPARE;
+`agent_started=false`. E2E acceptance and the three-task Pilot remain pending.
+Do not describe this as verified real inference. See [Pi integration](pi.md).
+
+
+2026-11-08 recovery update: user-approved WSL GUI disable/restart did not resolve
+host failure. Second Smoke `20261107T172036Z-04c34002` also stopped in PREPARE,
+agent_started=false. Windows event 2004 now records virtual-memory exhaustion
+before WSL/service crashes. Final Pi images rebuilt; network probe observed explicit
+DENY for GitHub/PyPI and DeepSeek 401. Pi/CLI targeted 8 passed, Ruff/mypy pass;
+full regression retry was interrupted by host resources. E2E/Pilot remain blocked.
+See the root PI_Integration_Report.md for both immutable attempts and cleanup.
+
+
+### Pi single-task acceptance completed (2026-11-08)
+
+User narrowed live acceptance to one end-to-end Smoke; Pilot deferred, no cloud
+resources. Run `20261107T173812Z-e8667261` is FINISHED / COMPLETED / official PASS,
+candidate frozen, cleanup complete. MLflow trace correlation: 21 F2P + 30 P2P pass;
+7 model calls, 6 tools, 48,627 tokens, Agent 24.799 s. Earlier two host crashes and
+one integration failure remain separately recorded. Fixed CRLF network wrapper,
+bounded transport overflow via redacted gzip archives, explicit DS thinking off.
+Full regression 248 passed / 16 skipped; Ruff/mypy pass; real Docker timeout and
+cancel controls pass. Later terminal usage bridge is tested against the complete
+real event recording offline (no inference), with final targeted tests passing;
+the accepted inference image predates that metadata-only bridge and must be rebuilt
+before deployment. No Benchmark/Runtime/verifier/metric semantics changed.
+See PI_Integration_Report.md for resource samples, limitations and all evidence.
+
+## 2026-11-08 ECS deployment: FeatureBench cache-cleanup parity
+
+With explicit user authorization, the ABK FeatureBench preparation worker now calls the pinned official RuntimeHandler.clear_package_caches after initialize_runtime and before snapshot creation. A failed cleanup aborts preparation and still removes the temporary container. Official Evaluator source, tests, scoring and Candidate Freeze remain unchanged.
+
+Validation: full local pytest 250 passed / 16 skipped (one existing deprecation warning); Ruff and strict mypy PASS. Two new cases verify cleanup-before-snapshot and fail-closed cleanup failure. Cloud real Pilot NOT RUN yet; pinned images are still downloading. No commit or push performed.

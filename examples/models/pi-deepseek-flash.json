@@ -1,0 +1,9 @@
+{
+  "model_id": "deepseek-flash",
+  "provider_id": "deepseek",
+  "base_url": "https://api.deepseek.com",
+  "credential": {"kind": "api_key", "env_var": "DEEPSEEK_API_KEY"},
+  "context_window": 1000000,
+  "max_output_tokens": 8192,
+  "reasoning_effort": "off"
+}

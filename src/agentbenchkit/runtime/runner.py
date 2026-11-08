@@ -83,6 +83,15 @@ async def evaluate_attempt(
     seq = 0
     deadline_phase: str | None = None
     phase = "PREPARE"
+    phase_started = started
+    phase_timings_ms: dict[str, float] = {}
+
+    def complete_phase() -> None:
+        nonlocal phase_started
+        ended = time.monotonic()
+        phase_timings_ms[phase] = (ended - phase_started) * 1000
+        phase_started = ended
+
     startup_failure = False
     agent_started = False
     verifier_cleanup_error = False
@@ -138,6 +147,7 @@ async def evaluate_attempt(
                         log.write(stream_redactor.feed("", final=True))
                 if setup_result.returncode != 0 or setup_result.timed_out:
                     raise StartupError("fixture setup failed")
+        complete_phase()
         phase = "AGENT"
         command = harness.command(task).model_copy(
             update={"timeout_seconds": budget(task.timeouts.agent)}
@@ -222,6 +232,7 @@ async def evaluate_attempt(
             status = ExecutionStatus.FINISHED
         if not process.cleanup_complete:
             raise RuntimeError("Agent stop not confirmed; candidate cannot be frozen")
+        complete_phase()
         phase = "COLLECT"
         checkpoint()
         collect_started = time.monotonic()
@@ -230,6 +241,7 @@ async def evaluate_attempt(
         frozen = True
         if time.monotonic() - collect_started > collect_budget:
             raise TimeoutError("candidate collection deadline exceeded")
+        complete_phase()
         phase = "VERIFY"
         checkpoint()
         verify_task = task.model_copy(
@@ -267,6 +279,8 @@ async def evaluate_attempt(
         if status not in {ExecutionStatus.TIMED_OUT, ExecutionStatus.CANCELLED}:
             status = ExecutionStatus.ERROR
     finally:
+        complete_phase()
+        cleanup_started = time.monotonic()
         verifier_cleanup_error |= (work / "verify" / "cleanup.json").exists()
         try:
             async with asyncio.timeout(task.timeouts.cleanup):
@@ -281,6 +295,7 @@ async def evaluate_attempt(
         except (OSError, ValueError, RuntimeError, TimeoutError) as exc:
             cleanup = AuxiliaryStatus.ERROR
             errors.append(redactor.text(str(exc)))
+        phase_timings_ms["CLEANUP"] = (time.monotonic() - cleanup_started) * 1000
     result = SampleResult(
         sample_id=sample_id,
         task_id=task.task_id,
@@ -315,6 +330,7 @@ async def evaluate_attempt(
             "agent_outcome": outcome,
             "cleanup_status": cleanup,
             "duration_ms": (time.monotonic() - started) * 1000,
+            "phase_timings_ms": phase_timings_ms,
             "process": process_data,
             "phase": phase,
             "agent_started": agent_started,

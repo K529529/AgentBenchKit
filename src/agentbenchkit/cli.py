@@ -29,6 +29,7 @@ from agentbenchkit.core.status import Verdict
 from agentbenchkit.environments.docker import DockerEnvironment
 from agentbenchkit.harnesses.codex import CodexHarness
 from agentbenchkit.harnesses.nexus import NexusHarness
+from agentbenchkit.harnesses.pi import PiHarness
 from agentbenchkit.harnesses.qoder import QoderHarness
 from agentbenchkit.runtime.recovery import recover
 from agentbenchkit.runtime.runner import evaluate
@@ -56,7 +57,7 @@ def list_components(kind: str) -> None:
     """List currently implemented benchmarks, harnesses or environments."""
     values = {
         "benchmarks": list(NAMES),
-        "harnesses": ["nexus", "codex", "qoder"],
+        "harnesses": ["nexus", "codex", "qoder", "pi"],
         "envs": ["host_process", "docker"],
     }
     if kind not in values:
@@ -140,6 +141,8 @@ def run(
     base_url: Annotated[str | None, typer.Option()] = None,
     codex_auth: Annotated[Path | None, typer.Option()] = None,
     qoder_auth: Annotated[Path | None, typer.Option()] = None,
+    pi_python: Annotated[str, typer.Option()] = "/opt/abk/bin/python",
+    pi_executable: Annotated[str, typer.Option()] = "pi",
     qoder_python: Annotated[str, typer.Option()] = "/opt/abk/bin/python",
     max_credits: Annotated[float | None, typer.Option(min=0.001)] = None,
     key_env: Annotated[str | None, typer.Option()] = None,
@@ -158,7 +161,7 @@ def run(
     """Evaluate an external Agent with fresh workspaces and independent verification."""
     if (
         benchmark not in NAMES
-        or harness not in {"nexus", "codex", "qoder"}
+        or harness not in {"nexus", "codex", "qoder", "pi"}
         or env not in {"host_process", "docker"}
     ):
         raise typer.BadParameter("choose an implemented benchmark, harness and environment")
@@ -168,6 +171,8 @@ def run(
         adapter: Harness
         if harness == "nexus":
             adapter = NexusHarness(binary if env == "host_process" else "nexus")
+        elif harness == "pi":
+            adapter = PiHarness(python=pi_python, executable=pi_executable)
         elif harness == "qoder":
             adapter = QoderHarness(python=qoder_python, docker=env == "docker")
         else:
