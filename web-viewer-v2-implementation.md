@@ -305,3 +305,15 @@ These checks supersede earlier NOT RUN statements only for the cases explicitly
 listed here. Compare, remaining raw-directory navigation and final post-commit
 review continue next. Screenshots are local in .agentbenchkit/viewer-browser-review.
 No cloud access/deployment, no real Agent/Verifier invocation, no main merge.
+
+### Product review round 6 — 2026-11-09
+
+Corrected comparison defaults to choose two runs from the same evidence source.
+Compare now displays the same recorded process duration as sample detail, preserving
+N/A when unavailable. Synthetic sample pages retain the preview warning; missing
+logs no longer suggest nonexistent reader links. Run outcome cards now precede the
+compact operational snapshot, with detailed counting notes collapsed.
+
+Validation: full local pytest 251 passed / 37 skipped, Ruff, mypy (91 files), Node
+interactions PASS. Chrome verified default selection, comparison durations, missing
+values and the real Pi run layout. No deployment or evaluation execution performed.

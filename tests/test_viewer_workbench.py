@@ -336,3 +336,26 @@ def test_filtered_reader_backtracking_and_long_text_progress(tmp_path: Path) -> 
         )
         assert beyond.status_code == 200 and "40001–45000" in beyond.text
         assert "当前从第 1 项开始" in beyond.text
+
+
+def test_compare_uses_recorded_process_duration_and_safe_default_pair(tmp_path: Path) -> None:
+    primary, secondary = tmp_path / "primary", tmp_path / "secondary"
+    fixture(primary)
+    write_dashboard_fixture(primary, "fixture-b", "Pi", task_count=50)
+    write_dashboard_fixture(secondary, "zz-other-source", "Pi", task_count=1)
+    before = hashes(tmp_path)
+    with TestClient(create_app(primary, (secondary,))) as client:
+        home = client.get("/")
+        assert home.status_code == 200
+        assert 'required value="fixture-b"' in home.text
+        assert 'required value="fixture"' in home.text
+        comparison = client.get("/compare?baseline=fixture&candidate=fixture-b")
+        assert comparison.status_code == 200
+        assert "1.5s · 工具 N/A" in comparison.text
+        assert "耗时 N/A · 工具 N/A" in comparison.text
+        assert "0.0s" not in comparison.text
+        missing = client.get("/runs/fixture/samples/sample-02")
+        assert "合成数据，不代表实际评测结果" in missing.text
+        assert "未收集可读取的验证日志" in missing.text
+        assert "使用下方日志阅读器" not in missing.text
+    assert hashes(tmp_path) == before

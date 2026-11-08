@@ -684,3 +684,10 @@ PASS; 390px IAB sample render PASS. Browser acceptance is scoped to these checke
 flows, not every possible data shape. Owner authorized further product review
 cycles after seeing the first visual revision. No cloud operations; 414d7c1 remains
 the deployed version. See the implementation report for remaining review scope.
+
+Viewer review round 6: PASS full pytest 251 / 37 skipped; Ruff; mypy (91 files);
+Node interactions. Chrome checks confirmed same-source default Compare selection,
+recorded process duration alignment (synthetic 1.5s), missing-data N/A, and Pi run
+summary hierarchy. Sample pages now carry synthetic-data notices, empty logs give
+an actionable explanation, and primary run metrics precede the detailed snapshot.
+No cloud operations. Further live review continues for native Pi event details.

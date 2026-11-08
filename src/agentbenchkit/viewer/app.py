@@ -114,11 +114,21 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
                 continue
             items.append(
                 {
+                    "source": roots.index(directory.parent) + 1,
                     "id": directory.name,
                     "manifest": manifest,
                     "summary": view.read(directory, "summary.json"),
                 }
             )
+        compare_pair = next(
+            (
+                (a, b)
+                for i, a in enumerate(items)
+                for b in items[i + 1 :]
+                if a["source"] == b["source"]
+            ),
+            None,
+        )
         return render(
             request,
             "runs.html",
@@ -128,6 +138,8 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
             page=page,
             pages=pages,
             q=q,
+            compare_baseline=compare_pair[0]["id"] if compare_pair else "",
+            compare_candidate=compare_pair[1]["id"] if compare_pair else "",
         )
 
     @app.get("/runs/{run_id}", response_class=HTMLResponse)
@@ -207,6 +219,7 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
             run_id=run_id,
             sample=record,
             benchmark=manifest.get("benchmark", "micro_swe"),
+            preview_notice=manifest.get("preview_notice"),
             task=task,
             files=files,
             workbench=workbench,
@@ -465,7 +478,7 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from None
         paired = []
-        for identifier in (baseline, candidate):
+        for identifier, side in ((baseline, "baseline_samples"), (candidate, "candidate_samples")):
             directory = run_dir(identifier)
             records = [
                 view.read(directory, p.relative_to(directory).as_posix())
@@ -473,6 +486,11 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
             ]
             records = [r for r in records if r.get("task_id") and r.get("sample_id")]
             view.run_view(directory, records, view.read(directory, "manifest.json"))
+            by_sample = {r["sample_id"]: r for r in records}
+            for item in result[side]:
+                recorded = by_sample.get(item["sample_id"], {})
+                item["viewer_duration"] = recorded.get("viewer_duration")
+                item["viewer_tools"] = recorded.get("viewer_tools")
             paired.append(records)
         comparison_metrics = paired_metrics(*paired)
         return render(
