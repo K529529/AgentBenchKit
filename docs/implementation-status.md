@@ -630,3 +630,15 @@ See PI_Integration_Report.md for resource samples, limitations and all evidence.
 With explicit user authorization, the ABK FeatureBench preparation worker now calls the pinned official RuntimeHandler.clear_package_caches after initialize_runtime and before snapshot creation. A failed cleanup aborts preparation and still removes the temporary container. Official Evaluator source, tests, scoring and Candidate Freeze remain unchanged.
 
 Validation: full local pytest 250 passed / 16 skipped (one existing deprecation warning); Ruff and strict mypy PASS. Two new cases verify cleanup-before-snapshot and fail-closed cleanup failure. Cloud real Pilot NOT RUN yet; pinned images are still downloading. No commit or push performed.
+## Viewer V0.3 isolated development — 2026-11-09
+
+Owner-authorized exception to historical V0.2 branch constraint: independent worktree
+and `codex/web-viewer-v0.3`; no main merge. Existing Pi/Runtime baseline is `0619ef1`.
+Viewer changes do not alter core execution or verification semantics.
+Baseline regression PASS: 229 passed / 37 skipped; Ruff PASS; mypy PASS.
+Focused Viewer/Credits regression PASS: 28 passed. Offline JavaScript matrix tests PASS.
+Historical Packaging full investigation chain PASS, 52 linked routes and 38 unchanged
+SHA256 records; historical Pi PASS evidence loads with missing usage kept N/A.
+Browser visual acceptance NOT RUN: browser origin policy denied access.
+Full implementation regression PASS: 242 passed / 37 skipped; Ruff PASS; mypy PASS.
+Cloud deployment NOT RUN at this checkpoint. Full checklist: `web-viewer-v2-implementation.md`.
