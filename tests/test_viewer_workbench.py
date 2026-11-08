@@ -325,3 +325,14 @@ def test_filtered_reader_backtracking_and_long_text_progress(tmp_path: Path) -> 
         )
         assert text.status_code == 200 and "20001–40000" in text.text
         assert "上一段文本" in text.text and "45000" in text.text
+        beyond = client.get(
+            "/runs/fixture/evidence",
+            params={
+                "path": record.relative_to(run).as_posix(),
+                "node": "/body",
+                "text_offset": 999999,
+                "start": 999999,
+            },
+        )
+        assert beyond.status_code == 200 and "40001–45000" in beyond.text
+        assert "当前从第 1 项开始" in beyond.text

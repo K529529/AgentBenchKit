@@ -676,3 +676,11 @@ Viewer product review round 4 (2026-11-09): PASS filtered-reader history and lon
 progress regression; 19 focused tests, Ruff, mypy (91 files), Node interactions.
 Chrome local Packaging log next/previous navigation PASS. Full browser acceptance
 and final full-suite regression remain pending for round 5. No cloud operations.
+
+Viewer review round 5: PASS full pytest 250 / 37 skipped; Ruff; mypy (91 files);
+Node contracts. Actual Chrome Packaging evidence chain and clipboard paste PASS;
+local synthetic 50-task pagination/filter/state restoration and 23-test search
+PASS; 390px IAB sample render PASS. Browser acceptance is scoped to these checked
+flows, not every possible data shape. Owner authorized further product review
+cycles after seeing the first visual revision. No cloud operations; 414d7c1 remains
+the deployed version. See the implementation report for remaining review scope.

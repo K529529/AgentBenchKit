@@ -322,7 +322,7 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
             next_text = None
             text_total = len(document) if isinstance(document, str) else None
             if isinstance(document, str):
-                text_offset = max(0, text_offset)
+                text_offset = min(max(0, text_offset), max(0, (len(document) - 1) // 20000 * 20000))
                 if len(document) > text_offset + 20000:
                     next_text = text_offset + 20000
                 document = document[text_offset : text_offset + 20000]
@@ -338,7 +338,7 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
                 for k, v in pairs
                 if not q or q.casefold() in (str(k) + json.dumps(v, ensure_ascii=False)).casefold()
             ]
-            offset = max(0, start - 1)
+            offset = min(max(0, start - 1), max(0, (len(pairs) - 1) // 20 * 20))
             fields = [
                 {
                     "name": k,

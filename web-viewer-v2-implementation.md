@@ -278,3 +278,30 @@ PASS: 19 tests in test_viewer_workbench.py and test_viewer.py; Ruff; mypy (91 fi
 offline Node interactions. Chrome live historical Packaging log pagination visited
 1–60, then 61–75, then returned to 1–60. Broader browser review continues in round 5.
 No cloud operations; the deployed version remains 414d7c1.
+
+### Product review round 5 — browser-led layout revision (2026-11-09)
+The owner rejected the previous layout after seeing it live, and then authorized
+additional review/commit/push cycles beyond the initial five-round ceiling.
+Reworked actual rendered pages: padded content panels, compact sample identity,
+consistent outcome cards, readable boolean labels, seconds/token formatting,
+two-column test groups, single empty states, responsive controls, and bounded
+long identifiers. Timeline common search is separate from expandable precise
+Step/seq/Call ID controls. Raw/download remains under evidence-source disclosure.
+Added return-to-timeline for complete events and clamped out-of-range record/text
+pages rather than showing impossible ranges.
+
+PASS: full local pytest **250 passed / 37 skipped**; Ruff; mypy (91 source files);
+Node interaction contracts. Synthetic fixtures are UI tests, not Agent acceptance.
+Chrome live checks: historical Packaging failure test -> log -> metadata.py:367
+patch -> explicit Step 50 apply_patch (physical line 380) -> Call ID result (382);
+log next/back; actual summary and diff-fragment clipboard paste; complete event
+field reader; RCA disclosure. Separate localhost:8877 synthetic 50-task fixture:
+25-row pagination, page restoration after sample return, FAIL filter (12/50),
+search, token sorting, 23-test list search/pagination, missing evidence, and Python
+stack folding. IAB 390px responsive sample rendering inspected, no document-level
+horizontal overflow. Chrome remains the primary final user surface.
+
+These checks supersede earlier NOT RUN statements only for the cases explicitly
+listed here. Compare, remaining raw-directory navigation and final post-commit
+review continue next. Screenshots are local in .agentbenchkit/viewer-browser-review.
+No cloud access/deployment, no real Agent/Verifier invocation, no main merge.
