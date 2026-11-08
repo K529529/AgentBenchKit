@@ -76,6 +76,14 @@ def events(path: Path) -> Iterator[tuple[int, dict[str, Any]]]:
             yield number, {"type": "unparsed", "notice": "事件截断、格式无效或超过单行限制"}
 
 
+def mapping(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def event_data(event: dict[str, Any]) -> dict[str, Any]:
+    return mapping(mapping(mapping(event.get("attributes")).get("native")).get("data"))
+
+
 def content_text(value: Any) -> str:
     if isinstance(value, str):
         return value
@@ -89,9 +97,9 @@ def content_text(value: Any) -> str:
 
 
 def event_view(number: int, event: dict[str, Any]) -> dict[str, Any]:
-    native = event.get("attributes", {}).get("native") or {}
-    data = native.get("data") or {}
-    pi = native.get("pi") or {}
+    native = mapping(mapping(event.get("attributes")).get("native"))
+    data = mapping(native.get("data"))
+    pi = mapping(native.get("pi"))
     tool = data.get("name") or pi.get("toolName") or ""
     args = data.get("arguments", data.get("arguments_json", pi.get("args")))
     args_text = args if isinstance(args, str) else json.dumps(args, ensure_ascii=False)
@@ -144,7 +152,9 @@ def event_view(number: int, event: dict[str, Any]) -> dict[str, Any]:
         "step": data.get("step"),
         "call_id": event.get("native_call_id") or data.get("call_id") or pi.get("toolCallId"),
         "args": args_text,
-        "duration": event.get("duration_ms") or data.get("duration_ms"),
+        "duration": event.get("duration_ms")
+        if event.get("duration_ms") is not None
+        else data.get("duration_ms"),
         "failure": failure,
         "change": change,
         "test": test,
@@ -162,7 +172,12 @@ def reference(root: Path, run: str, ref: str, folder: str, sample: str) -> dict[
     for candidate in (name, f"{folder}/{name}"):
         try:
             safe_path(root, candidate)
-            return {"ref": ref, "url": link(run, candidate, sample, q=fragment), "reason": ""}
+            return {
+                "ref": ref,
+                "url": link(run, candidate, sample, q=fragment),
+                "path": candidate,
+                "reason": "",
+            }
         except (ValueError, OSError):
             pass
     return {"ref": ref, "url": "", "reason": "缺失、越界或格式不支持；未访问授权 Run 之外的路径"}
@@ -220,7 +235,7 @@ def sample_view(root: Path, path: Path) -> dict[str, Any]:
     folder = path.parent.relative_to(root).as_posix()
     record = read(root, f"{folder}/sample.json")
     verifier = read(root, f"{folder}/verifier.json")
-    official = verifier.get("checks", {}).get("official_report") or {}
+    official = mapping(mapping(verifier.get("checks")).get("official_report"))
     files = file_list(root, path.parent)
     executions = [(f, read(root, f)) for f in files if f.endswith("/execution.json")]
     executions.sort(key=lambda pair: pair[1].get("started_at") or "")
@@ -260,7 +275,7 @@ def sample_view(root: Path, path: Path) -> dict[str, Any]:
                 repeat_labels[key] = argument[:350]
                 repeats.setdefault(key, []).append(number)
             if view["type"] == "agent_finished":
-                terminal = event.get("attributes", {}).get("native", {}).get("data") or {}
+                terminal = event_data(event)
                 complete = True
         complete = (
             complete
@@ -289,7 +304,7 @@ def sample_view(root: Path, path: Path) -> dict[str, Any]:
     )
     groups = []
     for name in ["FAIL_TO_PASS", "PASS_TO_PASS"]:
-        group = official.get("tests_status", {}).get(name) or {}
+        group = mapping(mapping(official.get("tests_status")).get(name))
         success, failure = group.get("success"), group.get("failure")
         groups.append(
             {
@@ -299,11 +314,17 @@ def sample_view(root: Path, path: Path) -> dict[str, Any]:
                 "failures": failure if isinstance(failure, list) else [],
             }
         )
+    refs = [
+        reference(root, run, str(verifier[k]), folder, sample)
+        for k in ["stdout_ref", "stderr_ref"]
+        if verifier.get(k)
+    ]
     logs = [
         f
         for f in files
         if "/verify/" in f and f.endswith(("test_output.txt", "stdout.log", "stderr.log"))
     ]
+    logs.extend(ref["path"] for ref in refs if ref.get("path") and ref["path"] not in logs)
     logs.sort(key=lambda f: (not f.endswith("test_output.txt"), f))
     exceptions = []
     for log in logs[:8]:
@@ -311,11 +332,6 @@ def sample_view(root: Path, path: Path) -> dict[str, Any]:
             exc["url"] = link(run, log, sample, start=max(1, exc["log_line"] - 12))
             exc["log"] = log
             exceptions.append(exc)
-    refs = [
-        reference(root, run, str(verifier[k]), folder, sample)
-        for k in ["stdout_ref", "stderr_ref"]
-        if verifier.get(k)
-    ]
     failure = saved.get("failure") or {}
     rca_refs = [
         reference(root, run, str(x), folder, sample) for x in failure.get("evidence_refs", [])

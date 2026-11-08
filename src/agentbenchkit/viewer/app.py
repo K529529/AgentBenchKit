@@ -205,6 +205,32 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
             target.read_text(encoding="utf-8"), headers={"X-Content-Type-Options": "nosniff"}
         )
 
+    @app.get("/runs/{run_id}/samples/{sample_id}/files", response_class=HTMLResponse)
+    def sample_files(
+        request: Request, run_id: str, sample_id: str, q: str = "", page: int = 1
+    ) -> HTMLResponse:
+        directory = run_dir(run_id)
+        paths = [p for p in directory.glob("tasks/*/*/sample.json") if p.parent.name == sample_id]
+        if len(paths) != 1:
+            raise HTTPException(404, "sample not found")
+        files = [
+            f for f in view.file_list(directory, paths[0].parent) if q.casefold() in f.casefold()
+        ]
+        pages = max(1, (len(files) + 29) // 30)
+        page = min(max(page, 1), pages)
+        return render(
+            request,
+            "files.html",
+            title="证据目录",
+            run_id=run_id,
+            sample_id=sample_id,
+            files=files[(page - 1) * 30 : page * 30],
+            total=len(files),
+            pages=pages,
+            page=page,
+            q=q,
+        )
+
     @app.get("/runs/{run_id}/samples/{sample_id}/file-events")
     def file_events(run_id: str, sample_id: str, file: str) -> RedirectResponse:
         directory = run_dir(run_id)

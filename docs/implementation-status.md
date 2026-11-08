@@ -642,3 +642,11 @@ SHA256 records; historical Pi PASS evidence loads with missing usage kept N/A.
 Browser visual acceptance NOT RUN: browser origin policy denied access.
 Full implementation regression PASS: 242 passed / 37 skipped; Ruff PASS; mypy PASS.
 Cloud deployment NOT RUN at this checkpoint. Full checklist: `web-viewer-v2-implementation.md`.
+
+Final Viewer local regression PASS: 243 passed / 37 skipped, Ruff PASS, mypy PASS,
+offline JavaScript interactions PASS. Cloud commit 414d7c1 deployed independently;
+1,265 HTTP checks PASS, 605 frozen evidence SHA256 and 106 source hashes unchanged;
+formal Worker / original Viewer PIDs unchanged, new Viewer ~55.3 MiB memory.
+Browser visual acceptance NOT RUN (separate browser policy). Owner requested minimal
+cloud work while formal evaluation is active: follow-up local refinements are tested
+and committed but NOT DEPLOYED; no further bulk cloud checks/restarts.

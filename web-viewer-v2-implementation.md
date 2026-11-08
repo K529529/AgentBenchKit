@@ -1,6 +1,9 @@
 # AgentBenchKit Web Viewer V2 implementation
 
-Status: local implementation and regression; cloud delivery pending final validation.
+Status: core Viewer deployed at cloud commit `414d7c1`; local follow-up refinements validated.
+After the owner requested minimal cloud work during the active evaluation, no further
+bulk cloud checks or deployment replacements are performed. Follow-up refinements remain
+local for optional integration after the evaluation finishes.
 
 ## Scope and preserved baseline
 
@@ -61,8 +64,8 @@ ABK package/runtime version stays 0.2.0; **Viewer V0.3** is a presentation relea
 | 21 | P2 Compare enhancement | Existing comparison retained, paginated/searchable; no new causal claims or token-delta charts |
 | 22 | Library and generic evidence UX | Implemented: 15-run server pages, 20-field structured record drilldown, bounded long text |
 | 23 | Read-only/security/partial writes | Local regression: traversal/XSS/missing/truncation/bounded pages/unchanged hashes |
-| 24 | Isolated cloud deployment | Pending; independent loopback service, source/environment and resource limits |
-| 25 | Cloud acceptance and rollback | Pending; old service retained; final commands/receipts to be added |
+| 24 | Isolated cloud deployment | PASS: `abk-viewer-v03.service`, loopback 8766, dedicated venv/source, locked dependencies, CPU/memory limits |
+| 25 | Cloud acceptance and rollback | PASS for backend HTTP/integrity: 1,265 checks, 605 frozen evidence files unchanged; old Viewer retained |
 
 ## Evidence association rules
 
@@ -90,7 +93,7 @@ not hold the whole trajectory in memory. Original downloads stream without regen
 
 - Baseline: 229 passed / 37 skipped; Ruff PASS; mypy PASS. Initial long Windows test
   paths failed; rerunning under a shorter isolated basetemp fixed this without core edits.
-- Full implementation regression: 242 passed / 37 skipped; Ruff PASS; mypy PASS.
+- Full implementation regression: 243 passed / 37 skipped; Ruff PASS; mypy PASS.
 - Focused Viewer/Credits regression after implementation: 28 passed.
 - Offline JS matrix contracts: pagination, keyword search, investigation filter, sorting,
   session-state persistence PASS. This is not browser visual acceptance.
@@ -114,5 +117,62 @@ Browser layout and actual clipboard interaction still require browser authority 
 
 ## Deployment and rollback
 
-To be completed after local regression. Intended new port 8766; old 8765 remains running.
-Original evaluation Runtime/source/environment, containers and scheduler are out of scope.
+Deployed revision: `414d7c1`. New service: `abk-viewer-v03.service`.
+Listen: `127.0.0.1:8766`. Old service `abk-formal50-viewer.service` on 8765 is unchanged.
+Source: `/data/abk/viewer-v03/releases/414d7c1`; venv: `/data/abk/viewer-v03/venv`.
+Dependency installation was corrected to `uv sync --frozen --no-dev` against the committed
+lockfile before acceptance. The initial unconstrained dependency install was superseded.
+Formal root: `/data/abk/formal50/output/runs`; Pilot root: `/data/abk/pilot/runs`.
+Backup: `/data/abk/viewer-v03/backups/20261108T182831Z` (UTC, November 9 local time).
+Backup contains old Viewer files/config/overlay, source manifest, safe SQLite backup
+receipts (or recorded absence) and frozen-evidence hashes. Cloud source has no `.git`;
+its exact identity is preserved by source manifest and 106 actual source-file hashes.
+No full formal experiment directory was copied or rewritten.
+
+Resource controls: CPUQuota=25% of one CPU, MemoryMax=384M, TasksMax=32, Nice=10,
+IOWeight=10; ProtectSystem=strict, explicit read-only roots, no privilege escalation,
+no capabilities, secrets/Docker storage inaccessible, loopback-only network.
+No background evidence polling, model/verifier work or scheduled index refresh occurs.
+Requests do perform read/parse work, so repeated investigation during evaluation can
+still consume the limited quota. The owner requested no further bulk cloud checks.
+
+Cloud backend acceptance: 1,265 HTTP requests all returned 200 across the formal
+50-task matrix and real Pilot samples/evidence. At that snapshot five formal samples
+were complete; this is **not** a final experiment score. All 605 preselected frozen
+evidence files and 106 source files retained SHA256. Formal Worker and old Viewer
+PIDs were unchanged. New Viewer memory was 57,974,784 bytes (~55.3 MiB), NRestarts=0.
+New-service restart for locked-dependency activation did not change those PIDs.
+This proves the checked interval, not a guarantee of zero resource contention.
+
+Windows: run the local `open-viewer.ps1` in `.agentbenchkit/viewer-delivery`, leave
+its terminal open, then open `http://127.0.0.1:8766/`. It uses the existing authorized
+SSH key and verified known_hosts file; no credentials are embedded or copied.
+Select the formal Run from the library (the report has 50 tasks); Pilot runs remain
+separate records. New finished samples appear after manual refresh, including final
+results without upgrading Runtime or rerunning a task.
+
+Service operations (on ECS):
+
+```sh
+journalctl -u abk-viewer-v03.service -n 100 --no-pager
+sudo systemctl stop abk-viewer-v03.service
+sudo systemctl restart abk-viewer-v03.service
+```
+
+Rollback: stop **only** `abk-viewer-v03.service`, keep using the original 8765 tunnel
+and Viewer. No restoration of Runtime/data is needed because they were never replaced.
+Do not restore an old SQLite snapshot over a live formal index merely to roll back UI.
+
+### Follow-up revision deliberately not redeployed during formal evaluation
+
+After the first deployment, local review added explicit custom stdout/stderr reference
+links, bounded evidence-directory pagination, a short task-description preview,
+null-native-event tolerance and preservation of zero-millisecond durations.
+These pass local tests and remain a separate follow-up commit. The cloud service is
+intentionally still `414d7c1` per the owner's latest resource-contention instruction.
+Optional distribution and Compare chart enhancements are deferred; browser visual
+acceptance remains NOT RUN due to the separate browser permission boundary.
+
+Detailed local receipts are in `.agentbenchkit/viewer-delivery/acceptance.json`,
+`deployment.json`, and `.agentbenchkit/viewer-acceptance/packaging.json`; these are
+local runtime records, not committed experimental artifacts.

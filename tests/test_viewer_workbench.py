@@ -237,3 +237,23 @@ def test_explicit_multiple_roots_do_not_need_symlinks(tmp_path: Path) -> None:
         assert c.get("/runs/pilot").status_code == 200
         assert c.get("/runs/formal-50").status_code == 200
         assert "pilot" in c.get("/").text
+
+
+def test_custom_log_refs_and_evidence_directory(tmp_path: Path) -> None:
+    run, folder = fixture(tmp_path)
+    custom = folder / "verify/custom-output.txt"
+    custom.write_text("src/a.py:7: in <module>\nE   ValueError: custom verifier output\n")
+    report = json.loads((folder / "verifier.json").read_text())
+    report["stdout_ref"] = "verify/custom-output.txt"
+    (folder / "verifier.json").write_text(json.dumps(report))
+    from agentbenchkit.viewer.presentation import event_view
+
+    assert event_view(1, {"type": "message", "attributes": None})["type"] == "message"
+    assert event_view(1, {"type": "message", "duration_ms": 0})["duration"] == 0
+    data = sample_view(run, folder / "sample.json")
+    assert any(e["type"] == "ValueError" for e in data["exceptions"])
+    with TestClient(create_app(tmp_path)) as client:
+        page = client.get("/runs/fixture/samples/sample-01/files?q=custom-output")
+        assert page.status_code == 200 and "custom-output.txt" in page.text
+        sample = client.get("/runs/fixture/samples/sample-01")
+        assert "custom-output.txt" in sample.text
