@@ -323,6 +323,8 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
                 )
             except (ValueError, OSError):
                 raise HTTPException(503, "记录正在写入或格式无效，请稍后重试") from None
+            if event and document is None:
+                raise HTTPException(404, "事件不存在或尚未落盘，请返回时间线查看已有事件")
             if node:
                 for part in node.split("/")[1:]:
                     key = part.replace("~1", "/").replace("~0", "~")

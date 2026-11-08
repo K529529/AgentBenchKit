@@ -143,7 +143,21 @@ def event_view(number: int, event: dict[str, Any]) -> dict[str, Any]:
             f" · Model calls {data.get('model_calls', 'N/A')}"
         )
     if not summary:
+        message = mapping(pi.get("message"))
+        if message.get("sections") and message.get("role"):
+            summary = f"{message['role']} 消息 · 分节内容请打开完整事件查看"
+        elif pi.get("type") == "abk_native_archive":
+            summary = "原生事件压缩归档 · 原始内容保留在完整证据中"
+    if not summary:
         summary = str(event.get("notice") or data.get("model") or native.get("kind") or kind)
+    duration = next(
+        (
+            value
+            for value in (event.get("duration_ms"), data.get("duration_ms"), pi.get("durationMs"))
+            if numeric(value)
+        ),
+        None,
+    )
     return {
         "line": number,
         "seq": event.get("seq", number),
@@ -154,9 +168,7 @@ def event_view(number: int, event: dict[str, Any]) -> dict[str, Any]:
         "step": data.get("step"),
         "call_id": event.get("native_call_id") or data.get("call_id") or pi.get("toolCallId"),
         "args": args_text,
-        "duration": event.get("duration_ms")
-        if event.get("duration_ms") is not None
-        else data.get("duration_ms"),
+        "duration": duration,
         "failure": failure,
         "change": change,
         "test": test,

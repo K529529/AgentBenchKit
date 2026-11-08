@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% from "_components.html" import rate, result, benchmark, meter %}
+{% from "_components.html" import rate, result, benchmark, meter, verdict %}
 {% block content %}
 <nav class="breadcrumb"><a href="/">评测工作台</a><span>/</span><span>运行对比</span></nav>
 {% if baseline_manifest.get('preview_notice') or candidate_manifest.get('preview_notice') %}<div class="warning">{{ baseline_manifest.get('preview_notice') or candidate_manifest.get('preview_notice') }}</div>{% endif %}
 <div class="heading compare-heading"><div><p class="eyebrow">SIDE BY SIDE</p><h1>运行对比</h1><p class="lead">共 {{ comparison.tasks | length }} 个任务 · 按任务查看所选运行的结果与差异</p></div><span class="comparison-tag">{{ '正式条件可比' if comparison.formal_comparable else '描述性对比' }}</span></div>
 <div class="agent-pair">{% for label, manifest, run_id, tone in [('A',baseline_manifest,comparison.baseline_run,'a'),('B',candidate_manifest,comparison.candidate_run,'b')] %}<a class="agent-card {{ tone }}" href="/runs/{{ run_id }}"><span class="agent-letter">{{ label }}</span><div><h2>{{ manifest.harness.name }}</h2><p>{{ (manifest.get('model') or {}).get('model_id', '模型 N/A') }} <span>· {{ benchmark(manifest.get('benchmark', 'micro_swe')) }}</span></p><code>{{ run_id }}</code></div><span class="agent-arrow">↗</span></a>{% endfor %}</div>
-{% if comparison.comparability_warnings %}<details open class="comparison-caveat"><summary>可比性受限 · 当前展示为观测结果，不作能力排名</summary><p>{{ comparison.comparability_warnings | join('、') }}</p><p>正式条件可比：{{ comparison.formal_comparable }}。样本差异不能证明稳定能力差异。</p></details>{% else %}<div class="notice">运行条件检查通过；单次随机结果仍不等于稳定能力变化。</div>{% endif %}
+{% if comparison.comparability_warnings %}<details open class="comparison-caveat"><summary>可比性受限 · 当前展示为观测结果，不作能力排名</summary><p>{{ comparison.comparability_warnings | join('、') }}</p><p>正式条件可比：{{ verdict(comparison.formal_comparable) }}。样本差异不能证明稳定能力差异。</p></details>{% else %}<div class="notice">运行条件检查通过；单次随机结果仍不等于稳定能力变化。</div>{% endif %}
 <section class="comparison-metrics">
 {% for key,label,note in [('end_to_end_success_rate','端到端成功率','成功样本 / 计划样本'),('candidate_pass_rate','候选通过率','通过样本 / 有效验证样本'),('coverage_rate','验证覆盖率','有效验证 / 计划样本'),('pass_at_k','pass@k','各运行原始 k 值与排除项见统计')] %}<div class="metric-compare"><h2>{{ label }}</h2>{% for side, summary, tone in [('A',comparison.baseline_summary,'a'),('B',comparison.candidate_summary,'b')] %}<div class="bar-label"><span class="side-label {{ tone }}">{{ side }}</span><strong>{{ rate(summary.get(key)) }}</strong></div>{{ meter(summary.get(key), side ~ ' ' ~ label, tone) }}{% endfor %}<p class="metric-note">{{ note }}</p></div>{% endfor %}
 </section>

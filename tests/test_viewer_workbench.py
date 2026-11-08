@@ -5,6 +5,7 @@ import html
 import json
 import re
 from pathlib import Path
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -359,3 +360,29 @@ def test_compare_uses_recorded_process_duration_and_safe_default_pair(tmp_path: 
         assert "未收集可读取的验证日志" in missing.text
         assert "使用下方日志阅读器" not in missing.text
     assert hashes(tmp_path) == before
+
+
+def test_pi_native_duration_and_missing_event_are_readable(tmp_path: Path) -> None:
+    from agentbenchkit.viewer.presentation import event_view
+
+    native = {"pi": {"durationMs": 4824, "toolName": "bash"}}
+    event: dict[str, Any] = {
+        "type": "tool_call_finished", "duration_ms": None, "attributes": {"native": native}
+    }
+    assert event_view(12, event)["duration"] == 4824
+    event["duration_ms"] = 0
+    assert event_view(12, event)["duration"] == 0
+    event["duration_ms"] = -1
+    native["pi"]["durationMs"] = True
+    assert event_view(12, event)["duration"] is None
+    archive = {"attributes": {"native": {"pi": {"type": "abk_native_archive"}}}}
+    assert "压缩归档" in event_view(7, archive)["summary"]
+    run, folder = fixture(tmp_path)
+    path = (folder / "executions/execution-1/trajectory.jsonl").relative_to(run).as_posix()
+    with TestClient(create_app(tmp_path)) as client:
+        missing = client.get("/runs/fixture/evidence", params={"path": path, "event": 999999})
+        assert missing.status_code == 404
+        assert "事件不存在或尚未落盘" in missing.text
+        sample = client.get("/runs/fixture/samples/sample-01")
+        assert "02 验证结果" in sample.text
+        assert "官方验证与测试结果" in sample.text

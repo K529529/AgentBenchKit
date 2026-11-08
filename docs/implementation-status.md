@@ -691,3 +691,12 @@ recorded process duration alignment (synthetic 1.5s), missing-data N/A, and Pi r
 summary hierarchy. Sample pages now carry synthetic-data notices, empty logs give
 an actionable explanation, and primary run metrics precede the detailed snapshot.
 No cloud operations. Further live review continues for native Pi event details.
+
+Viewer review round 7: PASS full pytest 252 / 37 skipped, Ruff, mypy (91 files).
+After final template-only polish, focused Viewer 29 tests and Node interactions
+PASS. Chrome verified Pi native tool duration 4824 ms, readable PASS wording,
+complete-event and nested-field navigation, real homepage page 2 and comparison,
+evidence directory search and actual verifier.json download (SHA-256 matches source).
+Historical hash baseline: 25 tracked evidence files unchanged; this is a sampled
+baseline, not a claim that every artifact was hashed. No Agent/Verifier rerun,
+Docker, cloud operation, deployment or main merge. See report for visual QA limits.

@@ -317,3 +317,48 @@ compact operational snapshot, with detailed counting notes collapsed.
 Validation: full local pytest 251 passed / 37 skipped, Ruff, mypy (91 files), Node
 interactions PASS. Chrome verified default selection, comparison durations, missing
 values and the real Pi run layout. No deployment or evaluation execution performed.
+
+### Product review round 7 and local delivery — 2026-11-09
+
+Pi native tool results now display their recorded durationMs when the normalized
+field is absent; valid zero remains zero and invalid durations remain N/A. Usage
+is unchanged: this historical Pi run has no terminal Usage and still shows N/A.
+System messages with sections and compressed archives have readable descriptions;
+archives are not decoded or interpreted. Complete-event field navigation is visible
+without opening raw JSON. Missing event numbers return a readable 404.
+
+Successful samples use neutral verification headings and do not invent a failed
+RCA phase. Presentation booleans read as yes/no rather than Python True/False.
+
+Local validation: full pytest **252 passed / 37 skipped**, Ruff and mypy (91 files)
+PASS. Final template edits: **29 Viewer tests**, Node interaction suite PASS.
+Skipped integrations were not invoked; this is not new real-agent acceptance.
+
+Browser review receipts across rounds 4–7:
+- Chrome: homepage pagination, same-source Compare form and actual paired results;
+  synthetic 50-task matrix pagination/filter/state; missing evidence notices.
+- Historical Packaging: FAIL → tests/test_metadata.py → NameError for
+  typing_extensions_Literal → src/packaging/metadata.py:367 → Patch → Step 50
+  apply_patch, explicitly paired call events 380/382. No evidence rewritten.
+- Sample summary/file fragment copy verified by pasting into an existing local
+  search field. Log next/previous retained physical ranges and filter history.
+- Pi PASS: F2P 21/21, P2P 30/30, 24.8s process, six observed tools, Usage N/A;
+  native result event 12 now displays 4824 ms. Complete event and nested attributes
+  reader work with return links.
+- Evidence directory opened, searched for verifier.json, opened its field reader,
+  downloaded via Chrome. Download SHA-256 equals the original file. The earlier
+  25-file historical hash baseline is unchanged (not an exhaustive artifact audit).
+- Responsive: 390px IAB sample render checked in round 5; Chrome's later viewport
+  override did not change its observed 960px viewport, so this is not claimed as a
+  Chrome mobile verification. Desktop Chrome was used for the final live checks.
+- Screenshots are local artifacts under `.agentbenchkit/viewer-browser-review/`:
+  final-sample.jpg and sample-narrow.jpg. They are not repository/runtime evidence.
+
+Coverage limits: checks cover these representative real and synthetic flows, not
+all possible evidence shapes or browsers. No remaining blocking issue was observed
+in the reviewed flows. The owner remains the final product acceptance authority.
+
+Delivery stays on codex/web-viewer-v0.3. Latest local service: http://127.0.0.1:8876.
+Cloud deployed version remains **414d7c1**; these changes are **not deployed**.
+No cloud resources, evaluation core, original worktree changes, or main merge were
+included. Unrelated CRLF status entries and ABK_Evaluation_Report.md are preserved.
