@@ -11,7 +11,7 @@
       let page = 1;
       const pageSize = 25;
       const extras = [...panel.querySelectorAll('.matrix-extra input, .matrix-extra select')];
-      const memoryKey = 'abk-filter:' + location.pathname;
+      const memoryKey = 'abk-filter:' + location.pathname + (location.pathname === '/compare' ? location.search : '');
       try {
         const saved = JSON.parse(sessionStorage.getItem(memoryKey) || '{}');
         status = saved.status || 'all'; page = saved.page || 1; if (input) input.value = saved.query || '';

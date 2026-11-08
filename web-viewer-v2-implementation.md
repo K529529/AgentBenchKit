@@ -59,9 +59,9 @@ ABK package/runtime version stays 0.2.0; **Viewer V0.3** is a presentation relea
 | 16 | P1 metric definitions | Implemented: scope/denominator/missing explanations and preserved Credits distinctions |
 | 17 | P2 Run Overview | Implemented: official outcomes, terminal samples, timeout/execution/verifier errors, usage |
 | 18 | P2 task matrix | Implemented: 50-task contract, multi-filter/search/sort, 25-row pages, saved client filters |
-| 19 | P2 investigation queue | Implemented: finished+fail, timeout/error, verifier error, pass without E2E, missing usage |
-| 20 | P2 distributions | Deferred: sortable individual duration/token values provided; no misleading incomplete histogram |
-| 21 | P2 Compare enhancement | Existing comparison retained, paginated/searchable; no new causal claims or token-delta charts |
+| 19 | P2 investigation queue | Implemented: finished+fail, timeout/error, verifier error, pass without E2E, missing usage, missing terminal-event investigation hint |
+| 20 | P2 distributions | Implemented locally: duration/token/saved-tool distributions, coverage, median/P90, top-10 and IQR investigation hints |
+| 21 | P2 Compare enhancement | Implemented locally: regression/improvement filters, one-to-one signed duration/token deltas, coverage and comparability warnings |
 | 22 | Library and generic evidence UX | Implemented: 15-run server pages, 20-field structured record drilldown, bounded long text |
 | 23 | Read-only/security/partial writes | Local regression: traversal/XSS/missing/truncation/bounded pages/unchanged hashes |
 | 24 | Isolated cloud deployment | PASS: `abk-viewer-v03.service`, loopback 8766, dedicated venv/source, locked dependencies, CPU/memory limits |
@@ -103,7 +103,7 @@ not hold the whole trajectory in memory. Original downloads stream without regen
   correctly displayed N/A instead of inventing token values.
 - Browser visual/click acceptance: NOT RUN. Browser tool denied local origin access due
   to its saved permission policy, including after the user changed terminal access.
-  No alternate browser surface or origin bypass was attempted.
+  User-authorized Chrome retry also failed; no policy bypass was attempted.
 - No paid Agent/Verifier runs are launched by this UI task. Synthetic fixtures are labeled
   and never counted as real evaluation acceptance.
 
@@ -112,7 +112,8 @@ not hold the whole trajectory in memory. Original downloads stream without regen
 Generic JSON records are readable field trees, not domain-specific renderers for every
 possible third-party schema. Python/pytest exception extraction is conservative; other
 formats retain searchable original logs. Highlighting is lightweight lexical coloring,
-not a full language parser. Optional distribution/Compare charts are deferred.
+not a full language parser. Tool-call distributions require already-saved analysis; missing analysis stays N/A.
+Histograms cover only saved samples, not the whole planned task set or unrecorded executions.
 Browser layout and actual clipboard interaction still require browser authority to verify.
 
 ## Deployment and rollback
@@ -170,9 +171,43 @@ links, bounded evidence-directory pagination, a short task-description preview,
 null-native-event tolerance and preservation of zero-millisecond durations.
 These pass local tests and remain a separate follow-up commit. The cloud service is
 intentionally still `414d7c1` per the owner's latest resource-contention instruction.
-Optional distribution and Compare chart enhancements are deferred; browser visual
-acceptance remains NOT RUN due to the separate browser permission boundary.
+Distribution and Compare enhancements are now implemented and validated locally. Browser visual
+acceptance remains NOT RUN; the owner explicitly deferred this on 2026-11-09.
 
 Detailed local receipts are in `.agentbenchkit/viewer-delivery/acceptance.json`,
 `deployment.json`, and `.agentbenchkit/viewer-acceptance/packaging.json`; these are
 local runtime records, not committed experimental artifacts.
+
+
+## Final local completion — 2026-11-09 (after browser acceptance was deferred)
+
+- Completed all remaining P2 presentation enhancements without new dependencies: three
+  coverage-aware distributions, median/P90/max, top-10 drilldown and Q3 + 1.5 IQR
+  outlier investigation links. Missing values do not become zero. Histograms require
+  complete coverage of the observed saved samples; known-subset statistics are labeled.
+- Compare now includes regression/improvement/inconclusive filters and signed B-minus-A
+  Agent-duration/token differences. Only one-to-one, known sample pairs qualify;
+  zero baseline has no percentage. Condition warnings stay visible; no causal claims.
+- Compare filter memory is scoped to the selected run pair. Existing matrix pagination,
+  filtering, sorting and sample navigation remain in place.
+- Missing terminal events are an explicit investigation hint (possibly still running),
+  not a failure verdict. Null native event metadata is tolerated. Deleted diff files
+  preserve their actual source filename; quoted paths with spaces support navigation.
+- Final full local regression PASS: **247 passed, 37 skipped**. Ruff PASS; mypy PASS
+  (91 source files); offline Node interaction contracts PASS. The only pytest warning
+  is the existing Starlette/httpx TestClient deprecation, not an application failure.
+- Added tests cover incomplete/invalid measurements, zero values, percentiles and
+  outliers, ambiguous multi-sample pairing, null/partial traces, read-only comparison,
+  and deleted/quoted diff files. Synthetic checks are not real-agent acceptance.
+- Rechecked local historical Packaging library/run/sample routes: all 200, NameError
+  evidence present; all 10 files in that local run retained SHA256. This is a separate
+  smaller checkpoint from earlier detailed acceptance receipts, not a replacement claim.
+- Original workspace: all 181 baseline manifest entries unchanged (zero hash drift).
+  Existing Pi/CLI/Runtime content and unrelated historical report remain untouched.
+- Browser visual, real clicks, responsive rendering and actual clipboard acceptance:
+  **NOT RUN**. Both browser surfaces reported saved-policy denial; restart also briefly
+  produced a browser-control process error. User explicitly authorized completing local
+  work without further browser troubleshooting. Backend/DOM contracts are not visual QA.
+- **No cloud access, deployment, restart or acceptance requests in this final phase.**
+  Cloud remains on 414d7c1. New local commits require separate integration after the
+  active evaluation; do not mistake local completion for deployment of these additions.

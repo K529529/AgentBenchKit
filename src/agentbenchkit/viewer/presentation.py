@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
 
+from agentbenchkit.viewer.analytics import numeric
+
 JSON_LIMIT = 8_000_000
 LINE_LIMIT = 2_000_000
 
@@ -363,12 +365,19 @@ def sample_view(root: Path, path: Path) -> dict[str, Any]:
 def diff_rows(path: Path) -> Iterator[dict[str, Any]]:
     file, old, new = "", None, None
     for number, text in lines(path):
-        if text.startswith("+++ "):
-            file = text[4:].strip().removeprefix("b/")
-        if text.startswith("--- ") and not file:
-            file = text[4:].strip().removeprefix("a/")
         if text.startswith("diff --git "):
             file, old, new = "", None, None
+        if text.startswith(("--- ", "+++ ")):
+            name = text[4:].strip().split("\t", 1)[0]
+            if name.startswith('"') and name.endswith('"'):
+                try:
+                    name = json.loads(name)
+                except ValueError:
+                    pass
+            if name != "/dev/null":
+                file = (
+                    name.removeprefix("b/") if text.startswith("+++ ") else name.removeprefix("a/")
+                )
         hunk = re.match(r"@@ -(\d+)(?:,\d+)? \+(\d+)", text)
         if hunk:
             old, new = int(hunk[1]), int(hunk[2])
@@ -397,6 +406,16 @@ def diff_rows(path: Path) -> Iterator[dict[str, Any]]:
 
 def run_view(root: Path, samples: list[dict[str, Any]], manifest: dict[str, Any]) -> dict[str, Any]:
     """Small execution records + bounded trajectory tail; no index writes or full-run replay."""
+    saved_metrics: dict[str, Any] = {}
+    for analysis in sorted(
+        root.glob("analyses/*.json"), key=lambda p: p.stat().st_mtime, reverse=True
+    ):
+        items = read(root, analysis.relative_to(root).as_posix()).get("samples") or []
+        for item in items:
+            if isinstance(item, dict) and isinstance(item.get("sample_id"), str):
+                metrics = item.get("metrics")
+                if isinstance(metrics, dict):
+                    saved_metrics.setdefault(item["sample_id"], metrics)
     counts: Counter[str] = Counter()
     durations: list[float] = []
     tokens: list[int] = []
@@ -406,9 +425,12 @@ def run_view(root: Path, samples: list[dict[str, Any]], manifest: dict[str, Any]
         records = [read(root, p.relative_to(root).as_posix()) for p in execution_paths]
         records.sort(key=lambda r: r.get("started_at") or "")
         execution = records[-1] if records else {}
-        duration = execution.get("process", {}).get("duration_ms")
+        duration = (execution.get("process") or {}).get("duration_ms")
+        duration = duration if numeric(duration) else None
         sample["viewer_duration"] = duration
+        sample["viewer_tools"] = saved_metrics.get(sample["sample_id"], {}).get("tool_calls")
         usage: dict[str, Any] = {}
+        terminal_seen = False
         execution_id = execution.get("physical_execution_id")
         if execution_id:
             rel = f"{folder}/executions/{execution_id}/trajectory.jsonl"
@@ -424,21 +446,16 @@ def run_view(root: Path, samples: list[dict[str, Any]], manifest: dict[str, Any]
                     except ValueError:
                         continue
                     if isinstance(event, dict) and event.get("type") == "agent_finished":
-                        usage = (
-                            event.get("attributes", {})
-                            .get("native", {})
-                            .get("data", {})
-                            .get("usage")
-                            or {}
-                        )
+                        terminal_seen = True
+                        native = (event.get("attributes") or {}).get("native") or {}
+                        usage = (native.get("data") or {}).get("usage") or {}
                         break
             except (ValueError, OSError):
                 pass
         total = usage.get("total_tokens")
-        if total is None and all(
-            isinstance(usage.get(k), int) for k in ["input_tokens", "output_tokens"]
-        ):
+        if total is None and all(numeric(usage.get(k)) for k in ["input_tokens", "output_tokens"]):
             total = usage["input_tokens"] + usage["output_tokens"]
+        total = total if numeric(total) else None
         sample["viewer_tokens"] = total
         sample["viewer_investigate"] = []
         if sample.get("execution_status") == "FINISHED" and sample.get("verifier_status") == "FAIL":
@@ -451,6 +468,8 @@ def run_view(root: Path, samples: list[dict[str, Any]], manifest: dict[str, Any]
             sample["viewer_investigate"].append("候选通过但端到端未成功")
         if total is None:
             sample["viewer_investigate"].append("Usage 缺失")
+        if execution_id and not terminal_seen:
+            sample["viewer_investigate"].append("未见轨迹结束事件（可能仍在运行或证据不完整）")
         status = sample.get("execution_status")
         counts["completed"] += int(
             status in {"FINISHED", "TIMED_OUT", "ERROR", "CANCELLED", "INTERRUPTED"}

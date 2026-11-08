@@ -650,3 +650,17 @@ formal Worker / original Viewer PIDs unchanged, new Viewer ~55.3 MiB memory.
 Browser visual acceptance NOT RUN (separate browser policy). Owner requested minimal
 cloud work while formal evaluation is active: follow-up local refinements are tested
 and committed but NOT DEPLOYED; no further bulk cloud checks/restarts.
+
+
+Viewer V0.3 final local enhancement phase — 2026-11-09:
+PASS: duration/token/saved-tool distributions and top-10/IQR investigation links;
+coverage-aware missing-data handling; Compare regression/improvement filters and
+one-to-one duration/token deltas; missing terminal hints; deleted/quoted diff paths.
+PASS: full pytest 247 passed / 37 skipped; Ruff; mypy (91 files); offline Node UI
+contracts. Existing TestClient deprecation warning only. Local historical Packaging
+routes PASS and 10 files unchanged; all 181 original baseline entries have zero drift.
+NOT RUN: browser visual/click/responsive/clipboard acceptance, explicitly deferred
+by owner after persistent browser permission failure. No paid/live Agent tests.
+NOT DEPLOYED: these final additions remain local/pushed branch changes. No cloud
+operations in this phase; deployed service stays 414d7c1, formal evaluation untouched.
+See web-viewer-v2-implementation.md for final scope, limits and integration instructions.

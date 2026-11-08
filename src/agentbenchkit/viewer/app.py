@@ -16,6 +16,7 @@ from agentbenchkit.analysis.compare import compare
 from agentbenchkit.analysis.judge import unavailable_scores
 from agentbenchkit.storage.index import resolve_run
 from agentbenchkit.viewer import presentation as view
+from agentbenchkit.viewer.analytics import distribution, paired_metrics
 
 PACKAGE = Path(__file__).parent
 MAX_RESPONSE = 1_000_000
@@ -133,6 +134,15 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
         ]
         samples = [s for s in samples if s.get("sample_id") and s.get("task_id")]
         analyses = [path.name for path in sorted(directory.glob("analyses/*.json"))]
+        overview = view.run_view(directory, samples, manifest)
+        distributions = [
+            distribution(samples, key, label, unit, scale)
+            for key, label, unit, scale in [
+                ("viewer_duration", "Agent 耗时", "秒", 1000),
+                ("viewer_tokens", "Total Tokens", "tokens", 1),
+                ("viewer_tools", "工具调用", "次", 1),
+            ]
+        ]
         return render(
             request,
             "run.html",
@@ -141,7 +151,8 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
             manifest=manifest,
             summary=view.read(directory, "summary.json"),
             samples=samples,
-            overview=view.run_view(directory, samples, manifest),
+            overview=overview,
+            distributions=distributions,
             notices=sorted(
                 {
                     task.get("metadata", {}).get("evaluation_notice", "")
@@ -431,11 +442,23 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
             result = compare(base_root, baseline, candidate, persist_analysis=False)
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from None
+        paired = []
+        for identifier in (baseline, candidate):
+            directory = run_dir(identifier)
+            records = [
+                view.read(directory, p.relative_to(directory).as_posix())
+                for p in directory.glob("tasks/*/*/sample.json")
+            ]
+            records = [r for r in records if r.get("task_id") and r.get("sample_id")]
+            view.run_view(directory, records, view.read(directory, "manifest.json"))
+            paired.append(records)
+        comparison_metrics = paired_metrics(*paired)
         return render(
             request,
             "compare.html",
             title="运行对比",
             comparison=result,
+            comparison_metrics=comparison_metrics,
             baseline_manifest=view.read(run_dir(baseline), "manifest.json"),
             candidate_manifest=view.read(run_dir(candidate), "manifest.json"),
         )
