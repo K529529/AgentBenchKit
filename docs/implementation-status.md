@@ -664,3 +664,10 @@ by owner after persistent browser permission failure. No paid/live Agent tests.
 NOT DEPLOYED: these final additions remain local/pushed branch changes. No cloud
 operations in this phase; deployed service stays 414d7c1, formal evaluation untouched.
 See web-viewer-v2-implementation.md for final scope, limits and integration instructions.
+
+Viewer five-round product review, round 1: corrected native Step/seq navigation,
+repeated-call result links, per-file fragment copy, log traceback folding,
+missing-result count/filter and cross-page Compare entry. Ruff/mypy and Node PASS.
+Full run found one single-run comparison-entry regression (247 passed, 1 failed,
+37 skipped); fixed visibility condition, then focused Viewer regression 25 passed.
+Final full-suite rerun is required after subsequent rounds. Visual QA remains NOT RUN.

@@ -24,3 +24,22 @@ input.value='';input.fire('input');investigate.checked=true;investigate.fire('in
 investigate.checked=false;investigate.fire('input');sort.value='duration';sort.fire('input');assert.equal(parent.order[0],rows[49]);assert.equal(rows[49].hidden,false);assert.equal(rows[0].hidden,true);
 assert.ok(Object.values(memory)[0].includes('duration'));
 console.log('PASS: offline matrix pagination, keyword search, investigation filter, sort and persisted state');
+// Exercise stack folding with a minimal DOM model, without claiming browser rendering.
+class Node {
+  constructor(tag='div',text=''){this.tag=tag;this.textContent=text;this.children=[];}
+  append(child){if(child.parent)child.parent.children=child.parent.children.filter(x=>x!==child);child.parent=this;this.children.push(child);}
+  before(child){const p=this.parent;child.parent=p;p.children.splice(p.children.indexOf(this),0,child);}
+  querySelector(s){return s==='code'?this.children.find(x=>x.tag==='code'):null;}
+  querySelectorAll(s){return s==='.log-line'?[...this.children]:[];}
+}
+const log=new Node();
+for(const text of ['ordinary','Traceback (most recent call last):','  File "x.py", line 2','ValueError: bad','Traceback (most recent call last):','  partial']){const row=new Node();row.append(new Node('code',text));log.append(row);}
+const stackListeners=[];
+vm.runInNewContext(fs.readFileSync('src/agentbenchkit/viewer/static/viewer.js','utf8'),{document:{querySelectorAll:s=>s==='[data-fold-stacks]'?[log]:[],createElement:t=>new Node(t),addEventListener:(t,f)=>{if(t==='DOMContentLoaded')stackListeners.push(f);}}});
+stackListeners.forEach(f=>f());
+assert.equal(log.children.length,4);
+assert.equal(log.children[1].tag,'details');
+assert.equal(log.children[1].children.length,4);
+assert.ok(log.children[1].children[0].textContent.includes('ValueError'));
+assert.equal(log.children[2].querySelector('code').textContent,'Traceback (most recent call last):');
+console.log('PASS: complete Python stacks collapse; partial stacks stay visible');

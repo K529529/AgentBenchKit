@@ -77,9 +77,29 @@
 // All untrusted content stays text nodes. Syntax accents never evaluate HTML.
 (() => {
   function setup() {
+    document.querySelectorAll('[data-fold-stacks]').forEach(log => {
+      const lines = [...log.querySelectorAll('.log-line')];
+      for (let i = 0; i < lines.length; i++) {
+        const text = lines[i].querySelector('code')?.textContent || '';
+        if (!/^Traceback \(most recent call last\):/.test(text)) continue;
+        let end = i + 1;
+        while (end < lines.length && !/^(?:[\w.]+(?:Error|Exception)|KeyboardInterrupt|SystemExit)(?::|$)/.test(lines[end].querySelector('code')?.textContent || '')) end++;
+        if (end >= lines.length) continue; // Keep partial stacks visible, never infer their ending.
+        const details = document.createElement('details');
+        details.className = 'log-stack';
+        const summary = document.createElement('summary');
+        summary.textContent = `调用栈 · ${end-i+1} 行 · ${lines[end].querySelector('code').textContent.slice(0,180)}`;
+        details.append(summary);
+        lines[i].before(details);
+        for (let j = i; j <= end; j++) details.append(lines[j]);
+        i = end;
+      }
+    });
     document.querySelectorAll('[data-go-back]').forEach(b => b.addEventListener('click', () => history.back()));
     document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', async () => {
-      const text = document.querySelector(button.dataset.copy)?.textContent || '';
+      const target = document.querySelector(button.dataset.copy);
+      const codeLines = target ? [...target.querySelectorAll('.diff-row code, .log-line code')] : [];
+      const text = codeLines.length ? codeLines.map(line => line.textContent).join('\n') : target?.textContent || '';
       try { await navigator.clipboard.writeText(text); button.textContent = '已复制'; }
       catch { button.textContent = '复制不可用，请选中文本复制'; }
     }));

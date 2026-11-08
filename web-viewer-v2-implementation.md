@@ -46,15 +46,15 @@ ABK package/runtime version stays 0.2.0; **Viewer V0.3** is a presentation relea
 | 3 | P0 failed-log navigation | Implemented: safe references, missing reason, sample return |
 | 4 | P0 exception summary | Implemented: structural Python/pytest frames and exception records; raw fallback |
 | 5 | P0 trajectory timeline | Implemented: actual seq vs native Step, tool/assistant/model summaries, event fields |
-| 6 | P0 search/filter | Implemented: whole-file streaming search, tool/type/error/change/test/call ID, pagination |
-| 7 | P0 Diff reader | Implemented: file grouping/search, old/new lines, lexical highlighting, collapse, copy |
+| 6 | P0 search/filter | Implemented: whole-file streaming search, tool/type/error/change/test/call ID, exact native Step/seq, pagination |
+| 7 | P0 Diff reader | Implemented: file grouping/search, old/new lines, lexical highlighting, collapse, per-file page-fragment copy |
 | 8 | P0 cross-evidence navigation | Real Packaging chain PASS; file-text trajectory associations labeled weak |
 | 9 | P1 information architecture | Implemented: Outcome, Failure, Patch, Trajectory, RCA, Raw; prompt collapsed |
 | 10 | P1 execution summary | Implemented: duration, steps, tools/failures, model calls, input/output/total usage |
 | 11 | P1 key events | Implemented: visible shortcuts and error styling |
-| 12 | P1 repeated calls | Implemented: identical tool/argument SHA256 groups and event positions; no loop verdict |
+| 12 | P1 repeated calls | Implemented: identical tool/argument SHA256 groups, explicit-ID result summaries and event positions; no loop verdict |
 | 13 | P1 RCA explanation | Implemented: saved owner/score/observations/evidence/uncertainty; no probability claim |
-| 14 | P1 log reader | Implemented: numbered bounded pages, search, highlight, copy, download; exception frames collapsed |
+| 14 | P1 log reader | Implemented: numbered bounded pages, search, highlight, copy, download; complete Python stacks and summary frames collapsed |
 | 15 | P1 copy investigation | Implemented: Markdown IDs, verdict/tests/exception/location/patch/trajectory/RCA |
 | 16 | P1 metric definitions | Implemented: scope/denominator/missing explanations and preserved Credits distinctions |
 | 17 | P2 Run Overview | Implemented: official outcomes, terminal samples, timeout/execution/verifier errors, usage |
@@ -211,3 +211,44 @@ local runtime records, not committed experimental artifacts.
 - **No cloud access, deployment, restart or acceptance requests in this final phase.**
   Cloud remains on 414d7c1. New local commits require separate integration after the
   active evaluation; do not mistake local completion for deployment of these additions.
+
+
+## Requirement re-audit after owner challenged premature completion
+
+The earlier statement that all remaining work was complete was too broad. A second
+code-level review found actual gaps beyond deferred visual QA. The following were
+corrected locally rather than silently retaining the earlier checklist wording:
+
+| Requirement | Gap found | Correction and evidence |
+|---|---|---|
+| P0-6 Step/event navigation | Only physical-line positioning existed | Separate exact native Step and seq filters; HTTP tests distinguish seq 40, physical line 3 and Step 50, plus empty results |
+| P0-7 copy snippet | Only whole-page copy | Per-file current-page fragment copy; log/diff copying joins code lines with newlines, excludes line-number gutters |
+| P1-4 repeated call results | Repeat groups linked starts but omitted result summaries | Explicit Call ID result summaries and result-line links; absent IDs/results labeled unknown, no inferred pairing |
+| P1-6 stack folding | Only sample exception frames collapsed | Complete Python Traceback blocks collapse in the log reader; partial/page-split stacks remain visible; offline DOM test checks both |
+| P2-1 missing results | No separate count | Count tasks lacking saved sample results; explicitly not labeled not-executed or failed |
+| P2-2 missing-result filter | Placeholder rows omitted state attributes | NO_RESULT filter targets rows without sample records |
+| P2-5 comparison entry | Dropdown limited to current library page | Editable Run IDs with current-page suggestions permit cross-page choices; existing authorized-root checks remain |
+
+Audit surfaces: library/compare launch, run matrix and task map, sample section
+navigation, failed-test disclosures/log links, patch file and line views, timeline
+search/detail/Call ID links, repeated-call results, RCA references, generic field
+reader, file directory, raw/download and error return paths. This is source and
+HTTP/DOM-contract inspection, **not** a claim that every control was visually clicked.
+
+Remaining precise limits (do not label these visually accepted):
+- Actual browser rendering, responsive layout, keyboard behavior and clipboard writes
+  remain NOT RUN by explicit owner waiver. CSS presence does not prove usability.
+- Stack grouping recognizes complete standard Python tracebacks within a loaded page;
+  pytest frames have the sample-level structural summary, other formats stay readable raw.
+- Diff syntax coloring is lexical, not a language-aware editor. Copy is the loaded
+  file fragment, not unshown file contents. Original full-file download is retained.
+- JSON unknown schemas use a paginated field tree, not a custom renderer per provider.
+- Tool-call distributions use saved analysis; no analysis means N/A, not an implicit replay.
+- A missing terminal marker in the bounded trajectory tail is an investigation hint,
+  not proof of corruption. Missing samples cannot distinguish not-started from in-flight.
+- Latest enhancements are not cloud deployed. The previous 414d7c1 service remains;
+  no new cloud operations were performed during this audit.
+
+This supersedes any interpretation of the earlier 25-item table as full browser or
+latest-cloud acceptance. Implemented, locally verified, visually verified and deployed
+are separate statuses.

@@ -257,3 +257,26 @@ def test_custom_log_refs_and_evidence_directory(tmp_path: Path) -> None:
         assert page.status_code == 200 and "custom-output.txt" in page.text
         sample = client.get("/runs/fixture/samples/sample-01")
         assert "custom-output.txt" in sample.text
+
+
+def test_native_step_seq_and_repeated_call_results(tmp_path: Path) -> None:
+    run, folder = fixture(tmp_path)
+    trajectory = folder / "executions/execution-1/trajectory.jsonl"
+    entries = [json.loads(line) for line in trajectory.read_text().splitlines()]
+    duplicate = {**entries[0], "seq": 40, "native_call_id": "call-without-result"}
+    entries.insert(2, duplicate)
+    trajectory.write_text("".join(json.dumps(e) + "\n" for e in entries))
+    repeated = sample_view(run, folder / "sample.json")["repeats"][0]
+    assert repeated["calls"][0]["results"][0]["failure"] is True
+    assert repeated["calls"][1]["results"] == []
+    rel = trajectory.relative_to(run).as_posix()
+    with TestClient(create_app(tmp_path)) as client:
+        step = client.get("/runs/fixture/evidence", params={"path": rel, "step": "50"})
+        assert step.status_code == 200 and step.text.count('class="timeline-event') == 2
+        seq = client.get("/runs/fixture/evidence", params={"path": rel, "seq": "40"})
+        assert seq.status_code == 200 and seq.text.count('class="timeline-event') == 1
+        assert "call-without-result" in seq.text
+        missing = client.get("/runs/fixture/evidence", params={"path": rel, "step": "999"})
+        assert "没有匹配的事件" in missing.text
+        sample = client.get("/runs/fixture/samples/sample-01")
+        assert "关联结果" in sample.text and "缺少明确 Call ID" in sample.text

@@ -282,6 +282,8 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
         node: str = "",
         event: int = 0,
         text_offset: int = 0,
+        step: str = "",
+        seq: str = "",
     ) -> HTMLResponse:
         directory = run_dir(run_id)
         try:
@@ -391,6 +393,8 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
                     (not kind or row["type"] == kind or bool(row.get(kind)))
                     and (not tool or row["tool"] == tool)
                     and (not call or row["call_id"] == call)
+                    and (not step or str(row["step"]) == step)
+                    and (not seq or str(row["seq"]) == seq)
                 )
             elif mode == "diff":
                 row = item
@@ -428,6 +432,8 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
             call=call,
             file=file,
             line=line,
+            step=step,
+            seq=seq,
             tools_seen=sorted(tools_seen - {""}),
             kinds_seen=sorted(kinds_seen),
             size=target.stat().st_size,

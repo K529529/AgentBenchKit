@@ -260,6 +260,8 @@ def sample_view(root: Path, path: Path) -> dict[str, Any]:
     complete = False
     repeats: dict[str, list[int]] = {}
     repeat_labels: dict[str, str] = {}
+    repeat_calls: dict[int, str] = {}
+    results_by_call: dict[str, list[dict[str, Any]]] = {}
     if trajectory in files:
         broken = False
         for number, event in events(safe_path(root, trajectory)):
@@ -276,13 +278,19 @@ def sample_view(root: Path, path: Path) -> dict[str, Any]:
                 key = hashlib.sha256(argument.encode()).hexdigest()
                 repeat_labels[key] = argument[:350]
                 repeats.setdefault(key, []).append(number)
+                if view["call_id"]:
+                    repeat_calls[number] = str(view["call_id"])
+            if view["type"] == "tool_call_finished" and view["call_id"]:
+                results_by_call.setdefault(str(view["call_id"]), []).append(
+                    {"line": number, "summary": view["summary"][:250], "failure": view["failure"]}
+                )
             if view["type"] == "agent_finished":
                 terminal = event_data(event)
                 complete = True
         complete = (
             complete
             and not broken
-            and not execution.get("process", {}).get("output_truncated", False)
+            and not mapping(execution.get("process")).get("output_truncated", False)
         )
     usage = terminal.get("usage") or {}
     metrics.update(
@@ -301,7 +309,7 @@ def sample_view(root: Path, path: Path) -> dict[str, Any]:
         model_calls=terminal.get("model_calls"),
         tool_calls=observed["tools"] if trajectory in files else None,
         tool_failures=observed["tool_failures"] if trajectory in files else None,
-        duration_ms=execution.get("process", {}).get("duration_ms"),
+        duration_ms=mapping(execution.get("process")).get("duration_ms"),
         trajectory_complete=complete if trajectory in files else None,
     )
     groups = []
@@ -356,7 +364,22 @@ def sample_view(root: Path, path: Path) -> dict[str, Any]:
         failure=failure,
         analysis_ref=analysis_ref,
         rca_refs=rca_refs,
-        repeats=[{"args": repeat_labels[k], "lines": v} for k, v in repeats.items() if len(v) > 1],
+        repeats=[
+            {
+                "args": repeat_labels[k],
+                "lines": v,
+                "calls": [
+                    {
+                        "line": n,
+                        "id": repeat_calls.get(n),
+                        "results": results_by_call.get(repeat_calls.get(n, ""), []),
+                    }
+                    for n in v
+                ],
+            }
+            for k, v in repeats.items()
+            if len(v) > 1
+        ],
         repeat_version="repeated-tool-calls-v1 · 展示规则：相同工具与原始参数",
         phase=failure.get("phase") or "Unknown",
     )
@@ -487,6 +510,10 @@ def run_view(root: Path, samples: list[dict[str, Any]], manifest: dict[str, Any]
         "counts": counts,
         "tasks": len(manifest.get("tasks", [])),
         "samples": len(samples),
+        "tasks_without_results": sum(
+            t.get("task_id") not in {s.get("task_id") for s in samples}
+            for t in manifest.get("tasks", [])
+        ),
         "usage_coverage": len(tokens),
         "tokens": sum(tokens) if tokens else None,
         "duration_ms": sum(durations) if durations else None,
