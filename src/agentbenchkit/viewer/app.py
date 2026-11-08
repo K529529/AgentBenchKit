@@ -7,9 +7,11 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from agentbenchkit.analysis.compare import compare
@@ -72,8 +74,8 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
         )
         return response
 
-    @app.exception_handler(HTTPException)
-    async def error_page(request: Request, exc: HTTPException) -> HTMLResponse:
+    @app.exception_handler(StarletteHTTPException)
+    async def error_page(request: Request, exc: StarletteHTTPException) -> HTMLResponse:
         response = render(
             request,
             "error.html",
@@ -83,6 +85,12 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
         )
         response.status_code = exc.status_code
         return response
+
+    @app.exception_handler(RequestValidationError)
+    async def invalid_query(request: Request, exc: RequestValidationError) -> HTMLResponse:
+        return await error_page(
+            request, HTTPException(422, "筛选参数格式不正确，请返回并重新输入页码或行号。")
+        )
 
     @app.get("/", response_class=HTMLResponse)
     def runs(request: Request, page: int = 1, q: str = "") -> HTMLResponse:

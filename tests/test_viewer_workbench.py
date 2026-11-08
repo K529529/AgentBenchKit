@@ -280,3 +280,16 @@ def test_native_step_seq_and_repeated_call_results(tmp_path: Path) -> None:
         assert "没有匹配的事件" in missing.text
         sample = client.get("/runs/fixture/samples/sample-01")
         assert "关联结果" in sample.text and "缺少明确 Call ID" in sample.text
+
+
+def test_navigation_errors_are_readable_and_transitional_states_filterable(tmp_path: Path) -> None:
+    fixture(tmp_path)
+    with TestClient(create_app(tmp_path)) as client:
+        for url, status in [("/?page=wrong", 422), ("/no-such-page", 404)]:
+            response = client.get(url)
+            assert response.status_code == status
+            assert response.headers["content-type"].startswith("text/html")
+            assert "返回评测工作台" in response.text
+        run = client.get("/runs/fixture")
+        assert 'value="PREPARING"' in run.text and 'value="COLLECTING"' in run.text
+        assert "data-filter-reset" in run.text

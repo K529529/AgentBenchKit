@@ -52,6 +52,11 @@
         buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.filter === status)));
       }
       input?.addEventListener('input', () => { page=1; apply(); });
+      panel.querySelector('[data-filter-reset]')?.addEventListener('click', () => {
+        status='all'; page=1; if (input) input.value='';
+        extras.forEach(x => {if(x.type==='checkbox') x.checked=false; else x.value='';});
+        apply();
+      });
       extras.forEach(x => x.addEventListener('input', () => {page=1; apply();}));
       panel.querySelector('[data-page-prev]')?.addEventListener('click', () => {page--;apply();});
       panel.querySelector('[data-page-next]')?.addEventListener('click', () => {page++;apply();});
@@ -95,7 +100,9 @@
         i = end;
       }
     });
-    document.querySelectorAll('[data-go-back]').forEach(b => b.addEventListener('click', () => history.back()));
+    document.querySelectorAll('[data-go-back]').forEach(b => b.addEventListener('click', () => {
+      if(history.length>1) history.back(); else location.assign('/');
+    }));
     document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', async () => {
       const target = document.querySelector(button.dataset.copy);
       const codeLines = target ? [...target.querySelectorAll('.diff-row code, .log-line code')] : [];

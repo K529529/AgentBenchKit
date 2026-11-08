@@ -261,3 +261,11 @@ collapsed each group, bounded the nested call list, and added previous-page
 navigation to structured records. Corrected invalid paragraph/details nesting.
 Focused Viewer tests 25 passed; offline Node tests verify independent list state
 and paging. Actual browser rendering remains NOT RUN.
+
+
+### Product review round 3
+Post-commit review found absent PREPARING/COLLECTING filters, no single reset
+control, and default framework JSON for invalid query/unknown routes. Added these
+filters, reset buttons, a concise status glossary, HTML error recovery and a home
+fallback when browser history is empty. Focused Viewer regression 26 passed;
+Ruff/mypy/offline Node contracts PASS. Rendering and real clicks remain NOT RUN.

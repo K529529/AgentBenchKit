@@ -6,7 +6,7 @@
 
 {% macro paged(label, key) -%}
 <div data-result-filter data-filter-key="{{key}}" data-page-size="10" class="paged-evidence">
-<div class="result-toolbar"><label class="search-label"><span>{{label}}</span><input type="search" data-search-input placeholder="输入关键词筛选…" autocomplete="off"></label><span class="filter-count" data-filter-count aria-live="polite"></span></div>
+<div class="result-toolbar"><label class="search-label"><span>{{label}}</span><input type="search" data-search-input placeholder="输入关键词筛选…" autocomplete="off"></label><button type="button" data-filter-reset>清除筛选</button><span class="filter-count" data-filter-count aria-live="polite"></span></div>
 <div class="paged-items">{{caller()}}</div>
 <p class="filter-empty" data-filter-empty hidden>没有匹配的记录。请清除关键词或检查证据是否已收集。</p>
 <nav class="pagination" aria-label="{{label}}分页"><button type="button" data-page-prev>← 上一页</button><span data-matrix-page></span><button type="button" data-page-next>下一页 →</button></nav>
