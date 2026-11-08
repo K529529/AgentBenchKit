@@ -292,6 +292,7 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
         text_offset: int = 0,
         step: str = "",
         seq: str = "",
+        trail: str = "",
     ) -> HTMLResponse:
         directory = run_dir(run_id)
         try:
@@ -319,6 +320,7 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
                     except (ValueError, KeyError, IndexError, TypeError):
                         raise HTTPException(404, "字段不存在或记录发生变化") from None
             next_text = None
+            text_total = len(document) if isinstance(document, str) else None
             if isinstance(document, str):
                 text_offset = max(0, text_offset)
                 if len(document) > text_offset + 20000:
@@ -360,12 +362,15 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
                 total=len(pairs),
                 next_text=next_text,
                 text_offset=text_offset,
+                text_total=text_total,
                 start=offset + 1,
                 event=event,
                 q=q,
                 next_start=offset + 21 if len(pairs) > offset + 20 else None,
             )
         start = max(1, start)
+        history = [int(n) for n in trail.split(",") if n.isdecimal() and len(n) < 12][-64:]
+        history = [n for n in history if 0 < n < start]
         rows: list[dict[str, Any]] = []
         next_start = None
         mode = (
@@ -442,6 +447,9 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
             line=line,
             step=step,
             seq=seq,
+            previous_start=history[-1] if history else None,
+            previous_trail=",".join(map(str, history[:-1])),
+            next_trail=",".join(map(str, [*history, start][-64:])),
             tools_seen=sorted(tools_seen - {""}),
             kinds_seen=sorted(kinds_seen),
             size=target.stat().st_size,

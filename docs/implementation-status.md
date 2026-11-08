@@ -671,3 +671,8 @@ missing-result count/filter and cross-page Compare entry. Ruff/mypy and Node PAS
 Full run found one single-run comparison-entry regression (247 passed, 1 failed,
 37 skipped); fixed visibility condition, then focused Viewer regression 25 passed.
 Final full-suite rerun is required after subsequent rounds. Visual QA remains NOT RUN.
+
+Viewer product review round 4 (2026-11-09): PASS filtered-reader history and long-text
+progress regression; 19 focused tests, Ruff, mypy (91 files), Node interactions.
+Chrome local Packaging log next/previous navigation PASS. Full browser acceptance
+and final full-suite regression remain pending for round 5. No cloud operations.

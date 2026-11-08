@@ -269,3 +269,12 @@ control, and default framework JSON for invalid query/unknown routes. Added thes
 filters, reset buttons, a concise status glossary, HTML error recovery and a home
 fallback when browser history is empty. Focused Viewer regression 26 passed;
 Ruff/mypy/offline Node contracts PASS. Rendering and real clicks remain NOT RUN.
+
+### Product review round 4 — resumed in browser-enabled chat
+Preserved the pending filtered-reader backtracking and long-text progress changes.
+Added bounded page-start trails for previous/next navigation and physical line ranges;
+structured long strings show character ranges and previous segments.
+PASS: 19 tests in test_viewer_workbench.py and test_viewer.py; Ruff; mypy (91 files);
+offline Node interactions. Chrome live historical Packaging log pagination visited
+1–60, then 61–75, then returned to 1–60. Broader browser review continues in round 5.
+No cloud operations; the deployed version remains 414d7c1.

@@ -1,7 +1,9 @@
 """Synthetic UI contract fixtures; these are not real-agent acceptance."""
 
 import hashlib
+import html
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -293,3 +295,33 @@ def test_navigation_errors_are_readable_and_transitional_states_filterable(tmp_p
         run = client.get("/runs/fixture")
         assert 'value="PREPARING"' in run.text and 'value="COLLECTING"' in run.text
         assert "data-filter-reset" in run.text
+
+
+def test_filtered_reader_backtracking_and_long_text_progress(tmp_path: Path) -> None:
+    run, folder = fixture(tmp_path)
+    log = folder / "verify/test_output.txt"
+    log.write_text("".join(f"{'match' if i % 2 else 'skip'} {i}\n" for i in range(1, 301)))
+    with TestClient(create_app(tmp_path)) as client:
+        first = client.get(
+            "/runs/fixture/evidence", params={"path": log.relative_to(run).as_posix(), "q": "match"}
+        )
+        next_link = re.search(r'href="([^"]+)"[^>]*>下一页', first.text)
+        assert next_link is not None
+        second = client.get(html.unescape(next_link[1]))
+        back = re.search(r'href="([^"]+)"[^>]*>← 上一页', second.text)
+        assert back is not None and "q=match" in back[1]
+        previous = client.get(html.unescape(back[1]))
+        assert 'id="L1"' in previous.text and 'id="L119"' in previous.text
+        assert 'id="L121"' not in previous.text
+        record = folder / "large.json"
+        record.write_text(json.dumps({"body": "x" * 45000}))
+        text = client.get(
+            "/runs/fixture/evidence",
+            params={
+                "path": record.relative_to(run).as_posix(),
+                "node": "/body",
+                "text_offset": 20000,
+            },
+        )
+        assert text.status_code == 200 and "20001–40000" in text.text
+        assert "上一段文本" in text.text and "45000" in text.text
