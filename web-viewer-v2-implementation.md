@@ -252,3 +252,12 @@ Remaining precise limits (do not label these visually accepted):
 This supersedes any interpretation of the earlier 25-item table as full browser or
 latest-cloud acceptance. Implemented, locally verified, visually verified and deployed
 are separate statuses.
+
+
+### Product review round 2
+After round-1 commit, found unbounded visible failed-test and repeat-group lists.
+Added independent search + 10-row pagination for F2P/P2P and repeated groups,
+collapsed each group, bounded the nested call list, and added previous-page
+navigation to structured records. Corrected invalid paragraph/details nesting.
+Focused Viewer tests 25 passed; offline Node tests verify independent list state
+and paging. Actual browser rendering remains NOT RUN.

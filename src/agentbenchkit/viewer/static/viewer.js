@@ -9,9 +9,9 @@
       const rows = [...panel.querySelectorAll('[data-result-row]')];
       let status = 'all';
       let page = 1;
-      const pageSize = 25;
+      const pageSize = Number(panel.dataset.pageSize) || 25;
       const extras = [...panel.querySelectorAll('.matrix-extra input, .matrix-extra select')];
-      const memoryKey = 'abk-filter:' + location.pathname + (location.pathname === '/compare' ? location.search : '');
+      const memoryKey = 'abk-filter:' + location.pathname + (location.pathname === '/compare' ? location.search : '') + (panel.dataset.filterKey ? ':' + panel.dataset.filterKey : '');
       try {
         const saved = JSON.parse(sessionStorage.getItem(memoryKey) || '{}');
         status = saved.status || 'all'; page = saved.page || 1; if (input) input.value = saved.query || '';
@@ -60,7 +60,7 @@
         apply();
       }));
       // A task-map link must still locate a row hidden by the current filter.
-      document.querySelectorAll('.task-tile').forEach(tile => tile.addEventListener('click', () => {
+      if (!panel.dataset.filterKey) document.querySelectorAll('.task-tile').forEach(tile => tile.addEventListener('click', () => {
         status = 'all';
         const target = document.querySelector(tile.getAttribute('href'));
         page = Math.floor(Math.max(0, rows.indexOf(target))/pageSize)+1;

@@ -43,3 +43,20 @@ assert.equal(log.children[1].children.length,4);
 assert.ok(log.children[1].children[0].textContent.includes('ValueError'));
 assert.equal(log.children[2].querySelector('code').textContent,'Traceback (most recent call last):');
 console.log('PASS: complete Python stacks collapse; partial stacks stay visible');
+// Independent pagers must not overwrite each other's query/page on the sample page.
+function listPanel(key) {
+  const p=new Element({filterKey:key,pageSize:'10'});
+  const rs=Array.from({length:24},(_,i)=>new Element({search:`test-${i}`,status:'all'}));
+  const order={append(){}};rs.forEach(r=>r.parentNode=order);
+  const controls={};for(const s of ['[data-search-input]','[data-filter-count]','[data-filter-empty]','[data-matrix-page]','[data-page-prev]','[data-page-next]']) controls[s]=new Element();
+  p.querySelector=s=>controls[s]||null;p.querySelectorAll=s=>s==='[data-result-row]'?rs:[];
+  return {p,rs,controls};
+}
+const lp=listPanel('F2P'),rp=listPanel('P2P'),listCallbacks=[],listMemory={};
+vm.runInNewContext(fs.readFileSync('src/agentbenchkit/viewer/static/viewer.js','utf8'),{document:{querySelectorAll:s=>s==='[data-result-filter]'?[lp.p,rp.p]:[],addEventListener:(t,f)=>{if(t==='DOMContentLoaded')listCallbacks.push(f);}},location:{pathname:'/runs/example/samples/example'},sessionStorage:{getItem:k=>listMemory[k],setItem:(k,v)=>listMemory[k]=v}});
+listCallbacks.forEach(f=>f());assert.equal(lp.rs.filter(r=>!r.hidden).length,10);
+lp.controls['[data-page-next]'].fire('click');assert.equal(lp.rs.filter(r=>!r.hidden)[0],lp.rs[10]);
+rp.controls['[data-search-input]'].value='test-23';rp.controls['[data-search-input]'].fire('input');
+assert.deepEqual(rp.rs.filter(r=>!r.hidden),[rp.rs[23]]);assert.equal(lp.rs.filter(r=>!r.hidden)[0],lp.rs[10]);
+assert.equal(Object.keys(listMemory).length,2);
+console.log('PASS: sample lists paginate independently and preserve separate state');
