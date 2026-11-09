@@ -1,0 +1,13 @@
+<div class="test-groups">{% for group in w.groups %}
+<article class="test-group"><h3>{{group.name}}</h3><p><b>{{group.passed|na}}</b> 通过 · <b>{{group.failed|na}}</b> 失败</p>
+{% if group.failures %}
+<form action="#failure" method="get" class="reader-filters test-search">
+  {% for name,value in group.retained.items() %}<input type="hidden" name="{{name}}" value="{{value}}">{% endfor %}
+  <label>查找失败测试<input name="{{group.prefix}}_q" value="{{group.query}}" placeholder="测试名 / 文件名"></label><button type="submit">搜索</button><a href="{{group.reset}}">清除筛选</a>
+</form>
+{% for test in group.visible %}<details class="failed-test"><summary><span class="badge FAIL">FAIL</span> {{test}}</summary><p>官方报告记录的失败测试。下方为本次验证日志；只有日志中匹配到测试名才视为关联。</p>
+{% for log in w.logs %}<p><a href="{{evidence_link(run_id,log,sample.sample_id,q=test.split('::')[0])}}">定位测试名 · {{log.split('/')[-1]}}</a> · <a href="{{evidence_link(run_id,log,sample.sample_id)}}">完整日志</a></p>{% else %}<p class="missing">缺少测试日志，无法继续定位；官方失败结论仍保留。</p>{% endfor %}</details>
+{% else %}<p class="empty-state">没有匹配的失败测试，请调整关键词或清除筛选。</p>{% endfor %}
+<nav class="pagination">{% if group.page > 1 %}<a href="{{group.previous}}">← 上一页</a>{% endif %}<span>第 {{group.page}} / {{group.pages}} 页 · {{group.total}} 条匹配 · 每页 10 条</span>{% if group.page < group.pages %}<a href="{{group.next}}">下一页 →</a>{% endif %}</nav>
+{% else %}<p class="test-empty">{{"未报告失败测试" if group.failed is not none else "未收集结构化测试清单"}}</p>{% endif %}
+</article>{% endfor %}</div>

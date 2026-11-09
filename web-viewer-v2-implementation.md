@@ -362,3 +362,57 @@ Delivery stays on codex/web-viewer-v0.3. Latest local service: http://127.0.0.1:
 Cloud deployed version remains **414d7c1**; these changes are **not deployed**.
 No cloud resources, evaluation core, original worktree changes, or main merge were
 included. Unrelated CRLF status entries and ABK_Evaluation_Report.md are preserved.
+
+### Formal fixed-50 ingestion and Judge integration — 2026-11-09
+
+PASS: the completed formal evidence archive contains 50 unique recorded tasks across
+runs 20261108T175913Z-b8f179b0 (39 samples, original 50-task plan) and
+20261108T224801Z-0343fc3f (11 resumed samples). Local read-only integration checked
+both run pages, all 50 sample pages and the collection homepage: **53/53 HTTP 200**.
+Official PASS 11, FAIL 38, NOT_RUN 1; strict sample_success 9; TIMED_OUT 24.
+An explicit continuation collection unions planned task IDs and rejects ambiguous
+multiple-sample tasks from its totals. Per-run saved summaries remain untouched.
+
+A real integration failure was found and fixed: Astropy tiled compression contains
+291 failed tests, whose repeated log links exceeded the response-size limit (413).
+Failure lists now use server-side search and 10-item paging, independently preserving
+F2P/P2P filters. Browser page 2/30 works and the final-page regression is covered.
+
+Judge rendering now reads native run/judge artifacts or optional --judge-root with
+independent results/ and metadata/ directories. Join keys are run+sample or
+run+task+physical execution; wrong execution IDs never attach to another sample.
+Results supersede pending metadata. Requests, inputs and credentials are not read.
+The UI displays four 0–4 dimensions, nullable scores, reasons, checked evidence links,
+model/Rubric/Prompt versions, uncertainty, errors, usage and source version history.
+Official correctness, Agent outcome, RCA and saved evidence are never changed.
+
+Real Judge snapshot verified: one JUDGED DeepSeek V4 Pro result, fastapi test_compat,
+quality-v1 / quality-json-v2; scores 4/3/3/2. Remaining 49 metadata records PENDING
+at snapshot time. This is NOT a claim that the 50 Judge calls are complete.
+Chrome verified Judge -> score rationale -> test_output.txt and read the real log.
+
+Validation: full pytest **256 passed / 37 skipped**, Ruff, mypy (93 files), Node
+interaction contracts PASS. Initial full regression had six assertions fail because
+an extra Judge list duplicated task rows; resolved by placing Judge entry points in
+the existing matrix instead. Repeated full suite passed. All 1,951 extracted formal
+artifacts matched archive SHA256 both before and after local validation.
+
+Local integration URL: http://127.0.0.1:8878 (formal results plus Judge snapshot).
+Local snapshot: D:/WorkSpace/AgentBenchKit/.agentbenchkit/viewer-formal50.
+This page is NOT a live cloud mirror; refreshing rereads the configured local files.
+Later Judge exports must be copied into its judge/results directory, or a separately
+approved cloud deployment can read the original independent Judge directory.
+No cloud service was restarted, no model/Agent/Verifier called, no budget consumed
+by this integration work, and no cloud permissions changed. Existing cloud Viewer
+remains 414d7c1; latest integration is not deployed there. Judge execution is managed
+separately. The existing loopback service main PID stayed 705965 during our checks.
+
+Viewer launch options (use readable output paths; do not grant access to secrets):
+
+```powershell
+.\.venv\Scripts\python.exe -m agentbenchkit.viewer.server --root D:/WorkSpace/AgentBenchKit/.agentbenchkit/viewer-formal50/runs --judge-root D:/WorkSpace/AgentBenchKit/.agentbenchkit/viewer-formal50/judge --collection-title "FeatureBench Fast 固定50题" --port 8878
+```
+
+Only use --collection-title for roots deliberately belonging to one continued
+batch. Without this opt-in, independent runs remain independent. Judge files still
+being written are skipped until readable; refreshing reveals newly completed files.

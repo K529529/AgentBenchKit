@@ -235,3 +235,11 @@ input:not([type=checkbox]), select { min-height: 38px; color: var(--ink); }
   .run-snapshot .metric-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .run-snapshot .metric-grid > div:last-child { grid-column: 1/-1; }
 }
+.judge-dimensions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:24px 0; }
+.judge-dimension { padding:20px; border:1px solid #dce3eb; border-radius:10px; min-width:0; }
+.judge-dimension h3 { margin:0; font-size:17px; }
+.judge-dimension strong { color:#246b63; font-size:28px; white-space:nowrap; }
+.judge-dimension strong small { font-size:13px; font-weight:400; }
+.judge-reason { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.8; }
+#judge dd { overflow-wrap:anywhere; }
+@media(max-width:650px) { .judge-dimensions { grid-template-columns:1fr; } }

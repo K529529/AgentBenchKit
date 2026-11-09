@@ -1,0 +1,6 @@
+<section class="panel content-panel" id="judge">
+  <p class="eyebrow">QUALITY REVIEW</p><h2>Judge 覆盖情况</h2>
+  <p class="muted">按样本最近一份记录统计，独立于官方 Verifier。等待中与尚无记录不算失败，缺失分数不计零。</p>
+  <div class="context-tags">{% for status,count in judge_coverage.items() %}<span class="context-tag">{{status}} <b>{{count}}</b></span>{% endfor %}</div>
+  <p>逐题评分入口位于上方结果表的 Judge 列。</p>
+</section>

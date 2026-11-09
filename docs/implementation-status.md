@@ -700,3 +700,13 @@ evidence directory search and actual verifier.json download (SHA-256 matches sou
 Historical hash baseline: 25 tracked evidence files unchanged; this is a sampled
 baseline, not a claim that every artifact was hashed. No Agent/Verifier rerun,
 Docker, cloud operation, deployment or main merge. See report for visual QA limits.
+
+Formal fixed-50 / Judge Viewer integration (2026-11-09): PASS 53/53 local HTTP
+pages using SHA256-verified real completed evidence; 50 unique tasks, PASS 11,
+FAIL 38, NOT_RUN 1, strict success 9. Fixed real 413 on 291-failure Astropy sample
+with server-side pagination. PASS Chrome actual next-page and real Judge rationale
+-> verification log. Judge snapshot: 1 JUDGED / 49 PENDING, not 50 completed Judges.
+PASS full pytest 256 / 37 skipped, Ruff, mypy (93 files), Node. Formal artifacts
+1951/1951 unchanged after validation. Isolated local service 8878; no cloud restart,
+no Agent/Verifier/Judge execution and no deployment. See implementation report for
+snapshot boundaries and explicit --judge-root / --collection-title configuration.

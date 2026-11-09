@@ -1,0 +1,17 @@
+<section class="panel content-panel" id="judge">
+  <div class="panel-heading"><div><p class="eyebrow">LLM-AS-A-JUDGE</p><h2>辅助质量评估</h2></div><a href="/runs/{{run_id}}/samples/{{sample.sample_id}}#judge">刷新 Judge ↻</a></div>
+  <p class="lead">官方 Verifier：<span class="badge {{sample.verifier_status}}">{{sample.verifier_status}}</span> · Judge 评价过程与方案质量，不参与官方通过率，不覆盖 Candidate Pass 或 Sample Success。</p>
+  {% if judges %}
+  {% set latest = judges[0] %}
+  <div class="context-tags"><span class="context-tag">Judge <b>{{latest.status}}</b></span><span class="context-tag">模型 <b>{{latest.model|na}}</b></span><span class="context-tag">Rubric <b>{{latest.rubric|na}}</b></span><span class="context-tag">Prompt <b>{{latest.prompt|na}}</b></span></div>
+  <p class="muted">0–4 分；N/A 表示未评分或不可观察，不计零分。高质量评分不等于官方测试通过。每次刷新读取已落盘结果。</p>
+  {% if latest.error %}<div class="warning"><strong>Judge 未成功完成</strong><pre>{{latest.error if latest.error is string else latest.error|pretty}}</pre></div>{% endif %}
+  {% if latest.status in ['PENDING','STARTED','RUNNING'] %}<p class="notice">该执行的 Judge {{'等待中' if latest.status == 'PENDING' else '进行中'}}，尚无最终评分。</p>{% endif %}
+  <div class="judge-dimensions">{% for d in latest.dimensions %}
+    <article class="judge-dimension"><div class="panel-heading"><h3>{{d.label}}</h3><strong>{{d.score|na}}{% if d.score is not none %}<small> / 4</small>{% endif %}</strong></div>
+    <details><summary>评分理由与证据 · {{d.refs|length}} 条引用</summary><p class="judge-reason">{{d.reason}}</p>{% for ref in d.refs %}<p>{% if ref.url %}<a href="{{ref.url}}" title="{{ref.ref}}">{{ref.ref.split('/')[-1]}} →</a>{% else %}<span class="missing">{{ref.ref}} · {{ref.reason}}</span>{% endif %}</p>{% endfor %}</details></article>
+  {% endfor %}</div>
+  {% if latest.uncertainty %}<details><summary>证据边界与不确定性</summary>{% if latest.uncertainty is mapping %}<dl>{% for key,value in latest.uncertainty.items() %}<dt>{{key}}</dt><dd>{{value|pretty}}</dd>{% endfor %}</dl>{% else %}<p>{{latest.uncertainty}}</p>{% endif %}</details>{% endif %}
+  <details><summary>Judge 调用信息与版本记录 · {{judges|length}} 份记录</summary><p>执行：{{latest.execution|na}} · 时间：{{latest.created|na}} · 耗时：{{latest.duration_ms|na}} ms</p><p>Judge Usage（独立于 Agent Usage）</p><pre>{{latest.usage|pretty}}</pre>{% for judge in judges %}<details><summary>{{judge.status}} · {{judge.source}}</summary><pre>{{judge.raw|preview}}</pre></details>{% endfor %}</details>
+  {% else %}<div class="empty-state"><h3>尚无可读取的 Judge 结果</h3><p>当前证据源中未找到与此样本或物理执行对应的评分。结果落盘后刷新即可查看；这不表示零分，也不表示调用失败。</p></div>{% endif %}
+</section>

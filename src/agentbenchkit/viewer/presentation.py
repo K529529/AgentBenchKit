@@ -82,6 +82,35 @@ def mapping(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
+def collection_view(roots: list[Path]) -> dict[str, Any]:
+    """Explicitly opted-in continuation collection; ambiguous tasks never become scores."""
+    planned: set[str] = set()
+    samples: dict[str, list[dict[str, Any]]] = {}
+    for root in roots:
+        for manifest_path in sorted(root.glob("*/manifest.json")):
+            directory = manifest_path.parent
+            manifest = read(directory, "manifest.json")
+            planned.update(t["task_id"] for t in manifest.get("tasks", []))
+            for path in directory.glob("tasks/*/*/sample.json"):
+                record = read(directory, path.relative_to(directory).as_posix())
+                if record.get("task_id") and record.get("sample_id"):
+                    samples.setdefault(record["task_id"], []).append(
+                        {**record, "run": directory.name}
+                    )
+    unique = [values[0] for task, values in samples.items() if task in planned and len(values) == 1]
+    return {
+        "planned": len(planned),
+        "recorded": len(unique),
+        "ambiguous": sum(len(values) > 1 for values in samples.values()),
+        "official_pass": sum(s.get("verifier_status") == "PASS" for s in unique),
+        "official_fail": sum(s.get("verifier_status") == "FAIL" for s in unique),
+        "not_run": sum(s.get("verifier_status") == "NOT_RUN" for s in unique),
+        "success": sum(s.get("sample_success") is True for s in unique),
+        "timeout": sum(s.get("execution_status") == "TIMED_OUT" for s in unique),
+        "samples": unique,
+    }
+
+
 def event_data(event: dict[str, Any]) -> dict[str, Any]:
     return mapping(mapping(mapping(event.get("attributes")).get("native")).get("data"))
 

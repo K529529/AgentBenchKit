@@ -5,6 +5,7 @@ import os
 import re
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -15,8 +16,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from agentbenchkit.analysis.compare import compare
-from agentbenchkit.analysis.judge import unavailable_scores
 from agentbenchkit.storage.index import resolve_run
+from agentbenchkit.viewer import judges as quality
 from agentbenchkit.viewer import presentation as view
 from agentbenchkit.viewer.analytics import distribution, paired_metrics
 
@@ -31,7 +32,12 @@ def artifact_path(directory: Path, relative: str) -> Path:
     return path
 
 
-def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
+def create_app(
+    root: Path,
+    extra_roots: tuple[Path, ...] = (),
+    judge_root: Path | None = None,
+    collection_title: str | None = None,
+) -> FastAPI:
     roots = []
     for configured in (root, *extra_roots):
         resolved = configured.resolve()
@@ -138,6 +144,8 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
             page=page,
             pages=pages,
             q=q,
+            collection=view.collection_view(roots) if collection_title else None,
+            collection_title=collection_title,
             compare_baseline=compare_pair[0]["id"] if compare_pair else "",
             compare_candidate=compare_pair[1]["id"] if compare_pair else "",
         )
@@ -155,6 +163,22 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
         samples = [s for s in samples if s.get("sample_id") and s.get("task_id")]
         analyses = [path.name for path in sorted(directory.glob("analyses/*.json"))]
         overview = view.run_view(directory, samples, manifest)
+        judge_records = quality.records(directory, judge_root)
+        judge_rows = []
+        for item in samples:
+            folder = directory / "tasks" / item["task_id"] / item["sample_id"] / "executions"
+            judged = quality.for_sample(
+                directory, item, {p.name for p in folder.glob("*")}, judge_records
+            )
+            item["viewer_judge"] = judged[0]["status"] if judged else "NOT_AVAILABLE"
+            judge_rows.append(
+                {
+                    "sample": item["sample_id"],
+                    "task": item["task_id"],
+                    "status": judged[0]["status"] if judged else "NOT_AVAILABLE",
+                    "official": item.get("verifier_status", "NOT_RUN"),
+                }
+            )
         distributions = [
             distribution(samples, key, label, unit, scale)
             for key, label, unit, scale in [
@@ -172,6 +196,8 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
             summary=view.read(directory, "summary.json"),
             samples=samples,
             overview=overview,
+            judge_rows=judge_rows,
+            judge_coverage=quality.coverage(judge_rows),
             distributions=distributions,
             notices=sorted(
                 {
@@ -184,7 +210,15 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
         )
 
     @app.get("/runs/{run_id}/samples/{sample_id}", response_class=HTMLResponse)
-    def sample(request: Request, run_id: str, sample_id: str) -> HTMLResponse:
+    def sample(
+        request: Request,
+        run_id: str,
+        sample_id: str,
+        f2p_page: int = 1,
+        p2p_page: int = 1,
+        f2p_q: str = "",
+        p2p_q: str = "",
+    ) -> HTMLResponse:
         directory = run_dir(run_id)
         if not re.fullmatch(r"[A-Za-z0-9_.-]+", sample_id):
             raise HTTPException(404)
@@ -210,8 +244,38 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
             {"task_id": record.get("task_id", "Unknown"), "prompt": "任务描述缺失"},
         )
         workbench = view.sample_view(directory, paths[0])
+        test_params: dict[str, Any] = {
+            "f2p_page": f2p_page,
+            "p2p_page": p2p_page,
+            "f2p_q": f2p_q,
+            "p2p_q": p2p_q,
+        }
+        for group, prefix in zip(workbench["groups"], ("f2p", "p2p"), strict=True):
+            query = str(test_params[prefix + "_q"])
+            matching = [test for test in group["failures"] if query.casefold() in test.casefold()]
+            pages = max(1, (len(matching) + 9) // 10)
+            page = min(max(1, int(test_params[prefix + "_page"])), pages)
+            group.update(
+                prefix=prefix,
+                query=query,
+                total=len(matching),
+                page=page,
+                pages=pages,
+                visible=matching[(page - 1) * 10 : page * 10],
+                previous="?" + urlencode({**test_params, prefix + "_page": page - 1}) + "#failure",
+                next="?" + urlencode({**test_params, prefix + "_page": page + 1}) + "#failure",
+                reset="?"
+                + urlencode({**test_params, prefix + "_q": "", prefix + "_page": 1})
+                + "#failure",
+                retained={k: v for k, v in test_params.items() if not k.startswith(prefix)},
+            )
         files = workbench["files"]
-        judges: list[dict[str, Any]] = []
+        judges = quality.for_sample(
+            directory,
+            record,
+            {str(e.get("physical_execution_id")) for _, e in workbench["executions"]},
+            quality.records(directory, judge_root),
+        )
         return render(
             request,
             "sample.html",
@@ -224,7 +288,6 @@ def create_app(root: Path, extra_roots: tuple[Path, ...] = ()) -> FastAPI:
             files=files,
             workbench=workbench,
             judges=judges,
-            rubric=unavailable_scores(),
         )
 
     @app.get("/runs/{run_id}/artifact", response_class=PlainTextResponse)

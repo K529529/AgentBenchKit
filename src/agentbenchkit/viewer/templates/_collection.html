@@ -1,0 +1,10 @@
+<section class="panel content-panel">
+<p class="eyebrow">CONTINUED EVALUATION</p><h2>{{collection_title}}</h2>
+<p>任务清单按 Task ID 去重，共 {{collection.planned}} 题；{{collection.recorded}} 题有唯一的样本记录。下方各 Run 保留各自原始计划与统计，不把续跑误当成另一组独立实验。</p>
+{% if collection.ambiguous %}<p class="warning">{{collection.ambiguous}} 个任务有多份样本，已排除，不能据此声称整批最终成绩。</p>{% endif %}
+<div class="stats"><div><small>Official PASS</small><strong>{{collection.official_pass}} / {{collection.planned}}</strong></div><div><small>严格 ABK 成功</small><strong>{{collection.success}} / {{collection.planned}}</strong></div><div><small>Official FAIL / NOT_RUN</small><strong>{{collection.official_fail}} / {{collection.not_run}}</strong></div><div><small>Agent 超时</small><strong>{{collection.timeout}}</strong></div></div>
+<details><summary>全部 {{collection.recorded}} 题 · 跨续跑段定位</summary>
+{% from "_components.html" import paged %}{% call paged("查找批次任务", "collection") %}
+{% for sample in collection.samples %}<article data-result-row data-search="{{sample.task_id}} {{sample.verifier_status}}" data-status="all"><p><a href="/runs/{{sample.run}}/samples/{{sample.sample_id}}">{{sample.task_id}}</a></p><p>官方 {{sample.verifier_status}} · 执行 {{sample.execution_status}} · <a href="/runs/{{sample.run}}/samples/{{sample.sample_id}}#judge">查看 Judge →</a></p></article>{% endfor %}
+{% endcall %}</details>
+</section>
