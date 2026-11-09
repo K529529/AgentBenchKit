@@ -731,3 +731,17 @@ distributions and Judge coverage remain explicitly scoped. No evidence rewritten
 PASS 31 focused tests, Ruff, mypy (93 files); live HTTP verifies 50 rows, exactly
 11 continuation rows, zero NO_RESULT rows, and all 11 sample links HTTP 200.
 Browser NOT RUN: CUA missing asset path persists; no visual acceptance claimed.
+
+Timeline endpoint navigation (2026-11-09): added filter-preserving last-page links,
+last observed turn and last model/tool activity shortcuts that explicitly clear
+filters. Navigation scans streamingly with bounded rendered pages; observed turn
+numbers count turn_start from one, never substitute for missing Harness Steps.
+Inputs show numeric examples, exact Call ID meaning, and disabled Harness Step
+when absent. Sample page also links directly to last turn. Verified real Pydantic
+8418613-byte trajectory: 3506 events, 352 observed turns, final turn 3503-3506;
+last event starts pytest tests/ with no subsequent result recorded. Independent
+Verifier PASS does not imply the Agent completed that final command.
+PASS full pytest 259/37 skipped, Ruff, mypy (94 files), Node contracts, real
+filtered-tail/last-turn checks and live HTTP. Final sample-link template checked
+via local service. Browser NOT RUN: persistent CUA asset initialization failure.
+No cloud actions or evidence mutations.

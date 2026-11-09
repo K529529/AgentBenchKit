@@ -367,7 +367,9 @@ def test_pi_native_duration_and_missing_event_are_readable(tmp_path: Path) -> No
 
     native = {"pi": {"durationMs": 4824, "toolName": "bash"}}
     event: dict[str, Any] = {
-        "type": "tool_call_finished", "duration_ms": None, "attributes": {"native": native}
+        "type": "tool_call_finished",
+        "duration_ms": None,
+        "attributes": {"native": native},
     }
     assert event_view(12, event)["duration"] == 4824
     event["duration_ms"] = 0
@@ -386,3 +388,36 @@ def test_pi_native_duration_and_missing_event_are_readable(tmp_path: Path) -> No
         sample = client.get("/runs/fixture/samples/sample-01")
         assert "02 验证结果" in sample.text
         assert "官方验证与测试结果" in sample.text
+
+
+def test_timeline_tail_turns_and_filter_preservation(tmp_path: Path) -> None:
+    run, folder = fixture(tmp_path)
+    path = folder / "executions/execution-1/trajectory.jsonl"
+    events = [
+        {
+            "seq": n,
+            "type": "turn_start" if n in (1, 70, 130) else "tool_call_started",
+            "attributes": {
+                "native": {"data": {"name": "bash", "arguments": {"command": f"echo {n}"}}}
+            },
+        }
+        for n in range(1, 136)
+    ]
+    path.write_text("\n".join(json.dumps(e) for e in events))
+    params = {"path": path.relative_to(run).as_posix()}
+    before = hashes(tmp_path)
+    with TestClient(create_app(tmp_path)) as client:
+        url = "/runs/fixture/evidence"
+        tail = client.get(url, params={**params, "jump": "last", "kind": "tool_call_started"})
+        assert tail.status_code == 200 and 'id="event-135"' in tail.text
+        assert "已到当前筛选结果末尾" in tail.text and "← 上一页" in tail.text
+        assert "kind=tool_call_started" in tail.text
+        last = client.get(url, params={**params, "jump": "last_turn", "kind": "tool_call_finished"})
+        assert 'id="event-130"' in last.text and 'id="event-135"' in last.text
+        assert "最后观察到第 3 轮" in last.text and "未记录 Harness Step" in last.text
+        turn = client.get(url, params={**params, "turn": "2"})
+        assert 'id="event-70"' in turn.text and 'id="event-129"' in turn.text
+        assert 'id="event-130"' not in turn.text
+        empty = client.get(url, params={**params, "jump": "last", "q": "absent"})
+        assert empty.status_code == 200 and "没有匹配的事件" in empty.text
+    assert hashes(tmp_path) == before

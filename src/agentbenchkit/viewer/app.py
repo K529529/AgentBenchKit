@@ -19,6 +19,7 @@ from agentbenchkit.analysis.compare import compare
 from agentbenchkit.storage.index import resolve_run
 from agentbenchkit.viewer import judges as quality
 from agentbenchkit.viewer import presentation as view
+from agentbenchkit.viewer import timeline
 from agentbenchkit.viewer.analytics import distribution, paired_metrics
 
 PACKAGE = Path(__file__).parent
@@ -412,6 +413,8 @@ def create_app(
         step: str = "",
         seq: str = "",
         trail: str = "",
+        turn: str = "",
+        jump: str = "",
     ) -> HTMLResponse:
         directory = run_dir(run_id)
         try:
@@ -501,6 +504,20 @@ def create_app(
             if target.suffix == ".diff"
             else "log"
         )
+        nav = None
+        if mode == "timeline":
+            if jump in {"last_turn", "last_activity"}:
+                q = kind = tool = call = step = seq = turn = ""
+            filters = dict(q=q, kind=kind, tool=tool, call=call, step=step, seq=seq, turn=turn)
+            nav = timeline.navigation(target, filters)
+            if jump == "last":
+                start = nav["pages"][-1] if nav["pages"] else 1
+            elif jump == "last_turn":
+                start = nav["last_turn"] or nav["last_activity"] or 1
+            elif jump == "last_activity":
+                start = nav["last_activity"] or 1
+            if jump:
+                history = []
         # Resolve exact new-line location in the original patch, never regenerate it.
         if mode == "diff" and line:
             for row in view.diff_rows(target):
@@ -508,7 +525,7 @@ def create_app(
                     start = max(1, row["line"] - 5)
                     break
         iterator: Any = (
-            view.events(target)
+            enumerate(timeline.rows(target), 1)
             if mode == "timeline"
             else enumerate(view.diff_rows(target), 1)
             if mode == "diff"
@@ -519,17 +536,11 @@ def create_app(
         response_budget = 0
         for number, item in iterator:
             if mode == "timeline":
-                row = view.event_view(number, item)
+                row, item = item
                 tools_seen.add(row["tool"])
                 kinds_seen.add(row["type"])
                 search = json.dumps(item, ensure_ascii=False)
-                matches = (
-                    (not kind or row["type"] == kind or bool(row.get(kind)))
-                    and (not tool or row["tool"] == tool)
-                    and (not call or row["call_id"] == call)
-                    and (not step or str(row["step"]) == step)
-                    and (not seq or str(row["seq"]) == seq)
-                )
+                matches = timeline.matches(row, item, filters)
             elif mode == "diff":
                 row = item
                 search = row["text"]
@@ -568,7 +579,14 @@ def create_app(
             line=line,
             step=step,
             seq=seq,
-            previous_start=history[-1] if history else None,
+            turn=turn,
+            nav=nav,
+            jump=jump,
+            previous_start=history[-1]
+            if history
+            else next((n for n in reversed(nav["pages"]) if n < start), None)
+            if nav
+            else None,
             previous_trail=",".join(map(str, history[:-1])),
             next_trail=",".join(map(str, [*history, start][-64:])),
             tools_seen=sorted(tools_seen - {""}),

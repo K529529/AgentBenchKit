@@ -442,3 +442,18 @@ page now has 50 task rows, 11 continuation rows, zero absent-result rows, and al
 11 continuation sample links return HTTP 200. Independent-run mode does not join.
 31 focused tests, Ruff and mypy PASS. Browser verification unavailable due to the
 existing CUA asset initialization error. Cloud services/evidence remain untouched.
+
+### Timeline end navigation — 2026-11-09
+
+Added one-click last page (preserves filters), last observed Agent turn, and last
+model/tool activity (explicitly clear filters, so pending tool starts are visible).
+The reader shows total events, filtered count and last observed turn. Turn numbers
+are counted from actual turn_start events, separately labeled from native Harness
+Steps. Numeric fields now give examples; absent Harness Steps are explained and
+the unavailable input disabled. Samples have a direct last-turn entry.
+
+Actual Pydantic timeout/PASS case: 3506 events, 352 observed turns; last turn has
+physical lines 3503–3506, ending in tool_call_started running pytest tests/ (no
+recorded result). Tested last-page filtering and reverse navigation without editing
+original evidence. Full tests 259 passed/37 skipped, Ruff, mypy94 and Node PASS;
+live local HTTP PASS. Browser unavailable due to CUA missing kernel asset path.
