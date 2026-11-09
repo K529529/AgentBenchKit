@@ -152,3 +152,29 @@ def test_collection_judge_scope_and_snapshot_notice(tmp_path: Path) -> None:
         assert "本 Run 的 Judge 覆盖 · 50 题" in run_page.text
         assert "查看整批任务与 Judge 汇总" in run_page.text
         assert "不会同步云端" in run_page.text
+
+
+def test_continued_run_fills_missing_rows_without_rewriting_statistics(tmp_path: Path) -> None:
+    from test_viewer_dashboard import write_dashboard_fixture
+    from test_viewer_workbench import hashes
+
+    first = write_dashboard_fixture(tmp_path, "first", "Pi", task_count=2)
+    write_dashboard_fixture(tmp_path, "resumed", "Pi", task_count=1)
+    missing = next(first.glob("tasks/*/sample-01/sample.json"))
+    missing.unlink()
+    before = hashes(tmp_path)
+    with TestClient(create_app(tmp_path, collection_title="Batch")) as client:
+        page = client.get("/runs/first")
+        assert page.status_code == 200
+        assert "整批评测：2 / 2 题已有结果" in page.text
+        assert "<small>仍无结果任务</small><strong>0</strong>" in page.text
+        assert "<small>已在续跑完成</small><strong>1</strong>" in page.text
+        assert "/runs/resumed/samples/sample-01" in page.text
+        assert 'data-execution="NO_RESULT"' not in page.text
+        assert page.text.count("data-result-row") == 2
+        assert "本 Run 的 Judge 覆盖 · 1 题" in page.text
+    with TestClient(create_app(tmp_path)) as client:
+        page = client.get("/runs/first")
+        assert 'data-execution="NO_RESULT"' in page.text
+        assert "续跑结果 ·" not in page.text
+    assert hashes(tmp_path) == before

@@ -177,6 +177,31 @@ def create_app(
         samples = [s for s in samples if s.get("sample_id") and s.get("task_id")]
         analyses = [path.name for path in sorted(directory.glob("analyses/*.json"))]
         overview = view.run_view(directory, samples, manifest)
+        batch = view.collection_view(roots) if collection_title else None
+        continued: list[dict[str, Any]] = []
+        if batch is not None:
+            planned = {task["task_id"] for task in manifest["tasks"]}
+            recorded = {item["task_id"] for item in samples}
+            continued = [
+                item
+                for item in batch["samples"]
+                if item["task_id"] in planned - recorded and item["run"] != run_id
+            ]
+            for origin in {item["run"] for item in continued}:
+                origin_dir = run_dir(origin)
+                origin_samples = [item for item in continued if item["run"] == origin]
+                view.run_view(origin_dir, origin_samples, view.read(origin_dir, "manifest.json"))
+                origin_judges = quality.records(origin_dir, judge_root)
+                for item in origin_samples:
+                    folder = (
+                        origin_dir / "tasks" / item["task_id"] / item["sample_id"] / "executions"
+                    )
+                    judged = quality.for_sample(
+                        origin_dir, item, {p.name for p in folder.glob("*")}, origin_judges
+                    )
+                    item["viewer_judge"] = judged[0]["status"] if judged else "NOT_AVAILABLE"
+        overview["continued"] = len(continued)
+        overview["unresolved"] = overview["tasks_without_results"] - len(continued)
         judge_records = quality.records(directory, judge_root)
         judge_rows = []
         for item in samples:
@@ -209,6 +234,8 @@ def create_app(
             manifest=manifest,
             summary=view.read(directory, "summary.json"),
             samples=samples,
+            matrix_samples=samples + continued,
+            batch=batch,
             overview=overview,
             judge_rows=judge_rows,
             judge_coverage=quality.coverage(judge_rows),

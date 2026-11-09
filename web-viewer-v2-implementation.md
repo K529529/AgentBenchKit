@@ -430,3 +430,15 @@ visible; page refresh does not claim to synchronize cloud results automatically.
 Checks: 11 targeted tests, Ruff, mypy PASS; running HTTP page asserts 50/21/29.
 Browser recheck unavailable due to CUA asset initialization failure; no screenshot
 or new visual acceptance claimed. No cloud mutations, service restart or paid call.
+
+### Completed continuations in the original Run — 2026-11-09
+
+Fixed the misleading "11 tasks without results" on the initial 50-task plan.
+When a continuation collection is explicitly configured, unique results from
+other Runs fill missing task rows and task-map verdicts, linking to the actual
+owning Run for samples and Judge. Original Run metrics remain unchanged and are
+clearly labeled; batch completion (50/50) appears above them. Actual first-Run
+page now has 50 task rows, 11 continuation rows, zero absent-result rows, and all
+11 continuation sample links return HTTP 200. Independent-run mode does not join.
+31 focused tests, Ruff and mypy PASS. Browser verification unavailable due to the
+existing CUA asset initialization error. Cloud services/evidence remain untouched.

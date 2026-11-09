@@ -721,3 +721,13 @@ PASS 11 focused tests, Ruff, mypy (93 files), and actual local HTTP response che
 for 50/21/29. Browser recheck NOT RUN: CUA initialization failed (missing kernel
 asset path); no new screenshot claimed. Prior full suite remains 256/37 before
 this scoped change. No cloud service changes or Judge execution.
+
+Continuation-row correction (2026-11-09): in explicit collection mode, the first
+Run now resolves its 11 locally absent tasks to unique samples in the continued
+Run. The matrix and task map include their actual statuses, metrics and links to
+the owning Run. The snapshot shows zero still-missing tasks and 11 completed in
+continuation. A batch banner shows 50/50, while original Run summaries, Tokens,
+distributions and Judge coverage remain explicitly scoped. No evidence rewritten.
+PASS 31 focused tests, Ruff, mypy (93 files); live HTTP verifies 50 rows, exactly
+11 continuation rows, zero NO_RESULT rows, and all 11 sample links HTTP 200.
+Browser NOT RUN: CUA missing asset path persists; no visual acceptance claimed.
