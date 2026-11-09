@@ -710,3 +710,14 @@ PASS full pytest 256 / 37 skipped, Ruff, mypy (93 files), Node. Formal artifacts
 1951/1951 unchanged after validation. Isolated local service 8878; no cloud restart,
 no Agent/Verifier/Judge execution and no deployment. See implementation report for
 snapshot boundaries and explicit --judge-root / --collection-title configuration.
+
+Judge snapshot correction (2026-11-09): synchronized 71 SHA256-verified metadata/
+result records read-only from cloud: 21 JUDGED, 29 PENDING across 50 samples.
+Run 20261108T175913Z-b8f179b0 has 21 JUDGED + 18 PENDING (39 samples);
+run 20261108T224801Z-0343fc3f has 11 PENDING. Added whole-collection Judge counts,
+explicit per-run scope and collection link, plus local snapshot synchronization
+time and an explicit notice that page refresh does not synchronize cloud files.
+PASS 11 focused tests, Ruff, mypy (93 files), and actual local HTTP response checks
+for 50/21/29. Browser recheck NOT RUN: CUA initialization failed (missing kernel
+asset path); no new screenshot claimed. Prior full suite remains 256/37 before
+this scoped change. No cloud service changes or Judge execution.

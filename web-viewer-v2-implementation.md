@@ -416,3 +416,17 @@ Viewer launch options (use readable output paths; do not grant access to secrets
 Only use --collection-title for roots deliberately belonging to one continued
 batch. Without this opt-in, independent runs remain independent. Judge files still
 being written are skipped until readable; refreshing reveals newly completed files.
+
+### Judge snapshot and scope correction — 2026-11-09
+
+The earlier 1-JUDGED snapshot was stale. A new read-only cloud transfer verified
+71 metadata/result files and shows 21 JUDGED / 29 PENDING over all 50 tasks.
+The original Run has 39 physical samples (21 judged, 18 pending); the continuation
+Run has 11 pending samples. Evaluation completion remains 50/50 independently of
+Judge completion. The homepage now shows whole-batch Judge coverage, while each
+Run explicitly labels its own scope and links back to the batch. Snapshot time is
+visible; page refresh does not claim to synchronize cloud results automatically.
+
+Checks: 11 targeted tests, Ruff, mypy PASS; running HTTP page asserts 50/21/29.
+Browser recheck unavailable due to CUA asset initialization failure; no screenshot
+or new visual acceptance claimed. No cloud mutations, service restart or paid call.

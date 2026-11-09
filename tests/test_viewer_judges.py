@@ -118,3 +118,37 @@ def test_collection_never_counts_duplicate_samples_as_final_results(tmp_path: Pa
     with TestClient(create_app(tmp_path, collection_title="Explicit batch")) as client:
         page = client.get("/")
         assert "Explicit batch" in page.text and "已排除" in page.text
+
+
+def test_collection_judge_scope_and_snapshot_notice(tmp_path: Path) -> None:
+    from agentbenchkit.viewer.judges import sync_info
+
+    run, _ = fixture(tmp_path / "runs")
+    external = tmp_path / "external"
+    external.mkdir()
+    (external / "viewer-sync.json").write_text(
+        json.dumps({"synced_at": "2026-11-09T01:00:00+00:00"})
+    )
+    assert sync_info(external) == "2026-11-09 09:00:00 UTC+8"
+    (run / "judge").mkdir()
+    (run / "judge/one.json").write_text(
+        json.dumps(
+            {
+                "run_id": "fixture",
+                "sample_id": "sample-01",
+                "judge_status": "COMPLETED",
+            }
+        )
+    )
+    with TestClient(
+        create_app(tmp_path / "runs", judge_root=external, collection_title="Fixed batch")
+    ) as client:
+        home = client.get("/")
+        assert home.status_code == 200
+        assert "整批 Judge 覆盖 · 50 题" in home.text
+        assert "已评分 <b>1</b>" in home.text and "尚无记录 <b>49</b>" in home.text
+        assert "2026-11-09 09:00:00 UTC+8" in home.text
+        run_page = client.get("/runs/fixture")
+        assert "本 Run 的 Judge 覆盖 · 50 题" in run_page.text
+        assert "查看整批任务与 Judge 汇总" in run_page.text
+        assert "不会同步云端" in run_page.text

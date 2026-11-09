@@ -2,6 +2,7 @@
 
 import json
 from collections import Counter
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,17 @@ LABELS = {
     "solution_quality": "方案质量",
     "efficiency": "效率",
 }
+
+
+def sync_info(root: Path | None) -> str | None:
+    if root is None:
+        return None
+    record = read_record(root / "viewer-sync.json", root)
+    try:
+        stamp = datetime.fromisoformat(record["synced_at"])
+        return stamp.astimezone(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S UTC+8")
+    except (KeyError, TypeError, ValueError):
+        return None
 
 
 def read_record(path: Path, root: Path) -> dict[str, Any]:

@@ -100,6 +100,19 @@ def create_app(
 
     @app.get("/", response_class=HTMLResponse)
     def runs(request: Request, page: int = 1, q: str = "") -> HTMLResponse:
+        collection = view.collection_view(roots) if collection_title else None
+        if collection is not None:
+            judge_cache: dict[str, list[dict[str, Any]]] = {}
+            for item in collection["samples"]:
+                directory = run_dir(item["run"])
+                if item["run"] not in judge_cache:
+                    judge_cache[item["run"]] = quality.records(directory, judge_root)
+                folder = directory / "tasks" / item["task_id"] / item["sample_id"] / "executions"
+                judged = quality.for_sample(
+                    directory, item, {p.name for p in folder.glob("*")}, judge_cache[item["run"]]
+                )
+                item["status"] = judged[0]["status"] if judged else "NOT_AVAILABLE"
+            collection["judge_coverage"] = quality.coverage(collection["samples"])
         items = []
         paths = [
             p
@@ -144,8 +157,9 @@ def create_app(
             page=page,
             pages=pages,
             q=q,
-            collection=view.collection_view(roots) if collection_title else None,
+            collection=collection,
             collection_title=collection_title,
+            judge_sync=quality.sync_info(judge_root),
             compare_baseline=compare_pair[0]["id"] if compare_pair else "",
             compare_candidate=compare_pair[1]["id"] if compare_pair else "",
         )
@@ -198,6 +212,8 @@ def create_app(
             overview=overview,
             judge_rows=judge_rows,
             judge_coverage=quality.coverage(judge_rows),
+            collection_title=collection_title,
+            judge_sync=quality.sync_info(judge_root),
             distributions=distributions,
             notices=sorted(
                 {
